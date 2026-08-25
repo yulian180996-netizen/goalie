@@ -60,6 +60,28 @@
   .tag{display:inline-block;font-size:11px;background:#2A1116;color:#E2606F;border-radius:6px;padding:2px 7px;margin-bottom:6px}
   .done-tag{background:#16281B;color:#4FA765}
   .ok{color:var(--ok)}
+  /* аналитика голов */
+  .chips{display:flex;flex-wrap:wrap;gap:6px}
+  .chips button{background:#12161C;border:1px solid var(--line);color:var(--tx2);border-radius:9px;
+       padding:8px 10px;font-size:12.5px;cursor:pointer}
+  .chips button.on{background:var(--red);border-color:var(--red);color:#fff;font-weight:700}
+  .svgbox{margin-top:8px;background:#0E1216;border:1px solid var(--line);border-radius:12px;padding:6px}
+  .svgbox svg{width:100%;height:auto;display:block;touch-action:manipulation}
+  .netgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;margin-top:6px}
+  .netgrid div{background:#12161C;border:1px solid var(--line);border-radius:9px;padding:11px 4px;
+       text-align:center;font-size:13px}
+  .netgrid b{display:block;font-size:17px;color:#fff}
+  .netgrid span{font-size:10px;color:var(--tx2)}
+  .netpic{position:relative;border-radius:10px;overflow:hidden;margin-top:8px;background:#0E1216}
+  .netpic img{width:100%;display:block}
+  .netpic .zgrid{position:absolute;left:0;top:0;right:0;bottom:0;
+       display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr)}
+  .netpic .zgrid button{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.28);
+       color:#fff;font-size:9.5px;font-weight:600;cursor:pointer;padding:0;
+       text-shadow:0 1px 3px rgba(0,0,0,.8);display:flex;align-items:flex-end;justify-content:center}
+  .netpic .zgrid button span{padding-bottom:3px;opacity:.75}
+  .netpic .zgrid button.on{background:rgba(214,17,46,.55);border-color:#D6112E}
+  .netpic .zgrid button.on span{opacity:1}
 </style>
 </head>
 <body>
@@ -178,6 +200,43 @@
     </div>
   </section>
 
+  <!-- АНАЛИТИКА ГОЛОВ -->
+  <section id="p-an" class="hide">
+    <h1>Аналитика голов</h1>
+    <div class="sub">Отметь, откуда забили, куда и в какой ситуации.</div>
+    <div class="card">
+      <h2>Новый гол</h2>
+      <div class="row">
+        <div><label>Соперник</label><input id="an-opp" placeholder="Команда"></div>
+        <div><label>Дата</label><input id="an-date" type="date"></div>
+      </div>
+      <label>1. Откуда забили — нажми на площадку</label>
+      <div class="svgbox" id="rink-wrap"></div>
+      <label>2. Куда забили — нажми на зону</label>
+      <div class="svgbox" id="net-wrap"></div>
+      <label>3. Ситуация</label>
+      <div class="chips" id="sit-chips"></div>
+      <button class="btn" data-act="angoal">Сохранить гол</button>
+    </div>
+    <div class="card">
+      <h2>Карта бросков</h2>
+      <div class="svgbox" id="map-wrap"></div>
+      <div class="sub" style="margin:8px 0 0" id="an-total"></div>
+    </div>
+    <div class="card">
+      <h2>Куда забивают</h2>
+      <div class="netgrid" id="net-stat"></div>
+    </div>
+    <div class="card">
+      <h2>Ситуации</h2>
+      <div class="list" id="sit-stat"></div>
+    </div>
+    <div class="card">
+      <h2>Последние голы</h2>
+      <div class="list" id="an-list"></div>
+    </div>
+  </section>
+
   <!-- ПРОФИЛЬ -->
   <section id="p-me" class="hide">
     <h1>Профиль</h1>
@@ -195,6 +254,13 @@
       <button class="btn sec" data-act="export">Скопировать все данные</button>
       <div class="sub" id="diag" style="margin:12px 0 0;font-size:11px"></div>
     </div>
+    <div class="card">
+      <h2>Импорт от тренера</h2>
+      <div class="sub" style="margin:0">Вставь код, который прислал тренер — профиль и цели заполнятся сами.</div>
+      <label>Код</label>
+      <textarea id="imp" placeholder="Вставь сюда код из сообщения"></textarea>
+      <button class="btn" data-act="import">Загрузить</button>
+    </div>
   </section>
 </div>
 
@@ -203,6 +269,7 @@
   <button id="n-wb" data-act="go:wb"><span>☾</span>Самочувствие</button>
   <button id="n-goals" data-act="go:goals"><span>◎</span>Цели</button>
   <button id="n-sch" data-act="go:sch"><span>⊞</span>Шульте</button>
+  <button id="n-an" data-act="go:an"><span>◈</span>Голы</button>
   <button id="n-me" data-act="go:me"><span>☺</span>Профиль</button>
 </nav>
 
@@ -227,7 +294,7 @@ function haptic(t){ try { if(TG && TG.HapticFeedback) TG.HapticFeedback.impactOc
 function alertMsg(m){ if (TG && TG.showPopup) { try { TG.showPopup({message:m}); return; } catch(e){} } alert(m); }
 
 /* ---------- состояние ---------- */
-var DB = { wb: [], goals: { season:null, months:{}, days:[] }, schulte: [], me: {} };
+var DB = { wb: [], goals: { season:null, months:{}, days:[] }, schulte: [], me: {}, gls: [] };
 var today = new Date().toISOString().slice(0,10);
 var curMonth = today.slice(0,7);
 
@@ -235,18 +302,20 @@ function boot(){
   load('wb', function(v){ DB.wb = v || [];
   load('goals', function(g){ DB.goals = g || { season:null, months:{}, days:[] };
   load('schulte', function(s){ DB.schulte = s || [];
-  load('me', function(m){ DB.me = m || {}; render(); }); }); }); });
+  load('me', function(m){ DB.me = m || {};
+  load('gls', function(gl){ DB.gls = gl || []; render(); }); }); }); }); });
 }
 
 /* ---------- навигация ---------- */
 function go(page){
-  var pages = ['home','wb','goals','sch','me'];
+  var pages = ['home','wb','goals','sch','an','me'];
   for (var i=0;i<pages.length;i++){
     document.getElementById('p-' + pages[i]).className = (pages[i]===page) ? '' : 'hide';
     document.getElementById('n-' + pages[i]).className = (pages[i]===page) ? 'on' : '';
   }
   window.scrollTo(0,0);
   if (page==='sch' && !running) buildGrid(true);
+  if (page==='an') buildAnalytics();
 }
 
 /* ---------- шкалы ---------- */
@@ -287,6 +356,11 @@ document.addEventListener('click', function(ev){
     else if (a[0] === 'mesave') saveMe();
     else if (a[0] === 'report') report();
     else if (a[0] === 'export') exportAll();
+    else if (a[0] === 'import') doImport();
+    else if (a[0] === 'netz') pickNet(parseInt(a[1], 10));
+    else if (a[0] === 'sit') pickSit(parseInt(a[1], 10));
+    else if (a[0] === 'angoal') saveGoal();
+    else if (a[0] === 'gdel') delGoal(parseInt(a[1], 10));
   } catch(e){ alertMsg('Ошибка: ' + e.message); }
 });
 
@@ -429,12 +503,152 @@ function report(){
 function ok(v){ return v !== null && v !== undefined; }
 function fmt(v){ return (v === null || v === undefined) ? '—' : (Math.round(v*10)/10).toString().replace('.', ','); }
 function exportAll(){ copy(JSON.stringify(DB), 'Все данные скопированы.'); }
+function b64ToStr(b64){
+  var bin = atob(String(b64).replace(/\s+/g, ''));
+  var bytes = new Uint8Array(bin.length);
+  for (var i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+  if (window.TextDecoder) return new TextDecoder('utf-8').decode(bytes);
+  return decodeURIComponent(escape(bin));
+}
+function doImport(){
+  var raw = (document.getElementById('imp').value || '').trim();
+  if (!raw){ alertMsg('Вставь код от тренера.'); return; }
+  var data;
+  try { data = JSON.parse(b64ToStr(raw)); }
+  catch(e){ alertMsg('Код не распознан. Скопируй его целиком, без пробелов в начале.'); return; }
+  if (data.me){ for (var k in data.me) if (data.me[k]) DB.me[k] = data.me[k]; }
+  if (data.goals){
+    if (data.goals.season) DB.goals.season = data.goals.season;
+    if (data.goals.months) for (var m in data.goals.months) DB.goals.months[m] = data.goals.months[m];
+    if (data.goals.days && data.goals.days.length){
+      DB.goals.days = data.goals.days.concat(DB.goals.days).slice(0, 40);
+    }
+  }
+  save('me', DB.me, function(){
+    save('goals', DB.goals, function(){
+      document.getElementById('imp').value = '';
+      haptic('medium');
+      alertMsg('Готово! Профиль и цели загружены.');
+      render(); go('goals');
+    });
+  });
+}
 function copy(text, msg){
   var ta = document.createElement('textarea');
   ta.value = text; ta.style.position='fixed'; ta.style.opacity='0';
   document.body.appendChild(ta); ta.select();
   try { document.execCommand('copy'); alertMsg(msg); } catch(e){ alertMsg(text); }
   document.body.removeChild(ta);
+}
+
+
+/* ================= АНАЛИТИКА ГОЛОВ ================= */
+var SITS = ['Реагирование','Бросок с приёма','Бросок в касание','Атака с угла','Атака из-за ворот',
+            'Трафик','Подправление','Добивание','Выход 1 на 1','Блокирование','Клюшка','Буллит'];
+var NZ = ['Верх лев','Верх центр','Верх прав','Блин','Корпус','Ловушка','Низ лев','Домик','Низ прав'];
+var anPick = { x:null, y:null, z:null, s:null };
+
+/* половина площадки: ворота внизу, синяя линия сверху */
+function rinkSVG(dots){
+  var d = '';
+  d += '<rect x="2" y="2" width="196" height="166" rx="26" fill="#F7F9FB" stroke="#2C313B" stroke-width="2"/>';
+  d += '<line x1="2" y1="18" x2="198" y2="18" stroke="#2B6CB0" stroke-width="4"/>';          /* синяя */
+  d += '<line x1="8" y1="150" x2="192" y2="150" stroke="#D6112E" stroke-width="2.5"/>';      /* линия ворот */
+  d += '<circle cx="52" cy="86" r="26" fill="none" stroke="#D6112E" stroke-width="1.6"/>';
+  d += '<circle cx="148" cy="86" r="26" fill="none" stroke="#D6112E" stroke-width="1.6"/>';
+  d += '<circle cx="52" cy="86" r="2.6" fill="#D6112E"/><circle cx="148" cy="86" r="2.6" fill="#D6112E"/>';
+  d += '<path d="M78 150 A22 22 0 0 1 122 150 Z" fill="#DCEAF7" stroke="#D6112E" stroke-width="1.4"/>'; /* площадь */
+  d += '<rect x="88" y="150" width="24" height="9" fill="#15181D" rx="2"/>';                 /* ворота */
+  if (dots && dots.length){
+    for (var i=0;i<dots.length;i++){
+      var px = 4 + dots[i][0]/100*192, py = 4 + dots[i][1]/100*162;
+      d += '<circle cx="' + px.toFixed(1) + '" cy="' + py.toFixed(1) + '" r="4" fill="#D6112E" fill-opacity="0.75" stroke="#fff" stroke-width="1"/>';
+    }
+  }
+  if (anPick.x !== null && !dots){
+    var mx = 4 + anPick.x/100*192, my = 4 + anPick.y/100*162;
+    d += '<circle cx="' + mx.toFixed(1) + '" cy="' + my.toFixed(1) + '" r="6" fill="#D6112E" stroke="#fff" stroke-width="2"/>';
+  }
+  return '<svg viewBox="0 0 200 170" xmlns="http://www.w3.org/2000/svg">' + d + '</svg>';
+}
+
+/* фото вратаря с сеткой зон 3x3 (вид со стороны броска) */
+function netHTML(){
+  var b = '';
+  for (var i = 0; i < 9; i++){
+    b += '<button data-act="netz:' + i + '"' + (anPick.z === i ? ' class="on"' : '') + '>' +
+         '<span>' + NZ[i] + '</span></button>';
+  }
+  return '<div class="netpic"><img src="goalie.jpg" alt="Вратарь">' +
+         '<div class="zgrid">' + b + '</div></div>';
+}
+
+function buildAnalytics(){
+  var rw = document.getElementById('rink-wrap');
+  if (!rw) return;
+  rw.innerHTML = rinkSVG(null);
+  rw.onclick = function(ev){
+    var r = rw.getBoundingClientRect();
+    anPick.x = Math.max(0, Math.min(100, Math.round((ev.clientX - r.left) / r.width * 100)));
+    anPick.y = Math.max(0, Math.min(100, Math.round((ev.clientY - r.top) / r.height * 100)));
+    haptic(); rw.innerHTML = rinkSVG(null);
+  };
+  document.getElementById('net-wrap').innerHTML = netHTML();
+  var chips = SITS.map(function(t, i){
+    return '<button data-act="sit:' + i + '"' + (anPick.s === i ? ' class="on"' : '') + '>' + t + '</button>';
+  }).join('');
+  document.getElementById('sit-chips').innerHTML = chips;
+  var dt = document.getElementById('an-date');
+  if (dt && !dt.value) dt.value = today;
+}
+
+function pickNet(i){ anPick.z = i; haptic(); document.getElementById('net-wrap').innerHTML = netHTML(); }
+function pickSit(i){ anPick.s = i; haptic(); buildAnalytics(); }
+
+function saveGoal(){
+  if (anPick.x === null){ alertMsg('Отметь на площадке, откуда забили.'); return; }
+  if (anPick.z === null){ alertMsg('Отметь на воротах, куда забили.'); return; }
+  if (anPick.s === null){ alertMsg('Выбери ситуацию.'); return; }
+  var dt = document.getElementById('an-date').value || today;
+  var opp = (document.getElementById('an-opp').value || '').slice(0, 18);
+  DB.gls.unshift([dt, anPick.x, anPick.y, anPick.z, anPick.s, opp]);
+  DB.gls = DB.gls.slice(0, 80);
+  save('gls', DB.gls, function(){
+    anPick = { x:null, y:null, z:null, s:null };
+    haptic('medium'); alertMsg('Гол записан.'); buildAnalytics(); render();
+  });
+}
+function delGoal(i){ DB.gls.splice(i, 1); save('gls', DB.gls, function(){ render(); }); }
+
+function renderAnalytics(){
+  if (!document.getElementById('map-wrap')) return;
+  var g = DB.gls || [];
+  document.getElementById('map-wrap').innerHTML = rinkSVG(g.map(function(x){ return [x[1], x[2]]; }));
+  document.getElementById('an-total').textContent = g.length
+    ? 'Всего голов записано: ' + g.length
+    : 'Пока нет записей — добавь первый гол выше.';
+
+  var cnt = [0,0,0,0,0,0,0,0,0], mx = 0;
+  g.forEach(function(x){ cnt[x[3]]++; });
+  cnt.forEach(function(v){ if (v > mx) mx = v; });
+  document.getElementById('net-stat').innerHTML = cnt.map(function(v, i){
+    var op = mx ? (0.12 + 0.72 * v / mx) : 0;
+    return '<div style="background:rgba(214,17,46,' + (v ? op.toFixed(2) : 0) + ')">' +
+           '<b>' + v + '</b><span>' + NZ[i] + '</span></div>';
+  }).join('');
+
+  var sc = {};
+  g.forEach(function(x){ sc[x[4]] = (sc[x[4]] || 0) + 1; });
+  var keys = Object.keys(sc).sort(function(a, b){ return sc[b] - sc[a]; });
+  document.getElementById('sit-stat').innerHTML = keys.length ? keys.map(function(k){
+    var pc = Math.round(sc[k] / g.length * 100);
+    return '<div><span>' + SITS[k] + '</span><b>' + sc[k] + ' · ' + pc + '%</b></div>';
+  }).join('') : '<div>Нет данных.</div>';
+
+  document.getElementById('an-list').innerHTML = g.length ? g.slice(0, 10).map(function(x, i){
+    return '<div><span>' + x[0].slice(8,10) + '.' + x[0].slice(5,7) + (x[5] ? ' · ' + esc(x[5]) : '') + '</span>' +
+      '<b>' + SITS[x[4]] + ' → ' + NZ[x[3]] + ' <span data-act="gdel:' + i + '" style="color:#98A0AA;padding-left:8px">×</span></b></div>';
+  }).join('') : '<div>Записей пока нет.</div>';
 }
 
 /* ---------- отрисовка ---------- */
@@ -507,6 +721,8 @@ function render(){
   document.getElementById('sch-list').innerHTML = DB.schulte.slice(0,8).map(function(x){
     return '<div><span>' + x.d.slice(8,10) + '.' + x.d.slice(5,7) + '</span><b>' + x.t + ' с · ошибок ' + x.e + '</b></div>';
   }).join('') || '<div>Попыток пока нет.</div>';
+
+  renderAnalytics();
 
   // профиль
   var dg = document.getElementById('diag');
