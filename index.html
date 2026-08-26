@@ -123,7 +123,7 @@
       <button class="tile" data-act="go:an"><e>🥅</e><b>Аналитика голов</b><i id="t-an">—</i></button>
       <button class="tile" data-act="go:notes"><e>📝</e><b>Заметки тренера</b><i id="t-notes">—</i></button>
       <button class="tile" data-act="go:me"><e>👤</e><b>Профиль</b><i id="t-me">—</i></button>
-      <button class="tile" data-act="report"><e>📤</e><b>Отчёт тренеру</b><i>сводка за 7 дней</i></button>
+      <button class="tile" data-act="go:rep"><e>📤</e><b>Отчёт тренеру</b><i id="t-rep">сводка и динамика</i></button>
     </div>
   </section>
 
@@ -302,6 +302,22 @@
     </div>
   </section>
 
+  <!-- ОТЧЁТ -->
+  <section id="p-rep" class="hide">
+    <h1>Отчёт</h1>
+    <div class="sub">Считается автоматически по твоим записям.</div>
+    <div class="card">
+      <h2>Период</h2>
+      <div class="chips" id="rep-per"></div>
+    </div>
+    <div id="rep-body"></div>
+    <div class="card">
+      <h2>Отправить тренеру</h2>
+      <div class="sub" style="margin:0">Скопируй текст и вставь в чат.</div>
+      <button class="btn" data-act="report">Скопировать отчёт</button>
+    </div>
+  </section>
+
   <!-- ЗАМЕТКИ ТРЕНЕРА -->
   <section id="p-notes" class="hide">
     <h1>Заметки тренера</h1>
@@ -326,6 +342,7 @@
       <button data-act="go:goals">Цели<i>сезон · месяц · занятие</i></button>
       <button data-act="go:an">Аналитика голов<i>карта и зоны</i></button>
       <button data-act="go:notes">Заметки тренера<i id="m-notes">0</i></button>
+      <button data-act="go:rep">Отчёт тренеру<i>сводка и динамика</i></button>
       <button data-act="go:me">Профиль и данные<i>импорт, экспорт</i></button>
     </div>
   </section>
@@ -419,7 +436,7 @@ function boot(){
 }
 
 /* ---------- навигация ---------- */
-var PAGES = ['home','wb','tr','cog','goals','an','notes','more','me'];
+var PAGES = ['home','wb','tr','cog','goals','an','notes','more','me','rep'];
 var NAVS = ['home','wb','tr','cog','more'];
 function go(page){
   PAGES.forEach(function(p){
@@ -430,12 +447,13 @@ function go(page){
     var b = document.getElementById('n-' + p);
     if (b) b.className = (p === page) ? 'on' : '';
   });
-  if (['goals','an','notes','me'].indexOf(page) >= 0){
+  if (['goals','an','notes','me','rep'].indexOf(page) >= 0){
     var mb = document.getElementById('n-more'); if (mb) mb.className = 'on';
   }
   window.scrollTo(0,0);
   if (page === 'cog' && !running) buildGrid(true);
   if (page === 'an') buildAnalytics();
+  if (page === 'rep') renderReport();
 }
 
 /* ---------- бегунки ---------- */
@@ -498,6 +516,7 @@ document.addEventListener('click', function(ev){
     else if (a[0] === 'gdel') delGoal(parseInt(a[1],10));
     else if (a[0] === 'mesave') saveMe();
     else if (a[0] === 'report') report();
+    else if (a[0] === 'per') { PER = parseInt(a[1],10); renderReport(); }
     else if (a[0] === 'export') exportAll();
     else if (a[0] === 'import') doImport();
   } catch(e){ alertMsg('Ошибка: ' + e.message); }
@@ -733,36 +752,157 @@ function last7(){
   var lim = new Date(Date.now() - 7*864e5).toISOString().slice(0,10);
   return DB.wb.filter(function(x){ return x.d >= lim; });
 }
+
+/* ================= ОТЧЁТ ================= */
+var PER = 7;
+function limDate(days){ return days ? new Date(Date.now() - days*864e5).toISOString().slice(0,10) : '0000-00-00'; }
+function inPer(d){ return d >= limDate(PER); }
+function avgKey(arr, key){
+  var vv = arr.map(function(x){ return x.v ? x.v[key] : null; }).filter(ok);
+  return vv.length ? Math.round(avg(vv)*10)/10 : null;
+}
+function repData(){
+  var lim = limDate(PER);
+  return {
+    wb: DB.wb.filter(function(x){ return x.d >= lim; }),
+    tr: DB.tr.filter(function(x){ return x.d >= lim; }),
+    sch: DB.schulte.filter(function(x){ return x.d >= lim; }),
+    sv: DB.svet.filter(function(x){ return x.d >= lim; }),
+    gl: DB.gls.filter(function(x){ return x[0] >= lim; })
+  };
+}
+function renderReport(){
+  var host = document.getElementById('rep-body');
+  if (!host) return;
+  document.getElementById('rep-per').innerHTML = [[7,'7 дней'],[30,'30 дней'],[0,'весь период']].map(function(o){
+    return '<button data-act="per:' + o[0] + '"' + (PER === o[0] ? ' class="on"' : '') + '>' + o[1] + '</button>';
+  }).join('');
+
+  var D = repData(), H = '';
+
+  /* самочувствие */
+  H += '<div class="card"><h2>Самочувствие</h2>';
+  if (D.wb.length){
+    H += '<div class="stat">' +
+      '<div><b>' + D.wb.length + '</b><span>записей</span></div>' +
+      '<div><b>' + fmt(avg(D.wb.map(function(x){return x.sl;}).filter(ok))) + '</b><span>сон, ч</span></div>' +
+      '<div><b>' + fmt(avg(D.wb.map(function(x){return x.p;}).filter(ok))) + '</b><span>пульс</span></div></div>';
+    H += '<div class="list">' + WB_KEYS.map(function(k){
+      var a = avgKey(D.wb, k[0]);
+      return '<div><span>' + k[1] + '</span><b>' + (a === null ? '—' : signed(a)) + '</b></div>';
+    }).join('') + '</div>';
+    var wts = D.wb.map(function(x){ return x.w; }).filter(ok);
+    if (wts.length) H += '<div class="sub" style="margin:10px 0 0">Вес: ' + wts[0] + ' кг' +
+      (wts.length > 1 ? ' (было ' + wts[wts.length-1] + ')' : '') + '</div>';
+  } else H += '<div class="sub" style="margin:0">Нет записей за период.</div>';
+  H += '</div>';
+
+  /* занятия */
+  H += '<div class="card"><h2>Занятия</h2>';
+  if (D.tr.length){
+    H += '<div class="sub" style="margin:0 0 8px">Записей: ' + D.tr.length + '</div><div class="list">' +
+      TR_KEYS.map(function(k){
+        var a = avgKey(D.tr, k[0]);
+        return '<div><span>' + k[1] + '</span><b>' + (a === null ? '—' : signed(a)) + '</b></div>';
+      }).join('') + '</div>';
+  } else H += '<div class="sub" style="margin:0">Нет записей за период.</div>';
+  H += '</div>';
+
+  /* когнитивка */
+  H += '<div class="card"><h2>Когнитивка</h2>';
+  if (D.sch.length || D.sv.length){
+    H += '<div class="list">';
+    if (D.sch.length) H += '<div><span>Шульте, лучший</span><b>' + Math.min.apply(null, D.sch.map(function(x){return x.t;})) + ' с</b></div>' +
+      '<div><span>Шульте, средний</span><b>' + fmt(avg(D.sch.map(function(x){return x.t;}))) + ' с</b></div>' +
+      '<div><span>Шульте, попыток</span><b>' + D.sch.length + '</b></div>';
+    if (D.sv.length) H += '<div><span>Светофон, лучший</span><b>' + Math.min.apply(null, D.sv.map(function(x){return x.e;})) + ' ош.</b></div>' +
+      '<div><span>Светофон, средний</span><b>' + fmt(avg(D.sv.map(function(x){return x.e;}))) + ' ош.</b></div>';
+    H += '</div>';
+  } else H += '<div class="sub" style="margin:0">Нет данных за период.</div>';
+  H += '</div>';
+
+  /* голы */
+  H += '<div class="card"><h2>Пропущенные голы</h2>';
+  if (D.gl.length){
+    var sc = {}, zc = {};
+    D.gl.forEach(function(x){ sc[x[4]] = (sc[x[4]]||0)+1; zc[x[3]] = (zc[x[3]]||0)+1; });
+    var top = function(o, names){
+      return Object.keys(o).sort(function(a,b){ return o[b]-o[a]; }).slice(0,3).map(function(k){
+        return '<div><span>' + names[k] + '</span><b>' + o[k] + ' · ' + Math.round(o[k]/D.gl.length*100) + '%</b></div>';
+      }).join('');
+    };
+    H += '<div class="sub" style="margin:0 0 8px">Всего: ' + D.gl.length + '</div>';
+    H += '<div class="sub" style="margin:0 0 4px">Чаще всего ситуации</div><div class="list">' + top(sc, SITS) + '</div>';
+    H += '<div class="sub" style="margin:10px 0 4px">Чаще всего зоны</div><div class="list">' + top(zc, NZ) + '</div>';
+  } else H += '<div class="sub" style="margin:0">Голов за период не записано.</div>';
+  H += '</div>';
+
+  /* цели */
+  H += '<div class="card"><h2>Цели</h2><div class="list">';
+  H += '<div><span>Сезон</span><b>' + (DB.goals.season ? esc(cut(DB.goals.season.t, 40)) : '—') + '</b></div>';
+  H += '<div><span>Месяц</span><b>' + (DB.goals.months[curMonth] ? esc(cut(DB.goals.months[curMonth].t, 40)) : '—') + '</b></div>';
+  var dd = DB.goals.days.filter(function(x){ return inPer(x.d); });
+  H += '<div><span>Цели на занятия</span><b>' + (dd.length ? dd.filter(function(x){return x.ok;}).length + ' из ' + dd.length : '—') + '</b></div>';
+  H += '</div></div>';
+
+  /* последние занятия текстом */
+  if (D.tr.length){
+    H += '<div class="card"><h2>Последние занятия</h2>' + D.tr.slice(0,3).map(function(x){
+      return '<div class="goal"><div class="tag">' + dm(x.d) + ' · ' + TR_TYPES[x.ty||0] + '</div>' +
+        (x.t1 ? '<div class="t">Задача: ' + esc(x.t1) + '</div>' : '') +
+        (x.t2 ? '<div class="c">Результат: ' + esc(x.t2) + '</div>' : '') +
+        (x.t3 ? '<div class="c">Внимание: ' + esc(x.t3) + '</div>' : '') + '</div>';
+    }).join('') + '</div>';
+  }
+  host.innerHTML = H;
+}
+
 function report(){
-  var w = last7(), L = [];
+  var D = repData(), L = [];
+  var perTxt = PER ? ('последние ' + PER + ' дней') : 'весь период';
   L.push('Отчёт вратаря' + (DB.me.n ? ': ' + DB.me.n : ''));
-  L.push('Период: последние 7 дней');
+  L.push('Период: ' + perTxt);
   L.push('');
-  if (w.length){
-    L.push('САМОЧУВСТВИЕ (записей ' + w.length + ')');
-    L.push('Сон: ' + fmt(avg(w.map(function(x){return x.sl;}).filter(ok))) + ' ч · пульс: ' +
-           fmt(avg(w.map(function(x){return x.p;}).filter(ok))));
+  if (D.wb.length){
+    L.push('САМОЧУВСТВИЕ (записей ' + D.wb.length + ')');
+    L.push('  Сон: ' + fmt(avg(D.wb.map(function(x){return x.sl;}).filter(ok))) + ' ч');
+    L.push('  Пульс в покое: ' + fmt(avg(D.wb.map(function(x){return x.p;}).filter(ok))));
     WB_KEYS.forEach(function(k){
-      var vv = w.map(function(x){ return x.v ? x.v[k[0]] : null; }).filter(ok);
-      if (vv.length) L.push('  ' + k[1] + ': ' + signed(Math.round(avg(vv)*10)/10));
+      var a = avgKey(D.wb, k[0]);
+      if (a !== null) L.push('  ' + k[1] + ': ' + signed(a));
     });
-  } else L.push('Дневник самочувствия за неделю не заполнялся.');
+    var wts = D.wb.map(function(x){ return x.w; }).filter(ok);
+    if (wts.length) L.push('  Вес: ' + wts[0] + ' кг');
+  } else L.push('САМОЧУВСТВИЕ: нет записей');
   L.push('');
-  var t7 = DB.tr.slice(0,7);
-  if (t7.length){
-    L.push('ЗАНЯТИЯ (последние ' + t7.length + ')');
+  if (D.tr.length){
+    L.push('ЗАНЯТИЯ (записей ' + D.tr.length + ')');
     TR_KEYS.forEach(function(k){
-      var vv = t7.map(function(x){ return x.v ? x.v[k[0]] : null; }).filter(ok);
-      if (vv.length) L.push('  ' + k[1] + ': ' + signed(Math.round(avg(vv)*10)/10));
+      var a = avgKey(D.tr, k[0]);
+      if (a !== null) L.push('  ' + k[1] + ': ' + signed(a));
     });
+    var last = D.tr[0];
+    if (last && (last.t1 || last.t2 || last.t3)){
+      L.push('  Последнее занятие ' + dm(last.d) + ':');
+      if (last.t1) L.push('    Задача: ' + last.t1);
+      if (last.t2) L.push('    Результат: ' + last.t2);
+      if (last.t3) L.push('    Внимание: ' + last.t3);
+    }
   }
   L.push('');
-  var s7 = DB.schulte.slice(0,7);
-  if (s7.length) L.push('Шульте: лучший ' + bestSchulte() + ' с, средний ' + fmt(avg(s7.map(function(x){return x.t;}))) + ' с');
-  var v7 = DB.svet.slice(0,7);
-  if (v7.length) L.push('Светофон: лучший ' + Math.min.apply(null, v7.map(function(x){return x.e;})) +
-                        ' ош., средний ' + fmt(avg(v7.map(function(x){return x.e;}))));
+  if (D.sch.length) L.push('Шульте: лучший ' + Math.min.apply(null, D.sch.map(function(x){return x.t;})) +
+    ' с, средний ' + fmt(avg(D.sch.map(function(x){return x.t;}))) + ' с, попыток ' + D.sch.length);
+  if (D.sv.length) L.push('Светофон: лучший ' + Math.min.apply(null, D.sv.map(function(x){return x.e;})) +
+    ' ош., средний ' + fmt(avg(D.sv.map(function(x){return x.e;}))));
+  if (D.gl.length){
+    var sc = {};
+    D.gl.forEach(function(x){ sc[x[4]] = (sc[x[4]]||0)+1; });
+    var tops = Object.keys(sc).sort(function(a,b){ return sc[b]-sc[a]; }).slice(0,3)
+      .map(function(k){ return SITS[k] + ' ' + sc[k]; }).join(', ');
+    L.push('Пропущено голов: ' + D.gl.length + ' (чаще: ' + tops + ')');
+  }
   if (DB.goals.season) L.push('Цель сезона: ' + DB.goals.season.t);
+  if (DB.goals.months[curMonth]) L.push('Цель месяца: ' + DB.goals.months[curMonth].t);
   copy(L.join('\n'), 'Отчёт скопирован — вставь его в чат тренеру.');
 }
 function copy(text, msg){
@@ -903,6 +1043,7 @@ function render(){
   }).join('') || '<div class="sub" style="margin:0">Заметок пока нет.</div>';
 
   renderAnalytics();
+  if (document.getElementById('p-rep') && !document.getElementById('p-rep').className) renderReport();
 
   /* профиль */
   var dg = document.getElementById('diag');
