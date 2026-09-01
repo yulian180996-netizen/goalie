@@ -116,6 +116,9 @@
       <div id="h-status" class="sub" style="margin:0"></div>
     </div>
     <div class="tiles">
+      <button class="tile wide hide" id="coach-entry" data-act="roster"
+              style="background:#2A1116;border-color:#5A2029">
+        <e>🧤</e><b>Кабинет тренера</b><i>все вратари, их данные и заметки</i></button>
       <button class="tile" data-act="go:wb"><e>☀️</e><b>Самочувствие</b><i id="t-wb">—</i></button>
       <button class="tile" data-act="go:tr"><e>🏒</e><b>Дневник занятий</b><i id="t-tr">—</i></button>
       <button class="tile" data-act="go:cog"><e>🧠</e><b>Когнитивка</b><i id="t-cog">—</i></button>
@@ -344,6 +347,7 @@
       <button data-act="go:notes">Заметки тренера<i id="m-notes">0</i></button>
       <button data-act="go:rep">Отчёт тренеру<i>сводка и динамика</i></button>
       <button data-act="go:me">Профиль и данные<i>импорт, экспорт</i></button>
+      <button id="m-coach" class="hide" data-act="roster">Кабинет тренера<i>все вратари</i></button>
     </div>
   </section>
 
@@ -365,11 +369,41 @@
       <div class="sub" id="diag" style="margin:12px 0 0;font-size:11px"></div>
     </div>
     <div class="card">
-      <h2>Импорт от тренера</h2>
-      <div class="sub" style="margin:0">Вставь код от тренера — профиль, цели и заметки заполнятся сами.</div>
+      <h2>Код от тренера</h2>
+      <div class="sub" style="margin:0">Введи код из сообщения — профиль и цели заполнятся сами.
+        Делается один раз.</div>
       <label>Код</label>
-      <textarea id="imp" placeholder="Вставь сюда код из сообщения"></textarea>
+      <textarea id="imp" placeholder="Например: KP4QDW"></textarea>
       <button class="btn" data-act="import">Загрузить</button>
+    </div>
+  </section>
+
+  <!-- КАБИНЕТ ТРЕНЕРА -->
+  <section id="p-coach" class="hide">
+    <h1>Кабинет тренера</h1>
+    <div class="sub">Все вратари и их данные.</div>
+    <div class="card">
+      <h2>Вратари</h2>
+      <div id="c-list"><div class="sub" style="margin:0">Загружаю…</div></div>
+    </div>
+  </section>
+
+  <!-- КАРТОЧКА ВРАТАРЯ -->
+  <section id="p-gk" class="hide">
+    <h1 id="gk-name">Вратарь</h1>
+    <div class="sub" id="gk-sub"></div>
+    <button class="btn sec" data-act="go:coach" style="margin:0 0 12px">← К списку</button>
+    <div id="gk-body"></div>
+    <div class="card">
+      <h2>Заметка вратарю</h2>
+      <div class="sub" style="margin:0">Он увидит её в разделе «Заметки тренера».</div>
+      <label>Текст</label>
+      <textarea id="gk-note" placeholder="На что обратить внимание"></textarea>
+      <button class="btn" data-act="cnote">Отправить заметку</button>
+    </div>
+    <div class="card">
+      <h2>Все заметки</h2>
+      <div id="gk-notes"></div>
     </div>
   </section>
 </div>
@@ -385,19 +419,71 @@
 <script>
 var TG = (window.Telegram && window.Telegram.WebApp) ? window.Telegram.WebApp : null;
 if (TG) { TG.ready(); TG.expand(); try { TG.setHeaderColor('#15181D'); TG.setBackgroundColor('#15181D'); } catch(e){} }
-var CS = null;
-try { if (TG && TG.CloudStorage && TG.isVersionAtLeast && TG.isVersionAtLeast('6.9')) CS = TG.CloudStorage; } catch(e){}
+/* ═══════════ АДРЕС БАЗЫ ═══════════
+   Сюда вставляется URL веб-приложения Apps Script (шаг 4 инструкции).
+   Пока он не вставлен, приложение работает только на этом телефоне. */
+var API_URL = 'https://script.google.com/macros/s/AKfycbySUUoLkv6qaywWfDZ9Qn1fob2Z2o4Md7npra59c_F24DreU8iSc9tzdsoedyC_6-tM/exec';
 
-/* ---------- хранилище ---------- */
-function load(key, cb){
-  if (CS) { CS.getItem(key, function(err, val){ cb(parse(val)); }); }
-  else { cb(parse(localStorage.getItem('gk_' + key))); }
+var INIT = (TG && TG.initData) ? TG.initData : '';
+var TGU  = (TG && TG.initDataUnsafe && TG.initDataUnsafe.user) ? TG.initDataUnsafe.user : null;
+var UID  = TGU ? String(TGU.id) : 'local';
+var IS_COACH = false;
+var SYNC = 'нет связи';          // что показываем в профиле
+var QUEUE = {};                  // что не успело уйти на сервер
+
+function apiReady(){ return API_URL.indexOf('http') === 0; }
+
+function api(payload, cb){
+  if (!apiReady()) { if (cb) cb(null); return; }
+  payload.initData = INIT;
+  var done = false;
+  var t = setTimeout(function(){ if(!done){ done = true; if (cb) cb(null); } }, 15000);
+  fetch(API_URL, { method: 'POST', body: JSON.stringify(payload) })
+    .then(function(r){ return r.json(); })
+    .then(function(j){ if(done) return; done = true; clearTimeout(t); if (cb) cb(j); })
+    .catch(function(){ if(done) return; done = true; clearTimeout(t); if (cb) cb(null); });
 }
+
+/* ---------- локальный кэш (мгновенный отклик и работа без сети) ---------- */
+function lget(key){ return parse(localStorage.getItem('gk_' + UID + '_' + key)); }
+function lset(key, obj){ try { localStorage.setItem('gk_' + UID + '_' + key, JSON.stringify(obj)); } catch(e){} }
+
+/* ---------- сохранение: сразу в кэш, следом на сервер ---------- */
 function save(key, obj, cb){
-  var s = JSON.stringify(obj);
-  if (CS) { CS.setItem(key, s, function(){ if(cb) cb(); }); }
-  else { localStorage.setItem('gk_' + key, s); if(cb) cb(); }
+  lset(key, obj);
+  if (cb) cb();
+  QUEUE[key] = JSON.stringify(obj);
+  flushQueue();
 }
+
+var flushing = false;
+function flushQueue(){
+  if (flushing || !apiReady()) return;
+  var keys = Object.keys(QUEUE);
+  if (!keys.length) return;
+  flushing = true;
+  var k = keys[0], body = QUEUE[k];
+  api({ a: 'push', key: k, json: body }, function(res){
+    flushing = false;
+    if (res && res.ok){
+      if (QUEUE[k] === body) delete QUEUE[k];
+      setSync('сохранено');
+      flushQueue();
+    } else {
+      setSync('нет связи — сохранится позже');
+      setTimeout(flushQueue, 20000);
+    }
+  });
+}
+setInterval(flushQueue, 30000);
+window.addEventListener('online', flushQueue);
+
+function setSync(s){
+  SYNC = s;
+  var el = document.getElementById('sync');
+  if (el) el.textContent = s;
+}
+
 function parse(v){ if(!v) return null; try { return JSON.parse(v); } catch(e){ return null; } }
 function haptic(t){ try { if(TG && TG.HapticFeedback) TG.HapticFeedback.impactOccurred(t || 'light'); } catch(e){} }
 function alertMsg(m){ if (TG && TG.showPopup) { try { TG.showPopup({message:m}); return; } catch(e){} } alert(m); }
@@ -423,20 +509,52 @@ var today = new Date().toISOString().slice(0,10);
 var curMonth = today.slice(0,7);
 var trType = 0;
 
+var DATA_KEYS = ['wb','tr','schulte','svet','goals','gls','me'];
+
 function boot(){
-  load('wb', function(v){ DB.wb = v || [];
-  load('tr', function(t){ DB.tr = t || [];
-  load('goals', function(g){ DB.goals = g || {season:null,months:{},days:[]};
-  load('schulte', function(s){ DB.schulte = s || [];
-  load('svet', function(sv){ DB.svet = sv || [];
-  load('notes', function(n){ DB.notes = n || [];
-  load('gls', function(gl){ DB.gls = gl || [];
-  load('me', function(m){ DB.me = m || {}; buildForms(); render(); });
-  }); }); }); }); }); }); });
+  /* 1. поднимаем кэш — приложение открывается мгновенно и работает без сети */
+  DATA_KEYS.forEach(function(k){
+    var v = lget(k);
+    if (v !== null && v !== undefined) DB[k] = v;
+  });
+  DB.notes = lget('notes') || [];
+  buildForms();
+  render();
+
+  /* 2. подтягиваем актуальное с сервера */
+  if (!apiReady()){ setSync('база не подключена'); return; }
+  setSync('синхронизация…');
+  api({ a: 'pull' }, function(res){
+    if (!res || !res.ok){ setSync('нет связи — работаю по кэшу'); return; }
+    IS_COACH = !!res.isCoach;
+    DATA_KEYS.forEach(function(k){
+      if (res.data && res.data[k] !== undefined && res.data[k] !== null){
+        DB[k] = res.data[k];
+        lset(k, DB[k]);
+      }
+    });
+    DB.notes = res.notes || [];
+    lset('notes', DB.notes);
+    setSync('на связи');
+    applyRole();
+    buildForms();
+    render();
+    if (IS_COACH) loadRoster();
+  });
+}
+
+/* ---------- роль: вратарь или тренер ---------- */
+function applyRole(){
+  var box = document.getElementById('coach-entry');
+  if (box) box.className = IS_COACH ? '' : 'hide';
+  var mb = document.getElementById('m-coach');
+  if (mb) mb.className = IS_COACH ? '' : 'hide';
+  var h = document.getElementById('hello');
+  if (IS_COACH && h) h.textContent = 'Тренерский доступ';
 }
 
 /* ---------- навигация ---------- */
-var PAGES = ['home','wb','tr','cog','goals','an','notes','more','me','rep'];
+var PAGES = ['home','wb','tr','cog','goals','an','notes','more','me','rep','coach','gk'];
 var NAVS = ['home','wb','tr','cog','more'];
 function go(page){
   PAGES.forEach(function(p){
@@ -447,7 +565,7 @@ function go(page){
     var b = document.getElementById('n-' + p);
     if (b) b.className = (p === page) ? 'on' : '';
   });
-  if (['goals','an','notes','me','rep'].indexOf(page) >= 0){
+  if (['goals','an','notes','me','rep','coach','gk'].indexOf(page) >= 0){
     var mb = document.getElementById('n-more'); if (mb) mb.className = 'on';
   }
   window.scrollTo(0,0);
@@ -502,7 +620,10 @@ document.addEventListener('click', function(ev){
     else if (a[0] === 'trdel') delTR(parseInt(a[1],10));
     else if (a[0] === 'svsave') saveSvet();
     else if (a[0] === 'noteadd') addNote();
-    else if (a[0] === 'notedel') delNote(parseInt(a[1],10));
+    else if (a[0] === 'notedel') delNote(a[1]);
+    else if (a[0] === 'roster') { go('coach'); loadRoster(); }
+    else if (a[0] === 'gk') openGoalie(a[1]);
+    else if (a[0] === 'cnote') coachNote();
     else if (a[0] === 'hit') hit(parseInt(a[1],10));
     else if (a[0] === 'schstart') startSchulte();
     else if (a[0] === 'season') saveSeason();
@@ -567,16 +688,28 @@ function saveSvet(){
   save('svet', DB.svet, function(){ haptic('medium'); alertMsg('Результат сохранён.'); render(); });
 }
 
-/* ---------- заметки тренера ---------- */
+/* ---------- заметки ---------- */
 function addNote(){
   var t = val('n-text').trim();
   if (!t){ alertMsg('Впиши текст заметки.'); return; }
-  DB.notes.unshift({ d: today, t: t.slice(0,400) });
-  DB.notes = DB.notes.slice(0,40);
   document.getElementById('n-text').value = '';
-  save('notes', DB.notes, function(){ haptic(); render(); });
+  haptic();
+  if (!apiReady()){
+    DB.notes.unshift({ id:'l'+Date.now(), d: today, a:'self', t: t.slice(0,400) });
+    lset('notes', DB.notes); render(); return;
+  }
+  api({ a:'note', text: t }, function(res){
+    if (res && res.ok){ DB.notes = res.notes || DB.notes; lset('notes', DB.notes); }
+    else alertMsg('Не удалось сохранить — нет связи.');
+    render();
+  });
 }
-function delNote(i){ DB.notes.splice(i,1); save('notes', DB.notes, function(){ render(); }); }
+function delNote(id){
+  var keep = [];
+  for (var i=0;i<DB.notes.length;i++) if (String(DB.notes[i].id) !== String(id)) keep.push(DB.notes[i]);
+  DB.notes = keep; lset('notes', DB.notes); render();
+  if (apiReady()) api({ a:'delnote', id: id }, function(){});
+}
 
 /* ---------- цели ---------- */
 function saveSeason(){
@@ -730,6 +863,22 @@ function b64ToStr(b64){
 function doImport(){
   var raw = (val('imp') || '').trim();
   if (!raw){ alertMsg('Вставь код от тренера.'); return; }
+
+  /* короткий код привязки — забираем данные из общей базы */
+  if (raw.length <= 14 && raw.indexOf('{') < 0){
+    if (!apiReady()){ alertMsg('Нет связи с базой — код примем позже.'); return; }
+    api({ a: 'claim', code: raw }, function(res){
+      if (!res || !res.ok){ alertMsg((res && res.err) || 'Код не подошёл.'); return; }
+      document.getElementById('imp').value = '';
+      haptic('medium');
+      alertMsg(res.wrote && res.wrote.length
+        ? 'Готово! Данные от тренера загружены.'
+        : 'Аккаунт привязан. Всё, что было, осталось на месте.');
+      boot();
+    });
+    return;
+  }
+
   var data;
   try { data = JSON.parse(b64ToStr(raw)); }
   catch(e){ alertMsg('Код не распознан. Скопируй его целиком.'); return; }
@@ -740,10 +889,11 @@ function doImport(){
     if (data.goals.days && data.goals.days.length) DB.goals.days = data.goals.days.concat(DB.goals.days).slice(0,40);
   }
   if (data.notes && data.notes.length) DB.notes = data.notes.concat(DB.notes).slice(0,40);
-  save('me', DB.me, function(){ save('goals', DB.goals, function(){ save('notes', DB.notes, function(){
+  lset('notes', DB.notes);
+  save('me', DB.me, function(){ save('goals', DB.goals, function(){
     document.getElementById('imp').value = '';
     haptic('medium'); alertMsg('Готово! Данные загружены.'); render(); go('goals');
-  }); }); });
+  }); });
 }
 function avg(arr){ if(!arr.length) return null; var s=0; for(var i=0;i<arr.length;i++) s+=arr[i]; return s/arr.length; }
 function ok(v){ return v !== null && v !== undefined && !isNaN(v); }
@@ -1037,9 +1187,13 @@ function render(){
   }).join('') || '<div>Записей пока нет.</div>';
 
   /* заметки */
-  document.getElementById('n-list').innerHTML = DB.notes.map(function(x,i){
-    return '<div class="goal"><span class="x" data-act="notedel:' + i + '">×</span>' +
-      '<div class="tag">' + dm(x.d) + '</div><div class="t">' + esc(x.t) + '</div></div>';
+  document.getElementById('n-list').innerHTML = DB.notes.map(function(x){
+    var mine = x.a !== 'coach';
+    return '<div class="goal">' +
+      (mine ? '<span class="x" data-act="notedel:' + x.id + '">×</span>' : '') +
+      '<div class="tag' + (mine ? ' done-tag' : '') + '">' +
+        (mine ? 'моя запись' : 'тренер') + ' · ' + dm(x.d) + '</div>' +
+      '<div class="t">' + esc(x.t) + '</div></div>';
   }).join('') || '<div class="sub" style="margin:0">Заметок пока нет.</div>';
 
   renderAnalytics();
@@ -1047,8 +1201,9 @@ function render(){
 
   /* профиль */
   var dg = document.getElementById('diag');
-  if (dg) dg.textContent = 'Версия 2.0 · Telegram SDK: ' + (TG ? 'подключён' : 'нет') +
-    ' · хранилище: ' + (CS ? 'облако Telegram' : 'локальное на устройстве');
+  if (dg) dg.innerHTML = 'Версия 3.0 · Telegram: ' + (TG ? 'подключён' : 'нет') +
+    ' · база: ' + (apiReady() ? 'общая' : 'не подключена') +
+    ' · состояние: <span id="sync">' + esc(SYNC) + '</span>';
   if (DB.me.n) document.getElementById('m-name').value = DB.me.n;
   if (DB.me.tm) document.getElementById('m-team').value = DB.me.tm;
   if (DB.me.y) document.getElementById('m-year').value = DB.me.y;
@@ -1077,6 +1232,176 @@ function renderAnalytics(){
     return '<div><span>' + dm(x[0]) + (x[5] ? ' · ' + esc(x[5]) : '') + '</span><b>' + SITS[x[4]] + ' → ' + NZ[x[3]] +
       ' <span data-act="gdel:' + i + '" style="color:#98A0AA;padding-left:8px">×</span></b></div>';
   }).join('') : '<div>Записей пока нет.</div>';
+}
+
+/* ══════════════════ КАБИНЕТ ТРЕНЕРА ══════════════════ */
+
+var ROSTER = [], CUR = null;
+
+function loadRoster(){
+  var box = document.getElementById('c-list');
+  if (box) box.innerHTML = '<div class="sub" style="margin:0">Загружаю…</div>';
+  api({ a: 'roster' }, function(res){
+    if (!res || !res.ok){
+      if (box) box.innerHTML = '<div class="sub" style="margin:0">Не удалось загрузить список.</div>';
+      return;
+    }
+    ROSTER = res.list || [];
+    renderRoster();
+  });
+}
+
+function renderRoster(){
+  var box = document.getElementById('c-list');
+  if (!box) return;
+  if (!ROSTER.length){
+    box.innerHTML = '<div class="sub" style="margin:0">Пока никто не заходил. ' +
+      'Отправь вратарям ссылку на приложение — они появятся здесь после первого входа.</div>';
+    return;
+  }
+  box.innerHTML = ROSTER.map(function(g){
+    var bits = [];
+    if (g.lastWbDate) bits.push('самочувствие ' + dm(g.lastWbDate));
+    if (g.schulteBest) bits.push('Шульте ' + g.schulteBest + ' с');
+    if (g.svetLast !== null && g.svetLast !== undefined) bits.push('светофон ' + g.svetLast);
+    bits.push('записей: ' + (g.wbN + g.trN));
+    var warn = g.ready !== null && g.ready !== undefined && g.ready <= -2;
+    return '<button class="tile wide" data-act="gk:' + g.uid + '" style="margin-bottom:8px">' +
+      '<b>' + esc(g.name) + (g.year ? ' · ' + esc(String(g.year)) : '') + '</b>' +
+      '<i>' + esc(bits.join(' · ')) + '</i>' +
+      (warn ? '<i style="color:#E2606F">низкая готовность в последней записи</i>' : '') +
+      '</button>';
+  }).join('');
+}
+
+function openGoalie(uid){
+  CUR = uid;
+  go('gk');
+  var head = ROSTER.filter(function(x){ return String(x.uid) === String(uid); })[0] || {};
+  document.getElementById('gk-name').textContent = head.name || 'Вратарь';
+  document.getElementById('gk-sub').textContent =
+    [head.team, head.year, head.seen ? 'был(а): ' + head.seen : ''].filter(Boolean).join(' · ');
+  document.getElementById('gk-body').innerHTML = '<div class="card"><div class="sub" style="margin:0">Загружаю…</div></div>';
+  document.getElementById('gk-notes').innerHTML = '';
+
+  api({ a: 'goalie', uid: uid }, function(res){
+    if (!res || !res.ok){
+      document.getElementById('gk-body').innerHTML =
+        '<div class="card"><div class="sub" style="margin:0">Не удалось загрузить данные.</div></div>';
+      return;
+    }
+    renderGoalie(res);
+  });
+}
+
+function renderGoalie(res){
+  var d  = res.data || {};
+  var wb = d.wb || [], tr = d.tr || [], sc = d.schulte || [], sv = d.svet || [];
+  var gl = d.gls || [], go_ = d.goals || {};
+  var H = [];
+
+  /* цели */
+  var gm = go_.months ? go_.months[curMonth] : null;
+  H.push(card('Цели', [
+    row('Сезон', go_.season ? esc(go_.season.t) : '—'),
+    row('Месяц', gm ? esc(gm.t) : '—'),
+    row('На занятия', String((go_.days || []).length) + ' записей')
+  ].join('')));
+
+  /* самочувствие */
+  if (wb.length){
+    var last = wb[0];
+    var avg = function(k){
+      var n = 0, s = 0;
+      wb.slice(0,7).forEach(function(x){ if (x.v && x.v[k] !== undefined){ s += x.v[k]; n++; } });
+      return n ? (s/n).toFixed(1) : '—';
+    };
+    H.push(card('Самочувствие · ' + dm(last.d), [
+      stat3(ok(last.sl) ? last.sl : '—', 'сон, ч',
+            (last.v && ok(last.v.rd)) ? signed(last.v.rd) : '—', 'готовность',
+            ok(last.p) ? last.p : '—', 'пульс'),
+      '<div class="list" style="margin-top:8px">' +
+        WB_KEYS.map(function(k){ return '<div><span>' + k[1] + '</span><b>' + avg(k[0]) + '</b></div>'; }).join('') +
+      '</div>',
+      '<div class="sub" style="margin:8px 0 0">Средние за последние 7 записей. Всего записей: ' + wb.length + '.</div>',
+      last.c ? '<div class="sub" style="margin:8px 0 0">Самонаблюдение: ' + esc(last.c) + '</div>' : ''
+    ].join('')));
+  }
+
+  /* когнитивка */
+  if (sc.length || sv.length){
+    H.push(card('Когнитивка', [
+      stat3(sc.length ? Math.min.apply(null, sc.map(function(x){ return x.t; })) : '—', 'Шульте лучш., с',
+            sc.length ? sc[0].t : '—', 'последний, с',
+            sv.length ? sv[0].e : '—', 'светофон, ошиб.'),
+      '<div class="list" style="margin-top:8px">' +
+        sc.slice(0,5).map(function(x){
+          return '<div><span>Шульте · ' + dm(x.d) + '</span><b>' + x.t + ' с · ' + x.e + ' ошиб.</b></div>';
+        }).join('') +
+        sv.slice(0,5).map(function(x){
+          return '<div><span>Светофон · ' + dm(x.d) + '</span><b>' + x.e + ' ошиб.' +
+                 (ok(x.ms) ? ' · ' + x.ms + ' мс' : '') + '</b></div>';
+        }).join('') +
+      '</div>'
+    ].join('')));
+  }
+
+  /* дневник занятий */
+  if (tr.length){
+    H.push(card('Дневник занятий', '<div class="list">' + tr.slice(0,6).map(function(x){
+      return '<div><span>' + dm(x.d) + ' · ' + (TR_TYPES[x.ty] || '') + '</span><b>' +
+        esc((x.t1 || x.t2 || '—').slice(0,60)) + '</b></div>';
+    }).join('') + '</div>' +
+    '<div class="sub" style="margin:8px 0 0">Всего записей: ' + tr.length + '.</div>'));
+  }
+
+  /* голы */
+  if (gl.length){
+    var bysit = {};
+    gl.forEach(function(x){ bysit[x[4]] = (bysit[x[4]] || 0) + 1; });
+    var keys = Object.keys(bysit).sort(function(a,b){ return bysit[b] - bysit[a]; }).slice(0,6);
+    H.push(card('Пропущенные · ' + gl.length, '<div class="list">' + keys.map(function(k){
+      return '<div><span>' + SITS[k] + '</span><b>' + bysit[k] + '</b></div>';
+    }).join('') + '</div>'));
+  }
+
+  if (H.length === 1) H.push(card('Данные', '<div class="sub" style="margin:0">Вратарь пока ничего не заполнил.</div>'));
+  document.getElementById('gk-body').innerHTML = H.join('');
+
+  document.getElementById('gk-notes').innerHTML = (res.notes || []).map(function(x){
+    var coach = x.a === 'coach';
+    return '<div class="goal"><div class="tag' + (coach ? '' : ' done-tag') + '">' +
+      (coach ? 'моя заметка' : 'запись вратаря') + ' · ' + dm(x.d) + '</div>' +
+      '<div class="t">' + esc(x.t) + '</div></div>';
+  }).join('') || '<div class="sub" style="margin:0">Заметок пока нет.</div>';
+}
+
+function coachNote(){
+  var t = val('gk-note').trim();
+  if (!t){ alertMsg('Впиши текст заметки.'); return; }
+  if (!CUR){ return; }
+  document.getElementById('gk-note').value = '';
+  haptic('medium');
+  api({ a: 'note', uid: CUR, text: t }, function(res){
+    if (!res || !res.ok){ alertMsg('Не удалось отправить — нет связи.'); return; }
+    alertMsg('Заметка отправлена вратарю.');
+    document.getElementById('gk-notes').innerHTML = (res.notes || []).map(function(x){
+      var coach = x.a === 'coach';
+      return '<div class="goal"><div class="tag' + (coach ? '' : ' done-tag') + '">' +
+        (coach ? 'моя заметка' : 'запись вратаря') + ' · ' + dm(x.d) + '</div>' +
+        '<div class="t">' + esc(x.t) + '</div></div>';
+    }).join('');
+  });
+}
+
+function card(title, inner){
+  return '<div class="card"><h2>' + title + '</h2>' + inner + '</div>';
+}
+function row(a, b){ return '<div class="list"><div><span>' + a + '</span><b>' + b + '</b></div></div>'; }
+function stat3(a, ta, b, tb, c2, tc){
+  return '<div class="stat"><div><b>' + a + '</b><span>' + ta + '</span></div>' +
+         '<div><b>' + b + '</b><span>' + tb + '</span></div>' +
+         '<div><b>' + c2 + '</b><span>' + tc + '</span></div></div>';
 }
 
 /* ---------- старт ---------- */
