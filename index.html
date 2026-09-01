@@ -1410,3 +1410,1415 @@ boot();
 </script>
 </body>
 </html>
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Вратарь · Спартак</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+  :root{ --red:#D6112E; --ink:#15181D; --card:#1C2027; --line:#2C313B;
+         --tx:#EDEFF2; --tx2:#98A0AA; --ok:#2FA84F; }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  body{margin:0;background:var(--ink);color:var(--tx);
+       font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;font-size:15px;padding-bottom:78px}
+  .wrap{padding:14px 14px 0}
+  h1{font-size:19px;margin:0 0 2px}
+  .sub{color:var(--tx2);font-size:13px;margin-bottom:14px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:12px}
+  .card h2{font-size:15px;margin:0 0 10px;display:flex;align-items:center;gap:8px}
+  .card h2:before{content:'';width:4px;height:15px;background:var(--red);border-radius:2px}
+  label{display:block;font-size:13px;color:var(--tx2);margin:12px 0 6px}
+  input,textarea,select{width:100%;background:#12161C;border:1px solid var(--line);color:var(--tx);
+       border-radius:10px;padding:11px;font-size:15px;font-family:inherit}
+  textarea{min-height:64px;resize:vertical}
+  .btn{width:100%;background:var(--red);color:#fff;border:0;border-radius:11px;padding:14px;
+       font-size:15px;font-weight:700;cursor:pointer;margin-top:14px}
+  .btn.sec{background:#252A33;color:var(--tx)}
+  .row{display:flex;gap:10px}
+  .row>*{flex:1}
+  .stat{display:flex;gap:8px;margin-bottom:10px}
+  .stat div{flex:1;background:#12161C;border:1px solid var(--line);border-radius:11px;padding:10px;text-align:center}
+  .stat b{display:block;font-size:20px;color:#fff}
+  .stat span{font-size:11px;color:var(--tx2)}
+  .bars{display:flex;align-items:flex-end;gap:3px;height:60px;margin-top:8px}
+  .bars i{flex:1;background:var(--red);border-radius:3px 3px 0 0;opacity:.85;min-height:2px}
+  .list{font-size:13px}
+  .list div{display:flex;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:1px solid var(--line);color:var(--tx2)}
+  .list div:last-child{border:0}
+  .list b{color:var(--tx);font-weight:600;text-align:right}
+  nav{position:fixed;left:0;right:0;bottom:0;background:#101419;border-top:1px solid var(--line);
+      display:flex;padding:6px 4px calc(6px + env(safe-area-inset-bottom))}
+  nav button{flex:1;background:0;border:0;color:var(--tx2);font-size:10.5px;padding:7px 2px;cursor:pointer}
+  nav button.on{color:var(--red);font-weight:700}
+  nav span{display:block;font-size:19px;line-height:1.15}
+  .hide{display:none}
+  /* бегунки */
+  .sl{margin-bottom:15px}
+  .slh{display:flex;justify-content:space-between;align-items:baseline;font-size:13.5px;margin-bottom:3px}
+  .slh b{font-size:16px;color:#fff;min-width:30px;text-align:right}
+  .sle{display:flex;justify-content:space-between;font-size:10.5px;color:var(--tx2);margin-top:1px}
+  input[type=range]{-webkit-appearance:none;appearance:none;width:100%;background:transparent;padding:0;border:0;height:24px}
+  input[type=range]::-webkit-slider-runnable-track{height:6px;background:#2C313B;border-radius:3px}
+  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;height:22px;margin-top:-8px;
+       border-radius:50%;background:var(--red);border:2px solid #fff}
+  input[type=range]::-moz-range-track{height:6px;background:#2C313B;border-radius:3px}
+  input[type=range]::-moz-range-thumb{width:20px;height:20px;border-radius:50%;background:var(--red);border:2px solid #fff}
+  /* Шульте */
+  #grid{display:grid;grid-template-columns:repeat(6,1fr);gap:6px;margin-top:10px}
+  #grid button{aspect-ratio:1;background:#12161C;border:1px solid var(--line);color:var(--tx);
+       border-radius:9px;font-size:16px;font-weight:600;cursor:pointer}
+  #grid button.bad{background:#3A1A1F;border-color:#5A2029}
+  .big{font-size:30px;font-weight:800;text-align:center;margin:6px 0}
+  .goal{background:#12161C;border:1px solid var(--line);border-radius:11px;padding:11px;margin-bottom:8px}
+  .goal .t{font-size:14px;margin-bottom:4px;white-space:pre-wrap}
+  .goal .c{font-size:12px;color:var(--tx2);white-space:pre-wrap}
+  .goal .x{float:right;color:var(--tx2);cursor:pointer;font-size:18px;line-height:1}
+  .tag{display:inline-block;font-size:11px;background:#2A1116;color:#E2606F;border-radius:6px;padding:2px 7px;margin-bottom:6px}
+  .done-tag{background:#16281B;color:#4FA765}
+  .ok{color:var(--ok)}
+  .tiles{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .tile{background:#12161C;border:1px solid var(--line);border-radius:14px;padding:13px 12px;
+       cursor:pointer;text-align:left;color:var(--tx);font-family:inherit}
+  .tile e{display:block;font-size:25px;line-height:1.1;margin-bottom:7px;font-style:normal}
+  .tile b{display:block;font-size:13.5px;font-weight:700;margin-bottom:3px}
+  .tile i{display:block;font-size:11.5px;color:var(--tx2);font-style:normal;line-height:1.3}
+  .tile.wide{grid-column:1 / -1}
+  .menu button{width:100%;text-align:left;background:#12161C;border:1px solid var(--line);color:var(--tx);
+       border-radius:11px;padding:14px;font-size:15px;margin-bottom:8px;cursor:pointer;display:flex;justify-content:space-between}
+  .menu button i{font-style:normal;color:var(--tx2)}
+  /* аналитика голов */
+  .chips{display:flex;flex-wrap:wrap;gap:6px}
+  .chips button{background:#12161C;border:1px solid var(--line);color:var(--tx2);border-radius:9px;
+       padding:8px 10px;font-size:12.5px;cursor:pointer}
+  .chips button.on{background:var(--red);border-color:var(--red);color:#fff;font-weight:700}
+  .svgbox{margin-top:8px;background:#0E1216;border:1px solid var(--line);border-radius:12px;padding:6px}
+  .svgbox svg{width:100%;height:auto;display:block;touch-action:manipulation}
+  .netgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;margin-top:6px}
+  .netgrid div{background:#12161C;border:1px solid var(--line);border-radius:9px;padding:11px 4px;text-align:center;font-size:13px}
+  .netgrid b{display:block;font-size:17px;color:#fff}
+  .netgrid span{font-size:10px;color:var(--tx2)}
+  .netpic{position:relative;border-radius:10px;overflow:hidden;margin-top:8px;background:#0E1216}
+  .netpic img{width:100%;display:block}
+  .netpic .zgrid{position:absolute;left:0;top:0;right:0;bottom:0;
+       display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr)}
+  .netpic .zgrid button{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.28);
+       color:#fff;font-size:9.5px;font-weight:600;cursor:pointer;padding:0;
+       text-shadow:0 1px 3px rgba(0,0,0,.8);display:flex;align-items:flex-end;justify-content:center}
+  .netpic .zgrid button span{padding-bottom:3px;opacity:.75}
+  .netpic .zgrid button.on{background:rgba(214,17,46,.55);border-color:#D6112E}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+  <!-- ГЛАВНАЯ -->
+  <section id="p-home">
+    <h1 id="hello">Привет!</h1>
+    <div class="sub" id="today"></div>
+    <div class="card">
+      <h2>Сегодня</h2>
+      <div class="stat">
+        <div><b id="h-sleep">—</b><span>сон, ч</span></div>
+        <div><b id="h-ready">—</b><span>готовность</span></div>
+        <div><b id="h-sch">—</b><span>Шульте, с</span></div>
+      </div>
+      <div id="h-status" class="sub" style="margin:0"></div>
+    </div>
+    <div class="tiles">
+      <button class="tile wide hide" id="coach-entry" data-act="roster"
+              style="background:#2A1116;border-color:#5A2029">
+        <e>🧤</e><b>Кабинет тренера</b><i>все вратари, их данные и заметки</i></button>
+      <button class="tile" data-act="go:wb"><e>☀️</e><b>Самочувствие</b><i id="t-wb">—</i></button>
+      <button class="tile" data-act="go:tr"><e>🏒</e><b>Дневник занятий</b><i id="t-tr">—</i></button>
+      <button class="tile" data-act="go:cog"><e>🧠</e><b>Когнитивка</b><i id="t-cog">—</i></button>
+      <button class="tile" data-act="go:goals"><e>🎯</e><b>Цели</b><i id="t-goals">—</i></button>
+      <button class="tile" data-act="go:an"><e>🥅</e><b>Аналитика голов</b><i id="t-an">—</i></button>
+      <button class="tile" data-act="go:notes"><e>📝</e><b>Заметки тренера</b><i id="t-notes">—</i></button>
+      <button class="tile" data-act="go:me"><e>👤</e><b>Профиль</b><i id="t-me">—</i></button>
+      <button class="tile" data-act="go:rep"><e>📤</e><b>Отчёт тренеру</b><i id="t-rep">сводка и динамика</i></button>
+    </div>
+  </section>
+
+  <!-- САМОЧУВСТВИЕ -->
+  <section id="p-wb" class="hide">
+    <h1>Дневник самочувствия</h1>
+    <div class="sub">Заполняй утром — за минуту.</div>
+    <div class="card">
+      <h2>Запись</h2>
+      <div class="sub" style="margin:0 0 4px">Дата: <b id="wb-date" style="color:#fff"></b></div>
+      <div class="row">
+        <div><label>Сон, часов</label><input id="i-sleep" type="number" inputmode="decimal" placeholder="например 8,5"></div>
+        <div><label>Пульс в покое</label><input id="i-pulse" type="number" inputmode="numeric" placeholder="уд/мин"></div>
+      </div>
+      <div id="wb-sliders" style="margin-top:16px"></div>
+      <label>Вес, кг</label>
+      <input id="i-weight" type="number" inputmode="decimal" placeholder="кг">
+      <label>Самонаблюдение</label>
+      <textarea id="i-note" placeholder="Что чувствую, что мешает, что заметил за собой"></textarea>
+      <button class="btn" data-act="wbsave">Сохранить</button>
+    </div>
+    <div class="card">
+      <h2>Динамика готовности</h2>
+      <div class="bars" id="wb-bars"></div>
+      <div class="sub" style="margin:8px 0 0">Последние 14 записей. Выше — лучше.</div>
+    </div>
+    <div class="card">
+      <h2>Средние за 7 дней</h2>
+      <div class="list" id="wb-avg"></div>
+    </div>
+    <div class="card">
+      <h2>История</h2>
+      <div class="list" id="wb-list"></div>
+    </div>
+  </section>
+
+  <!-- ДНЕВНИК ТРЕНИРОВОК -->
+  <section id="p-tr" class="hide">
+    <h1>Дневник тренировок и игр</h1>
+    <div class="sub">Заполняй сразу после занятия.</div>
+    <div class="card">
+      <h2>Запись</h2>
+      <div class="sub" style="margin:0 0 4px">Дата: <b id="tr-date" style="color:#fff"></b></div>
+      <label>Тип занятия</label>
+      <div class="chips" id="tr-type"></div>
+      <label>Какую задачу ставил</label>
+      <textarea id="t-task" placeholder="Что хотел отработать сегодня"></textarea>
+      <label>Получилось ли её достичь</label>
+      <textarea id="t-done" placeholder="Что вышло, что нет и почему"></textarea>
+      <label>На что обратить внимание в будущем</label>
+      <textarea id="t-next" placeholder="Вывод на следующее занятие"></textarea>
+      <div id="tr-sliders" style="margin-top:16px"></div>
+      <button class="btn" data-act="trsave">Сохранить</button>
+    </div>
+    <div class="card">
+      <h2>Динамика включённости</h2>
+      <div class="bars" id="tr-bars"></div>
+      <div class="sub" style="margin:8px 0 0">Последние 14 занятий.</div>
+    </div>
+    <div class="card">
+      <h2>Средние за 7 занятий</h2>
+      <div class="list" id="tr-avg"></div>
+    </div>
+    <div class="card">
+      <h2>История</h2>
+      <div id="tr-list"></div>
+    </div>
+  </section>
+
+  <!-- КОГНИТИВКА -->
+  <section id="p-cog" class="hide">
+    <h1>Когнитивка</h1>
+    <div class="sub">Внимание и концентрация.</div>
+    <div class="card">
+      <h2>Таблица Шульте 6×6</h2>
+      <div class="sub" style="margin:0">Найди числа от 1 до 36 по порядку. Найденные не подсвечиваются — смотри в центр.</div>
+      <div class="big"><span id="timer">0.0</span> с</div>
+      <div class="sub" style="text-align:center;margin:0">
+        Ищем: <b id="next-num" style="color:#fff">1</b> · ошибок: <b id="errs" style="color:#fff">0</b>
+      </div>
+      <div id="grid"></div>
+      <button class="btn" data-act="schstart">Новая попытка</button>
+    </div>
+    <div class="card">
+      <h2>Результаты Шульте</h2>
+      <div class="stat">
+        <div><b id="sch-best">—</b><span>лучший</span></div>
+        <div><b id="sch-avg">—</b><span>средний 7</span></div>
+        <div><b id="sch-cnt">0</b><span>попыток</span></div>
+      </div>
+      <div class="bars" id="sch-bars"></div>
+      <div class="list" id="sch-list" style="margin-top:10px"></div>
+    </div>
+    <div class="card">
+      <h2>Светофон</h2>
+      <div class="sub" style="margin:0">Внеси результат после теста.</div>
+      <div class="row">
+        <div><label>Ошибок</label><input id="sv-err" type="number" inputmode="numeric" placeholder="кол-во"></div>
+        <div><label>Время, мс</label><input id="sv-ms" type="number" inputmode="numeric" placeholder="800"></div>
+      </div>
+      <button class="btn" data-act="svsave">Сохранить результат</button>
+      <div class="stat" style="margin-top:14px">
+        <div><b id="sv-best">—</b><span>лучший</span></div>
+        <div><b id="sv-avg">—</b><span>средний 7</span></div>
+        <div><b id="sv-cnt">0</b><span>записей</span></div>
+      </div>
+      <div class="bars" id="sv-bars"></div>
+      <div class="list" id="sv-list" style="margin-top:10px"></div>
+    </div>
+  </section>
+
+  <!-- ЦЕЛИ -->
+  <section id="p-goals" class="hide">
+    <h1>Цели</h1>
+    <div class="sub">Сезон → месяц → занятие.</div>
+    <div class="card">
+      <h2>Цель на сезон</h2>
+      <label>Что хочу сделать</label>
+      <input id="g-season" placeholder="Например: закрепиться в основе">
+      <label>Критерий — как пойму, что достиг</label>
+      <input id="g-season-c" placeholder="Например: 90% отражённых за сезон">
+      <button class="btn" data-act="season">Сохранить</button>
+    </div>
+    <div class="card">
+      <h2>Цель на месяц</h2>
+      <label>Что делаю в этом месяце</label>
+      <input id="g-month" placeholder="Например: контроль отскоков">
+      <label>Критерий</label>
+      <input id="g-month-c" placeholder="Например: не больше 1 добивания за игру">
+      <button class="btn" data-act="month">Сохранить</button>
+      <div id="g-month-list" style="margin-top:12px"></div>
+    </div>
+    <div class="card">
+      <h2>Цель на занятие</h2>
+      <label>Что отрабатываю</label>
+      <input id="g-day" placeholder="Например: игра клюшкой за воротами">
+      <button class="btn" data-act="dayadd">Добавить</button>
+      <div id="g-day-list" style="margin-top:12px"></div>
+    </div>
+  </section>
+
+  <!-- АНАЛИТИКА ГОЛОВ -->
+  <section id="p-an" class="hide">
+    <h1>Аналитика голов</h1>
+    <div class="sub">Откуда забили, куда и в какой ситуации.</div>
+    <div class="card">
+      <h2>Новый гол</h2>
+      <div class="row">
+        <div><label>Соперник</label><input id="an-opp" placeholder="Команда"></div>
+        <div><label>Дата</label><input id="an-date" type="date"></div>
+      </div>
+      <label>1. Откуда забили — нажми на площадку</label>
+      <div class="svgbox" id="rink-wrap"></div>
+      <label>2. Куда забили — нажми на зону</label>
+      <div id="net-wrap"></div>
+      <label>3. Ситуация</label>
+      <div class="chips" id="sit-chips"></div>
+      <button class="btn" data-act="angoal">Сохранить гол</button>
+    </div>
+    <div class="card">
+      <h2>Карта бросков</h2>
+      <div class="svgbox" id="map-wrap"></div>
+      <div class="sub" style="margin:8px 0 0" id="an-total"></div>
+    </div>
+    <div class="card">
+      <h2>Куда забивают</h2>
+      <div class="netgrid" id="net-stat"></div>
+    </div>
+    <div class="card">
+      <h2>Ситуации</h2>
+      <div class="list" id="sit-stat"></div>
+    </div>
+    <div class="card">
+      <h2>Последние голы</h2>
+      <div class="list" id="an-list"></div>
+    </div>
+  </section>
+
+  <!-- ОТЧЁТ -->
+  <section id="p-rep" class="hide">
+    <h1>Отчёт</h1>
+    <div class="sub">Считается автоматически по твоим записям.</div>
+    <div class="card">
+      <h2>Период</h2>
+      <div class="chips" id="rep-per"></div>
+    </div>
+    <div id="rep-body"></div>
+    <div class="card">
+      <h2>Отправить тренеру</h2>
+      <div class="sub" style="margin:0">Скопируй текст и вставь в чат.</div>
+      <button class="btn" data-act="report">Скопировать отчёт</button>
+    </div>
+  </section>
+
+  <!-- ЗАМЕТКИ ТРЕНЕРА -->
+  <section id="p-notes" class="hide">
+    <h1>Заметки тренера</h1>
+    <div class="sub">Что сказал тренер по играм и тренировкам.</div>
+    <div class="card">
+      <h2>Новая заметка</h2>
+      <label>Текст</label>
+      <textarea id="n-text" placeholder="На что обратить внимание"></textarea>
+      <button class="btn" data-act="noteadd">Добавить</button>
+    </div>
+    <div class="card">
+      <h2>Все заметки</h2>
+      <div id="n-list"></div>
+    </div>
+  </section>
+
+  <!-- ЕЩЁ -->
+  <section id="p-more" class="hide">
+    <h1>Ещё</h1>
+    <div class="sub">Остальные разделы.</div>
+    <div class="card menu">
+      <button data-act="go:goals">Цели<i>сезон · месяц · занятие</i></button>
+      <button data-act="go:an">Аналитика голов<i>карта и зоны</i></button>
+      <button data-act="go:notes">Заметки тренера<i id="m-notes">0</i></button>
+      <button data-act="go:rep">Отчёт тренеру<i>сводка и динамика</i></button>
+      <button data-act="go:me">Профиль и данные<i>импорт, экспорт</i></button>
+      <button id="m-coach" class="hide" data-act="roster">Кабинет тренера<i>все вратари</i></button>
+    </div>
+  </section>
+
+  <!-- ПРОФИЛЬ -->
+  <section id="p-me" class="hide">
+    <h1>Профиль</h1>
+    <div class="sub">Данные хранятся в твоём Telegram.</div>
+    <div class="card">
+      <h2>Вратарь</h2>
+      <label>Имя и фамилия</label><input id="m-name" placeholder="Иванов Юрий">
+      <label>Команда</label><input id="m-team" placeholder="Спартак-МАХ">
+      <label>Год рождения</label><input id="m-year" type="number" inputmode="numeric" placeholder="2008">
+      <button class="btn" data-act="mesave">Сохранить</button>
+    </div>
+    <div class="card">
+      <h2>Данные</h2>
+      <div class="sub" style="margin:0">Экспорт — на случай смены телефона.</div>
+      <button class="btn sec" data-act="export">Скопировать все данные</button>
+      <div class="sub" id="diag" style="margin:12px 0 0;font-size:11px"></div>
+    </div>
+    <div class="card">
+      <h2>Код от тренера</h2>
+      <div class="sub" style="margin:0">Введи код из сообщения — профиль и цели заполнятся сами.
+        Делается один раз.</div>
+      <label>Код</label>
+      <textarea id="imp" placeholder="Например: KP4QDW"></textarea>
+      <button class="btn" data-act="import">Загрузить</button>
+    </div>
+  </section>
+
+  <!-- КАБИНЕТ ТРЕНЕРА -->
+  <section id="p-coach" class="hide">
+    <h1>Кабинет тренера</h1>
+    <div class="sub">Все вратари и их данные.</div>
+    <div class="card">
+      <h2>Вратари</h2>
+      <div id="c-list"><div class="sub" style="margin:0">Загружаю…</div></div>
+    </div>
+  </section>
+
+  <!-- КАРТОЧКА ВРАТАРЯ -->
+  <section id="p-gk" class="hide">
+    <h1 id="gk-name">Вратарь</h1>
+    <div class="sub" id="gk-sub"></div>
+    <button class="btn sec" data-act="go:coach" style="margin:0 0 12px">← К списку</button>
+    <div id="gk-body"></div>
+    <div class="card">
+      <h2>Заметка вратарю</h2>
+      <div class="sub" style="margin:0">Он увидит её в разделе «Заметки тренера».</div>
+      <label>Текст</label>
+      <textarea id="gk-note" placeholder="На что обратить внимание"></textarea>
+      <button class="btn" data-act="cnote">Отправить заметку</button>
+    </div>
+    <div class="card">
+      <h2>Все заметки</h2>
+      <div id="gk-notes"></div>
+    </div>
+  </section>
+</div>
+
+<nav>
+  <button id="n-home" class="on" data-act="go:home"><span>◆</span>Главная</button>
+  <button id="n-wb" data-act="go:wb"><span>☾</span>Самочувствие</button>
+  <button id="n-tr" data-act="go:tr"><span>✎</span>Дневник</button>
+  <button id="n-cog" data-act="go:cog"><span>⊞</span>Когнитивка</button>
+  <button id="n-more" data-act="go:more"><span>≡</span>Ещё</button>
+</nav>
+
+<script>
+var TG = (window.Telegram && window.Telegram.WebApp) ? window.Telegram.WebApp : null;
+if (TG) { TG.ready(); TG.expand(); try { TG.setHeaderColor('#15181D'); TG.setBackgroundColor('#15181D'); } catch(e){} }
+/* ═══════════ АДРЕС БАЗЫ ═══════════
+   Сюда вставляется URL веб-приложения Apps Script (шаг 4 инструкции).
+   Пока он не вставлен, приложение работает только на этом телефоне. */
+var API_URL = 'https://script.google.com/macros/s/AKfycbySUUoLkv6qaywWfDZ9Qn1fob2Z2o4Md7npra59c_F24DreU8iSc9tzdsoedyC_6-tM/exec';
+
+var INIT = (TG && TG.initData) ? TG.initData : '';
+var TGU  = (TG && TG.initDataUnsafe && TG.initDataUnsafe.user) ? TG.initDataUnsafe.user : null;
+var UID  = TGU ? String(TGU.id) : 'local';
+var IS_COACH = false;
+var SYNC = 'нет связи';          // что показываем в профиле
+var QUEUE = {};                  // что не успело уйти на сервер
+
+function apiReady(){ return API_URL.indexOf('http') === 0; }
+
+function api(payload, cb){
+  if (!apiReady()) { if (cb) cb(null); return; }
+  payload.initData = INIT;
+  var done = false;
+  var t = setTimeout(function(){ if(!done){ done = true; if (cb) cb(null); } }, 15000);
+  fetch(API_URL, { method: 'POST', body: JSON.stringify(payload) })
+    .then(function(r){ return r.json(); })
+    .then(function(j){ if(done) return; done = true; clearTimeout(t); if (cb) cb(j); })
+    .catch(function(){ if(done) return; done = true; clearTimeout(t); if (cb) cb(null); });
+}
+
+/* ---------- локальный кэш (мгновенный отклик и работа без сети) ---------- */
+function lget(key){ return parse(localStorage.getItem('gk_' + UID + '_' + key)); }
+function lset(key, obj){ try { localStorage.setItem('gk_' + UID + '_' + key, JSON.stringify(obj)); } catch(e){} }
+
+/* ---------- сохранение: сразу в кэш, следом на сервер ---------- */
+function save(key, obj, cb){
+  lset(key, obj);
+  if (cb) cb();
+  QUEUE[key] = JSON.stringify(obj);
+  flushQueue();
+}
+
+var flushing = false;
+function flushQueue(){
+  if (flushing || !apiReady()) return;
+  var keys = Object.keys(QUEUE);
+  if (!keys.length) return;
+  flushing = true;
+  var k = keys[0], body = QUEUE[k];
+  api({ a: 'push', key: k, json: body }, function(res){
+    flushing = false;
+    if (res && res.ok){
+      if (QUEUE[k] === body) delete QUEUE[k];
+      setSync('сохранено');
+      flushQueue();
+    } else {
+      setSync('нет связи — сохранится позже');
+      setTimeout(flushQueue, 20000);
+    }
+  });
+}
+setInterval(flushQueue, 30000);
+window.addEventListener('online', flushQueue);
+
+function setSync(s){
+  SYNC = s;
+  var el = document.getElementById('sync');
+  if (el) el.textContent = s;
+}
+
+function parse(v){ if(!v) return null; try { return JSON.parse(v); } catch(e){ return null; } }
+function haptic(t){ try { if(TG && TG.HapticFeedback) TG.HapticFeedback.impactOccurred(t || 'light'); } catch(e){} }
+function alertMsg(m){ if (TG && TG.showPopup) { try { TG.showPopup({message:m}); return; } catch(e){} } alert(m); }
+
+/* ---------- показатели ---------- */
+var WB_KEYS = [
+  ['q','Качество сна'], ['f','Усталость'], ['des','Желание тренироваться'], ['mo','Настроение'],
+  ['pf','Психологическое утомление'], ['rd','Готовность'], ['sor','Крепатура (мышечная боль)']
+];
+var TR_KEYS = [
+  ['inv','Включённость в работу'], ['att','Уровень внимания'], ['emo','Контроль эмоций (дыхание)'],
+  ['fat','Усталость'], ['trk','Отслеживание'], ['mov','Скорость и качество перемещений'],
+  ['reb','Переключения на добивания'], ['fin','Игра до конца'], ['stk','Игра клюшкой'],
+  ['scan','Сканирование и чтение игры'], ['voi','Подсказки голосом'], ['joy','Удовольствие от процесса']
+];
+var TR_TYPES = ['Тренировка','Игра','Зал'];
+var SITS = ['Реагирование','Бросок с приёма','Бросок в касание','Атака с угла','Атака из-за ворот',
+            'Трафик','Подправление','Добивание','Выход 1 на 1','Блокирование','Клюшка','Буллит'];
+var NZ = ['Верх лев','Верх центр','Верх прав','Блин','Корпус','Ловушка','Низ лев','Домик','Низ прав'];
+
+var DB = { wb:[], tr:[], schulte:[], svet:[], goals:{season:null,months:{},days:[]}, gls:[], notes:[], me:{} };
+var today = new Date().toISOString().slice(0,10);
+var curMonth = today.slice(0,7);
+var trType = 0;
+
+var DATA_KEYS = ['wb','tr','schulte','svet','goals','gls','me'];
+
+function boot(){
+  /* 1. поднимаем кэш — приложение открывается мгновенно и работает без сети */
+  DATA_KEYS.forEach(function(k){
+    var v = lget(k);
+    if (v !== null && v !== undefined) DB[k] = v;
+  });
+  DB.notes = lget('notes') || [];
+  buildForms();
+  render();
+
+  /* 2. подтягиваем актуальное с сервера */
+  if (!apiReady()){ setSync('база не подключена'); return; }
+  setSync('синхронизация…');
+  api({ a: 'pull' }, function(res){
+    if (!res || !res.ok){ setSync('нет связи — работаю по кэшу'); return; }
+    IS_COACH = !!res.isCoach;
+    DATA_KEYS.forEach(function(k){
+      if (res.data && res.data[k] !== undefined && res.data[k] !== null){
+        DB[k] = res.data[k];
+        lset(k, DB[k]);
+      }
+    });
+    DB.notes = res.notes || [];
+    lset('notes', DB.notes);
+    setSync('на связи');
+    applyRole();
+    buildForms();
+    render();
+    if (IS_COACH) loadRoster();
+  });
+}
+
+/* ---------- роль: вратарь или тренер ---------- */
+function applyRole(){
+  var box = document.getElementById('coach-entry');
+  if (box) box.className = IS_COACH ? '' : 'hide';
+  var mb = document.getElementById('m-coach');
+  if (mb) mb.className = IS_COACH ? '' : 'hide';
+  var h = document.getElementById('hello');
+  if (IS_COACH && h) h.textContent = 'Тренерский доступ';
+}
+
+/* ---------- навигация ---------- */
+var PAGES = ['home','wb','tr','cog','goals','an','notes','more','me','rep','coach','gk'];
+var NAVS = ['home','wb','tr','cog','more'];
+function go(page){
+  PAGES.forEach(function(p){
+    var el = document.getElementById('p-' + p);
+    if (el) el.className = (p === page) ? '' : 'hide';
+  });
+  NAVS.forEach(function(p){
+    var b = document.getElementById('n-' + p);
+    if (b) b.className = (p === page) ? 'on' : '';
+  });
+  if (['goals','an','notes','me','rep','coach','gk'].indexOf(page) >= 0){
+    var mb = document.getElementById('n-more'); if (mb) mb.className = 'on';
+  }
+  window.scrollTo(0,0);
+  if (page === 'cog' && !running) buildGrid(true);
+  if (page === 'an') buildAnalytics();
+  if (page === 'rep') renderReport();
+}
+
+/* ---------- бегунки ---------- */
+function sliderHTML(key, title){
+  return '<div class="sl"><div class="slh"><span>' + title + '</span><b id="v-' + key + '">0</b></div>' +
+    '<input type="range" min="-3" max="3" step="1" value="0" id="r-' + key + '" data-v="' + key + '">' +
+    '<div class="sle"><span>−3</span><span>как обычно</span><span>+3</span></div></div>';
+}
+function buildForms(){
+  document.getElementById('wb-sliders').innerHTML = WB_KEYS.map(function(k){ return sliderHTML(k[0], k[1]); }).join('');
+  document.getElementById('tr-sliders').innerHTML = TR_KEYS.map(function(k){ return sliderHTML(k[0], k[1]); }).join('');
+  document.getElementById('tr-type').innerHTML = TR_TYPES.map(function(t,i){
+    return '<button data-act="trtype:' + i + '"' + (trType === i ? ' class="on"' : '') + '>' + t + '</button>';
+  }).join('');
+  document.getElementById('wb-date').textContent = human(today);
+  document.getElementById('tr-date').textContent = human(today);
+}
+document.addEventListener('input', function(ev){
+  var el = ev.target;
+  if (el && el.type === 'range'){
+    var out = document.getElementById('v-' + el.getAttribute('data-v'));
+    if (out) out.textContent = signed(el.value);
+  }
+});
+function signed(v){ v = Number(v); return v > 0 ? '+' + v : String(v); }
+function getSl(key){ var el = document.getElementById('r-' + key); return el ? Number(el.value) : 0; }
+function setSl(key, val){
+  var el = document.getElementById('r-' + key); if (!el) return;
+  el.value = (val === undefined || val === null) ? 0 : val;
+  var out = document.getElementById('v-' + key); if (out) out.textContent = signed(el.value);
+}
+
+/* ---------- единый обработчик нажатий ---------- */
+document.addEventListener('click', function(ev){
+  var el = ev.target;
+  while (el && el.getAttribute && !el.getAttribute('data-act') && el !== document.body) el = el.parentNode;
+  if (!el || !el.getAttribute) return;
+  var act = el.getAttribute('data-act');
+  if (!act) return;
+  var a = act.split(':');
+  try {
+    if (a[0] === 'go') go(a[1]);
+    else if (a[0] === 'wbsave') saveWB();
+    else if (a[0] === 'trsave') saveTR();
+    else if (a[0] === 'trtype') { trType = parseInt(a[1],10); buildForms(); restoreTR(); }
+    else if (a[0] === 'trdel') delTR(parseInt(a[1],10));
+    else if (a[0] === 'svsave') saveSvet();
+    else if (a[0] === 'noteadd') addNote();
+    else if (a[0] === 'notedel') delNote(a[1]);
+    else if (a[0] === 'roster') { go('coach'); loadRoster(); }
+    else if (a[0] === 'gk') openGoalie(a[1]);
+    else if (a[0] === 'cnote') coachNote();
+    else if (a[0] === 'hit') hit(parseInt(a[1],10));
+    else if (a[0] === 'schstart') startSchulte();
+    else if (a[0] === 'season') saveSeason();
+    else if (a[0] === 'month') saveMonth();
+    else if (a[0] === 'dayadd') addDay();
+    else if (a[0] === 'daytog') toggleDay(parseInt(a[1],10));
+    else if (a[0] === 'daydel') delDay(parseInt(a[1],10));
+    else if (a[0] === 'netz') pickNet(parseInt(a[1],10));
+    else if (a[0] === 'sit') pickSit(parseInt(a[1],10));
+    else if (a[0] === 'angoal') saveGoal();
+    else if (a[0] === 'gdel') delGoal(parseInt(a[1],10));
+    else if (a[0] === 'mesave') saveMe();
+    else if (a[0] === 'report') report();
+    else if (a[0] === 'per') { PER = parseInt(a[1],10); renderReport(); }
+    else if (a[0] === 'export') exportAll();
+    else if (a[0] === 'import') doImport();
+  } catch(e){ alertMsg('Ошибка: ' + e.message); }
+});
+
+/* ---------- самочувствие ---------- */
+function saveWB(){
+  var v = {};
+  WB_KEYS.forEach(function(k){ v[k[0]] = getSl(k[0]); });
+  var rec = { d: today, sl: num(val('i-sleep')), p: num(val('i-pulse')), w: num(val('i-weight')),
+              v: v, c: (val('i-note') || '').slice(0,120) };
+  DB.wb = DB.wb.filter(function(x){ return x.d !== today; });
+  DB.wb.unshift(rec);
+  DB.wb = DB.wb.slice(0,60);
+  save('wb', DB.wb, function(){ haptic('medium'); alertMsg('Сохранено.'); render(); });
+}
+function val(id){ var e = document.getElementById(id); return e ? e.value : ''; }
+function num(v){ var n = parseFloat(String(v).replace(',','.')); return isNaN(n) ? null : n; }
+
+/* ---------- дневник тренировок ---------- */
+function saveTR(){
+  var v = {};
+  TR_KEYS.forEach(function(k){ v[k[0]] = getSl(k[0]); });
+  var rec = { d: today, ty: trType, t1: val('t-task').slice(0,300), t2: val('t-done').slice(0,300),
+              t3: val('t-next').slice(0,300), v: v };
+  if (!rec.t1 && !rec.t2 && !rec.t3){ alertMsg('Впиши хотя бы задачу на занятие.'); return; }
+  DB.tr = DB.tr.filter(function(x){ return !(x.d === today && x.ty === trType); });
+  DB.tr.unshift(rec);
+  DB.tr = DB.tr.slice(0,40);
+  save('tr', DB.tr, function(){ haptic('medium'); alertMsg('Запись сохранена.'); render(); });
+}
+function delTR(i){ DB.tr.splice(i,1); save('tr', DB.tr, function(){ render(); }); }
+function restoreTR(){
+  var r = DB.tr.filter(function(x){ return x.d === today && x.ty === trType; })[0];
+  document.getElementById('t-task').value = r ? r.t1 : '';
+  document.getElementById('t-done').value = r ? r.t2 : '';
+  document.getElementById('t-next').value = r ? r.t3 : '';
+  TR_KEYS.forEach(function(k){ setSl(k[0], r && r.v ? r.v[k[0]] : 0); });
+}
+
+/* ---------- светофон ---------- */
+function saveSvet(){
+  var e = num(val('sv-err'));
+  if (e === null){ alertMsg('Впиши количество ошибок.'); return; }
+  DB.svet.unshift({ d: today, e: e, ms: num(val('sv-ms')) });
+  DB.svet = DB.svet.slice(0,60);
+  document.getElementById('sv-err').value = '';
+  save('svet', DB.svet, function(){ haptic('medium'); alertMsg('Результат сохранён.'); render(); });
+}
+
+/* ---------- заметки ---------- */
+function addNote(){
+  var t = val('n-text').trim();
+  if (!t){ alertMsg('Впиши текст заметки.'); return; }
+  document.getElementById('n-text').value = '';
+  haptic();
+  if (!apiReady()){
+    DB.notes.unshift({ id:'l'+Date.now(), d: today, a:'self', t: t.slice(0,400) });
+    lset('notes', DB.notes); render(); return;
+  }
+  api({ a:'note', text: t }, function(res){
+    if (res && res.ok){ DB.notes = res.notes || DB.notes; lset('notes', DB.notes); }
+    else alertMsg('Не удалось сохранить — нет связи.');
+    render();
+  });
+}
+function delNote(id){
+  var keep = [];
+  for (var i=0;i<DB.notes.length;i++) if (String(DB.notes[i].id) !== String(id)) keep.push(DB.notes[i]);
+  DB.notes = keep; lset('notes', DB.notes); render();
+  if (apiReady()) api({ a:'delnote', id: id }, function(){});
+}
+
+/* ---------- цели ---------- */
+function saveSeason(){
+  var t = val('g-season').trim();
+  if(!t){ alertMsg('Впиши цель.'); return; }
+  DB.goals.season = { t: t, c: val('g-season-c').trim() };
+  save('goals', DB.goals, function(){ alertMsg('Цель на сезон сохранена.'); render(); });
+}
+function saveMonth(){
+  var t = val('g-month').trim();
+  if(!t){ alertMsg('Впиши цель на месяц.'); return; }
+  DB.goals.months[curMonth] = { t: t, c: val('g-month-c').trim() };
+  save('goals', DB.goals, function(){ alertMsg('Цель на месяц сохранена.'); render(); });
+}
+function addDay(){
+  var t = val('g-day').trim();
+  if(!t){ alertMsg('Впиши цель на занятие.'); return; }
+  DB.goals.days.unshift({ d: today, t: t, ok: false });
+  DB.goals.days = DB.goals.days.slice(0,40);
+  document.getElementById('g-day').value = '';
+  save('goals', DB.goals, function(){ haptic(); render(); });
+}
+function toggleDay(i){ DB.goals.days[i].ok = !DB.goals.days[i].ok; save('goals', DB.goals, function(){ haptic(); render(); }); }
+function delDay(i){ DB.goals.days.splice(i,1); save('goals', DB.goals, function(){ render(); }); }
+
+/* ---------- Шульте ---------- */
+var order = [], next = 1, errs = 0, t0 = 0, tick = null, running = false;
+function buildGrid(preview){
+  var nums = [];
+  for (var i=1;i<=36;i++) nums.push(i);
+  for (var j=nums.length-1;j>0;j--){ var k = Math.floor(Math.random()*(j+1)); var t=nums[j]; nums[j]=nums[k]; nums[k]=t; }
+  order = nums;
+  var html = '';
+  for (var q=0;q<36;q++) html += '<button id="c' + q + '" data-act="hit:' + q + '">' + nums[q] + '</button>';
+  document.getElementById('grid').innerHTML = html;
+  next = 1; errs = 0; running = !preview;
+  document.getElementById('next-num').textContent = '1';
+  document.getElementById('errs').textContent = '0';
+  document.getElementById('timer').textContent = '0.0';
+}
+function startSchulte(){
+  buildGrid(false);
+  t0 = Date.now(); running = true;
+  if (tick) clearInterval(tick);
+  tick = setInterval(function(){ document.getElementById('timer').textContent = ((Date.now()-t0)/1000).toFixed(1); }, 100);
+}
+function hit(idx){
+  if (!running) { startSchulte(); return; }
+  var btn = document.getElementById('c' + idx);
+  if (order[idx] === next){
+    haptic();                                  /* найденное число не подсвечиваем */
+    next++;
+    document.getElementById('next-num').textContent = String(Math.min(next,36));
+    if (next > 36) finishSchulte();
+  } else {
+    errs++; document.getElementById('errs').textContent = String(errs);
+    btn.className = 'bad'; haptic('heavy');
+    setTimeout(function(){ if (btn.className === 'bad') btn.className = ''; }, 200);
+  }
+}
+function finishSchulte(){
+  running = false; clearInterval(tick);
+  var sec = Math.round((Date.now()-t0)/100)/10;
+  DB.schulte.unshift({ d: today, t: sec, e: errs });
+  DB.schulte = DB.schulte.slice(0,60);
+  save('schulte', DB.schulte, function(){
+    haptic('medium');
+    var best = bestSchulte();
+    alertMsg('Готово: ' + sec + ' с, ошибок ' + errs + (sec <= best ? '. Лучший результат!' : ''));
+    render();
+  });
+}
+function bestSchulte(){ return DB.schulte.length ? DB.schulte.reduce(function(a,x){ return Math.min(a,x.t); }, 999) : 999; }
+
+/* ---------- аналитика голов ---------- */
+var anPick = { x:null, y:null, z:null, s:null };
+function rinkSVG(dots){
+  var d = '';
+  d += '<rect x="2" y="2" width="196" height="166" rx="26" fill="#F7F9FB" stroke="#2C313B" stroke-width="2"/>';
+  d += '<line x1="2" y1="18" x2="198" y2="18" stroke="#2B6CB0" stroke-width="4"/>';
+  d += '<line x1="8" y1="150" x2="192" y2="150" stroke="#D6112E" stroke-width="2.5"/>';
+  d += '<circle cx="52" cy="86" r="26" fill="none" stroke="#D6112E" stroke-width="1.6"/>';
+  d += '<circle cx="148" cy="86" r="26" fill="none" stroke="#D6112E" stroke-width="1.6"/>';
+  d += '<circle cx="52" cy="86" r="2.6" fill="#D6112E"/><circle cx="148" cy="86" r="2.6" fill="#D6112E"/>';
+  d += '<path d="M78 150 A22 22 0 0 1 122 150 Z" fill="#DCEAF7" stroke="#D6112E" stroke-width="1.4"/>';
+  d += '<rect x="88" y="150" width="24" height="9" fill="#15181D" rx="2"/>';
+  if (dots && dots.length){
+    for (var i=0;i<dots.length;i++){
+      var px = 4 + dots[i][0]/100*192, py = 4 + dots[i][1]/100*162;
+      d += '<circle cx="' + px.toFixed(1) + '" cy="' + py.toFixed(1) + '" r="4" fill="#D6112E" fill-opacity="0.75" stroke="#fff" stroke-width="1"/>';
+    }
+  }
+  if (anPick.x !== null && !dots){
+    var mx = 4 + anPick.x/100*192, my = 4 + anPick.y/100*162;
+    d += '<circle cx="' + mx.toFixed(1) + '" cy="' + my.toFixed(1) + '" r="6" fill="#D6112E" stroke="#fff" stroke-width="2"/>';
+  }
+  return '<svg viewBox="0 0 200 170" xmlns="http://www.w3.org/2000/svg">' + d + '</svg>';
+}
+function netHTML(){
+  var b = '';
+  for (var i=0;i<9;i++){
+    b += '<button data-act="netz:' + i + '"' + (anPick.z === i ? ' class="on"' : '') + '><span>' + NZ[i] + '</span></button>';
+  }
+  return '<div class="netpic"><img src="goalie.jpg" alt="Вратарь"><div class="zgrid">' + b + '</div></div>';
+}
+function buildAnalytics(){
+  var rw = document.getElementById('rink-wrap');
+  if (!rw) return;
+  rw.innerHTML = rinkSVG(null);
+  rw.onclick = function(ev){
+    var r = rw.getBoundingClientRect();
+    anPick.x = Math.max(0, Math.min(100, Math.round((ev.clientX - r.left) / r.width * 100)));
+    anPick.y = Math.max(0, Math.min(100, Math.round((ev.clientY - r.top) / r.height * 100)));
+    haptic(); rw.innerHTML = rinkSVG(null);
+  };
+  document.getElementById('net-wrap').innerHTML = netHTML();
+  document.getElementById('sit-chips').innerHTML = SITS.map(function(t,i){
+    return '<button data-act="sit:' + i + '"' + (anPick.s === i ? ' class="on"' : '') + '>' + t + '</button>';
+  }).join('');
+  var dt = document.getElementById('an-date');
+  if (dt && !dt.value) dt.value = today;
+}
+function pickNet(i){ anPick.z = i; haptic(); document.getElementById('net-wrap').innerHTML = netHTML(); }
+function pickSit(i){ anPick.s = i; haptic(); buildAnalytics(); }
+function saveGoal(){
+  if (anPick.x === null){ alertMsg('Отметь на площадке, откуда забили.'); return; }
+  if (anPick.z === null){ alertMsg('Отметь зону, куда забили.'); return; }
+  if (anPick.s === null){ alertMsg('Выбери ситуацию.'); return; }
+  DB.gls.unshift([val('an-date') || today, anPick.x, anPick.y, anPick.z, anPick.s, val('an-opp').slice(0,18)]);
+  DB.gls = DB.gls.slice(0,80);
+  save('gls', DB.gls, function(){
+    anPick = { x:null, y:null, z:null, s:null };
+    haptic('medium'); alertMsg('Гол записан.'); buildAnalytics(); render();
+  });
+}
+function delGoal(i){ DB.gls.splice(i,1); save('gls', DB.gls, function(){ render(); }); }
+
+/* ---------- профиль, импорт, отчёт ---------- */
+function saveMe(){
+  DB.me = { n: val('m-name').trim(), tm: val('m-team').trim(), y: val('m-year').trim() };
+  save('me', DB.me, function(){ alertMsg('Сохранено.'); render(); });
+}
+function exportAll(){ copy(JSON.stringify(DB), 'Все данные скопированы.'); }
+function b64ToStr(b64){
+  var bin = atob(String(b64).replace(/\s+/g,''));
+  var bytes = new Uint8Array(bin.length);
+  for (var i=0;i<bin.length;i++) bytes[i] = bin.charCodeAt(i);
+  if (window.TextDecoder) return new TextDecoder('utf-8').decode(bytes);
+  return decodeURIComponent(escape(bin));
+}
+function doImport(){
+  var raw = (val('imp') || '').trim();
+  if (!raw){ alertMsg('Вставь код от тренера.'); return; }
+
+  /* короткий код привязки — забираем данные из общей базы */
+  if (raw.length <= 14 && raw.indexOf('{') < 0){
+    if (!apiReady()){ alertMsg('Нет связи с базой — код примем позже.'); return; }
+    api({ a: 'claim', code: raw }, function(res){
+      if (!res || !res.ok){ alertMsg((res && res.err) || 'Код не подошёл.'); return; }
+      document.getElementById('imp').value = '';
+      haptic('medium');
+      alertMsg(res.wrote && res.wrote.length
+        ? 'Готово! Данные от тренера загружены.'
+        : 'Аккаунт привязан. Всё, что было, осталось на месте.');
+      boot();
+    });
+    return;
+  }
+
+  var data;
+  try { data = JSON.parse(b64ToStr(raw)); }
+  catch(e){ alertMsg('Код не распознан. Скопируй его целиком.'); return; }
+  if (data.me){ for (var k in data.me) if (data.me[k]) DB.me[k] = data.me[k]; }
+  if (data.goals){
+    if (data.goals.season) DB.goals.season = data.goals.season;
+    if (data.goals.months) for (var m in data.goals.months) DB.goals.months[m] = data.goals.months[m];
+    if (data.goals.days && data.goals.days.length) DB.goals.days = data.goals.days.concat(DB.goals.days).slice(0,40);
+  }
+  if (data.notes && data.notes.length) DB.notes = data.notes.concat(DB.notes).slice(0,40);
+  lset('notes', DB.notes);
+  save('me', DB.me, function(){ save('goals', DB.goals, function(){
+    document.getElementById('imp').value = '';
+    haptic('medium'); alertMsg('Готово! Данные загружены.'); render(); go('goals');
+  }); });
+}
+function avg(arr){ if(!arr.length) return null; var s=0; for(var i=0;i<arr.length;i++) s+=arr[i]; return s/arr.length; }
+function ok(v){ return v !== null && v !== undefined && !isNaN(v); }
+function fmt(v){ return !ok(v) ? '—' : (Math.round(v*10)/10).toString().replace('.', ','); }
+function last7(){
+  var lim = new Date(Date.now() - 7*864e5).toISOString().slice(0,10);
+  return DB.wb.filter(function(x){ return x.d >= lim; });
+}
+
+/* ================= ОТЧЁТ ================= */
+var PER = 7;
+function limDate(days){ return days ? new Date(Date.now() - days*864e5).toISOString().slice(0,10) : '0000-00-00'; }
+function inPer(d){ return d >= limDate(PER); }
+function avgKey(arr, key){
+  var vv = arr.map(function(x){ return x.v ? x.v[key] : null; }).filter(ok);
+  return vv.length ? Math.round(avg(vv)*10)/10 : null;
+}
+function repData(){
+  var lim = limDate(PER);
+  return {
+    wb: DB.wb.filter(function(x){ return x.d >= lim; }),
+    tr: DB.tr.filter(function(x){ return x.d >= lim; }),
+    sch: DB.schulte.filter(function(x){ return x.d >= lim; }),
+    sv: DB.svet.filter(function(x){ return x.d >= lim; }),
+    gl: DB.gls.filter(function(x){ return x[0] >= lim; })
+  };
+}
+function renderReport(){
+  var host = document.getElementById('rep-body');
+  if (!host) return;
+  document.getElementById('rep-per').innerHTML = [[7,'7 дней'],[30,'30 дней'],[0,'весь период']].map(function(o){
+    return '<button data-act="per:' + o[0] + '"' + (PER === o[0] ? ' class="on"' : '') + '>' + o[1] + '</button>';
+  }).join('');
+
+  var D = repData(), H = '';
+
+  /* самочувствие */
+  H += '<div class="card"><h2>Самочувствие</h2>';
+  if (D.wb.length){
+    H += '<div class="stat">' +
+      '<div><b>' + D.wb.length + '</b><span>записей</span></div>' +
+      '<div><b>' + fmt(avg(D.wb.map(function(x){return x.sl;}).filter(ok))) + '</b><span>сон, ч</span></div>' +
+      '<div><b>' + fmt(avg(D.wb.map(function(x){return x.p;}).filter(ok))) + '</b><span>пульс</span></div></div>';
+    H += '<div class="list">' + WB_KEYS.map(function(k){
+      var a = avgKey(D.wb, k[0]);
+      return '<div><span>' + k[1] + '</span><b>' + (a === null ? '—' : signed(a)) + '</b></div>';
+    }).join('') + '</div>';
+    var wts = D.wb.map(function(x){ return x.w; }).filter(ok);
+    if (wts.length) H += '<div class="sub" style="margin:10px 0 0">Вес: ' + wts[0] + ' кг' +
+      (wts.length > 1 ? ' (было ' + wts[wts.length-1] + ')' : '') + '</div>';
+  } else H += '<div class="sub" style="margin:0">Нет записей за период.</div>';
+  H += '</div>';
+
+  /* занятия */
+  H += '<div class="card"><h2>Занятия</h2>';
+  if (D.tr.length){
+    H += '<div class="sub" style="margin:0 0 8px">Записей: ' + D.tr.length + '</div><div class="list">' +
+      TR_KEYS.map(function(k){
+        var a = avgKey(D.tr, k[0]);
+        return '<div><span>' + k[1] + '</span><b>' + (a === null ? '—' : signed(a)) + '</b></div>';
+      }).join('') + '</div>';
+  } else H += '<div class="sub" style="margin:0">Нет записей за период.</div>';
+  H += '</div>';
+
+  /* когнитивка */
+  H += '<div class="card"><h2>Когнитивка</h2>';
+  if (D.sch.length || D.sv.length){
+    H += '<div class="list">';
+    if (D.sch.length) H += '<div><span>Шульте, лучший</span><b>' + Math.min.apply(null, D.sch.map(function(x){return x.t;})) + ' с</b></div>' +
+      '<div><span>Шульте, средний</span><b>' + fmt(avg(D.sch.map(function(x){return x.t;}))) + ' с</b></div>' +
+      '<div><span>Шульте, попыток</span><b>' + D.sch.length + '</b></div>';
+    if (D.sv.length) H += '<div><span>Светофон, лучший</span><b>' + Math.min.apply(null, D.sv.map(function(x){return x.e;})) + ' ош.</b></div>' +
+      '<div><span>Светофон, средний</span><b>' + fmt(avg(D.sv.map(function(x){return x.e;}))) + ' ош.</b></div>';
+    H += '</div>';
+  } else H += '<div class="sub" style="margin:0">Нет данных за период.</div>';
+  H += '</div>';
+
+  /* голы */
+  H += '<div class="card"><h2>Пропущенные голы</h2>';
+  if (D.gl.length){
+    var sc = {}, zc = {};
+    D.gl.forEach(function(x){ sc[x[4]] = (sc[x[4]]||0)+1; zc[x[3]] = (zc[x[3]]||0)+1; });
+    var top = function(o, names){
+      return Object.keys(o).sort(function(a,b){ return o[b]-o[a]; }).slice(0,3).map(function(k){
+        return '<div><span>' + names[k] + '</span><b>' + o[k] + ' · ' + Math.round(o[k]/D.gl.length*100) + '%</b></div>';
+      }).join('');
+    };
+    H += '<div class="sub" style="margin:0 0 8px">Всего: ' + D.gl.length + '</div>';
+    H += '<div class="sub" style="margin:0 0 4px">Чаще всего ситуации</div><div class="list">' + top(sc, SITS) + '</div>';
+    H += '<div class="sub" style="margin:10px 0 4px">Чаще всего зоны</div><div class="list">' + top(zc, NZ) + '</div>';
+  } else H += '<div class="sub" style="margin:0">Голов за период не записано.</div>';
+  H += '</div>';
+
+  /* цели */
+  H += '<div class="card"><h2>Цели</h2><div class="list">';
+  H += '<div><span>Сезон</span><b>' + (DB.goals.season ? esc(cut(DB.goals.season.t, 40)) : '—') + '</b></div>';
+  H += '<div><span>Месяц</span><b>' + (DB.goals.months[curMonth] ? esc(cut(DB.goals.months[curMonth].t, 40)) : '—') + '</b></div>';
+  var dd = DB.goals.days.filter(function(x){ return inPer(x.d); });
+  H += '<div><span>Цели на занятия</span><b>' + (dd.length ? dd.filter(function(x){return x.ok;}).length + ' из ' + dd.length : '—') + '</b></div>';
+  H += '</div></div>';
+
+  /* последние занятия текстом */
+  if (D.tr.length){
+    H += '<div class="card"><h2>Последние занятия</h2>' + D.tr.slice(0,3).map(function(x){
+      return '<div class="goal"><div class="tag">' + dm(x.d) + ' · ' + TR_TYPES[x.ty||0] + '</div>' +
+        (x.t1 ? '<div class="t">Задача: ' + esc(x.t1) + '</div>' : '') +
+        (x.t2 ? '<div class="c">Результат: ' + esc(x.t2) + '</div>' : '') +
+        (x.t3 ? '<div class="c">Внимание: ' + esc(x.t3) + '</div>' : '') + '</div>';
+    }).join('') + '</div>';
+  }
+  host.innerHTML = H;
+}
+
+function report(){
+  var D = repData(), L = [];
+  var perTxt = PER ? ('последние ' + PER + ' дней') : 'весь период';
+  L.push('Отчёт вратаря' + (DB.me.n ? ': ' + DB.me.n : ''));
+  L.push('Период: ' + perTxt);
+  L.push('');
+  if (D.wb.length){
+    L.push('САМОЧУВСТВИЕ (записей ' + D.wb.length + ')');
+    L.push('  Сон: ' + fmt(avg(D.wb.map(function(x){return x.sl;}).filter(ok))) + ' ч');
+    L.push('  Пульс в покое: ' + fmt(avg(D.wb.map(function(x){return x.p;}).filter(ok))));
+    WB_KEYS.forEach(function(k){
+      var a = avgKey(D.wb, k[0]);
+      if (a !== null) L.push('  ' + k[1] + ': ' + signed(a));
+    });
+    var wts = D.wb.map(function(x){ return x.w; }).filter(ok);
+    if (wts.length) L.push('  Вес: ' + wts[0] + ' кг');
+  } else L.push('САМОЧУВСТВИЕ: нет записей');
+  L.push('');
+  if (D.tr.length){
+    L.push('ЗАНЯТИЯ (записей ' + D.tr.length + ')');
+    TR_KEYS.forEach(function(k){
+      var a = avgKey(D.tr, k[0]);
+      if (a !== null) L.push('  ' + k[1] + ': ' + signed(a));
+    });
+    var last = D.tr[0];
+    if (last && (last.t1 || last.t2 || last.t3)){
+      L.push('  Последнее занятие ' + dm(last.d) + ':');
+      if (last.t1) L.push('    Задача: ' + last.t1);
+      if (last.t2) L.push('    Результат: ' + last.t2);
+      if (last.t3) L.push('    Внимание: ' + last.t3);
+    }
+  }
+  L.push('');
+  if (D.sch.length) L.push('Шульте: лучший ' + Math.min.apply(null, D.sch.map(function(x){return x.t;})) +
+    ' с, средний ' + fmt(avg(D.sch.map(function(x){return x.t;}))) + ' с, попыток ' + D.sch.length);
+  if (D.sv.length) L.push('Светофон: лучший ' + Math.min.apply(null, D.sv.map(function(x){return x.e;})) +
+    ' ош., средний ' + fmt(avg(D.sv.map(function(x){return x.e;}))));
+  if (D.gl.length){
+    var sc = {};
+    D.gl.forEach(function(x){ sc[x[4]] = (sc[x[4]]||0)+1; });
+    var tops = Object.keys(sc).sort(function(a,b){ return sc[b]-sc[a]; }).slice(0,3)
+      .map(function(k){ return SITS[k] + ' ' + sc[k]; }).join(', ');
+    L.push('Пропущено голов: ' + D.gl.length + ' (чаще: ' + tops + ')');
+  }
+  if (DB.goals.season) L.push('Цель сезона: ' + DB.goals.season.t);
+  if (DB.goals.months[curMonth]) L.push('Цель месяца: ' + DB.goals.months[curMonth].t);
+  copy(L.join('\n'), 'Отчёт скопирован — вставь его в чат тренеру.');
+}
+function copy(text, msg){
+  var ta = document.createElement('textarea');
+  ta.value = text; ta.style.position='fixed'; ta.style.opacity='0';
+  document.body.appendChild(ta); ta.select();
+  try { document.execCommand('copy'); alertMsg(msg); } catch(e){ alertMsg(text); }
+  document.body.removeChild(ta);
+}
+function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function setTxt(id, t){ var e = document.getElementById(id); if (e) e.textContent = t; }
+function cut(s2, n){ s2 = String(s2); return s2.length > n ? s2.slice(0, n - 1) + '…' : s2; }
+function human(d){ return d.slice(8,10) + '.' + d.slice(5,7) + '.' + d.slice(0,4); }
+function dm(d){ return d.slice(8,10) + '.' + d.slice(5,7); }
+
+/* ---------- отрисовка ---------- */
+function render(){
+  var name = DB.me.n ? DB.me.n.split(' ')[0] :
+    (TG && TG.initDataUnsafe && TG.initDataUnsafe.user ? TG.initDataUnsafe.user.first_name : '');
+  document.getElementById('hello').textContent = name ? ('Привет, ' + name + '!') : 'Привет!';
+  var dd = new Date();
+  var mn = ['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
+  document.getElementById('today').textContent = dd.getDate() + ' ' + mn[dd.getMonth()] + ', ' +
+    ['воскресенье','понедельник','вторник','среда','четверг','пятница','суббота'][dd.getDay()];
+
+  var wbToday = DB.wb.filter(function(x){ return x.d === today; })[0];
+  document.getElementById('h-sleep').textContent = wbToday && ok(wbToday.sl) ? String(wbToday.sl) : '—';
+  document.getElementById('h-ready').textContent = wbToday && wbToday.v ? signed(wbToday.v.rd) : '—';
+  var schToday = DB.schulte.filter(function(x){ return x.d === today; });
+  document.getElementById('h-sch').textContent = schToday.length ? String(Math.min.apply(null, schToday.map(function(x){return x.t;}))) : '—';
+  document.getElementById('h-status').innerHTML = wbToday
+    ? '<span class="ok">Самочувствие на сегодня заполнено.</span>' : 'Самочувствие сегодня ещё не заполнено.';
+  document.getElementById('m-notes').textContent = String(DB.notes.length);
+
+  /* подписи плиток на главной */
+  setTxt('t-wb', wbToday ? 'сегодня заполнено' : 'сегодня не заполнено');
+  setTxt('t-tr', DB.tr.length ? 'записей: ' + DB.tr.length + (DB.tr[0] ? ' · ' + dm(DB.tr[0].d) : '') : 'пока пусто');
+  setTxt('t-cog', DB.schulte.length ? 'Шульте лучший ' + bestSchulte() + ' с' : 'Шульте и Светофон');
+  setTxt('t-goals', DB.goals.season ? cut(DB.goals.season.t, 30) : 'цель сезона не задана');
+  setTxt('t-an', DB.gls.length ? 'голов: ' + DB.gls.length : 'карта и зоны');
+  setTxt('t-notes', DB.notes.length ? 'заметок: ' + DB.notes.length : 'пока пусто');
+  setTxt('t-me', DB.me.n ? cut(DB.me.n, 22) : 'заполнить данные');
+
+  /* самочувствие */
+  if (wbToday){
+    if (ok(wbToday.sl)) document.getElementById('i-sleep').value = wbToday.sl;
+    if (ok(wbToday.p)) document.getElementById('i-pulse').value = wbToday.p;
+    if (ok(wbToday.w)) document.getElementById('i-weight').value = wbToday.w;
+    if (wbToday.c) document.getElementById('i-note').value = wbToday.c;
+    WB_KEYS.forEach(function(k){ setSl(k[0], wbToday.v ? wbToday.v[k[0]] : 0); });
+  }
+  var ser = DB.wb.slice(0,14).reverse();
+  document.getElementById('wb-bars').innerHTML = ser.map(function(x){
+    var rd = x.v ? x.v.rd : 0;
+    return '<i style="height:' + Math.max(6, (rd + 3) / 6 * 100) + '%"></i>';
+  }).join('') || '';
+  var a7 = last7();
+  document.getElementById('wb-avg').innerHTML = a7.length ? (
+    '<div><span>Сон</span><b>' + fmt(avg(a7.map(function(x){return x.sl;}).filter(ok))) + ' ч</b></div>' +
+    '<div><span>Пульс в покое</span><b>' + fmt(avg(a7.map(function(x){return x.p;}).filter(ok))) + '</b></div>' +
+    WB_KEYS.map(function(k){
+      var vv = a7.map(function(x){ return x.v ? x.v[k[0]] : null; }).filter(ok);
+      return '<div><span>' + k[1] + '</span><b>' + (vv.length ? signed(Math.round(avg(vv)*10)/10) : '—') + '</b></div>';
+    }).join('')
+  ) : '<div>Нет записей за неделю.</div>';
+  document.getElementById('wb-list').innerHTML = DB.wb.slice(0,10).map(function(x){
+    return '<div><span>' + dm(x.d) + '</span><b>сон ' + (ok(x.sl)?x.sl:'—') + ' ч · готовность ' +
+      (x.v ? signed(x.v.rd) : '—') + '</b></div>';
+  }).join('') || '<div>Записей пока нет.</div>';
+
+  /* дневник тренировок */
+  var tser = DB.tr.slice(0,14).reverse();
+  document.getElementById('tr-bars').innerHTML = tser.map(function(x){
+    var v = x.v ? x.v.inv : 0;
+    return '<i style="height:' + Math.max(6, (v + 3) / 6 * 100) + '%"></i>';
+  }).join('') || '';
+  var t7 = DB.tr.slice(0,7);
+  document.getElementById('tr-avg').innerHTML = t7.length ? TR_KEYS.map(function(k){
+    var vv = t7.map(function(x){ return x.v ? x.v[k[0]] : null; }).filter(ok);
+    return '<div><span>' + k[1] + '</span><b>' + (vv.length ? signed(Math.round(avg(vv)*10)/10) : '—') + '</b></div>';
+  }).join('') : '<div>Записей пока нет.</div>';
+  document.getElementById('tr-list').innerHTML = DB.tr.slice(0,10).map(function(x,i){
+    return '<div class="goal"><span class="x" data-act="trdel:' + i + '">×</span>' +
+      '<div class="tag">' + dm(x.d) + ' · ' + TR_TYPES[x.ty || 0] + '</div>' +
+      (x.t1 ? '<div class="t">Задача: ' + esc(x.t1) + '</div>' : '') +
+      (x.t2 ? '<div class="c">Результат: ' + esc(x.t2) + '</div>' : '') +
+      (x.t3 ? '<div class="c">Внимание: ' + esc(x.t3) + '</div>' : '') + '</div>';
+  }).join('') || '<div class="sub" style="margin:0">Записей пока нет.</div>';
+
+  /* цели */
+  if (DB.goals.season){
+    document.getElementById('g-season').value = DB.goals.season.t;
+    document.getElementById('g-season-c').value = DB.goals.season.c || '';
+  }
+  var gm = DB.goals.months[curMonth];
+  if (gm){ document.getElementById('g-month').value = gm.t; document.getElementById('g-month-c').value = gm.c || ''; }
+  document.getElementById('g-month-list').innerHTML = Object.keys(DB.goals.months).sort().reverse().slice(0,6).map(function(k){
+    return '<div class="goal"><div class="tag">' + k + '</div><div class="t">' + esc(DB.goals.months[k].t) + '</div>' +
+      (DB.goals.months[k].c ? '<div class="c">' + esc(DB.goals.months[k].c) + '</div>' : '') + '</div>';
+  }).join('');
+  document.getElementById('g-day-list').innerHTML = DB.goals.days.slice(0,12).map(function(x,i){
+    return '<div class="goal"><span class="x" data-act="daydel:' + i + '">×</span>' +
+      '<div class="tag ' + (x.ok?'done-tag':'') + '" data-act="daytog:' + i + '">' +
+      (x.ok ? 'выполнено' : 'отметить') + ' · ' + dm(x.d) + '</div><div class="t">' + esc(x.t) + '</div></div>';
+  }).join('') || '<div class="sub" style="margin:0">Целей пока нет.</div>';
+
+  /* когнитивка */
+  document.getElementById('sch-cnt').textContent = String(DB.schulte.length);
+  document.getElementById('sch-best').textContent = DB.schulte.length ? String(bestSchulte()) : '—';
+  var s7 = DB.schulte.slice(0,7).map(function(x){ return x.t; });
+  document.getElementById('sch-avg').textContent = s7.length ? fmt(avg(s7)) : '—';
+  var sser = DB.schulte.slice(0,14).reverse();
+  var smx = sser.length ? Math.max.apply(null, sser.map(function(x){return x.t;})) : 1;
+  document.getElementById('sch-bars').innerHTML = sser.map(function(x){
+    return '<i style="height:' + Math.max(6, Math.round(x.t/smx*100)) + '%"></i>';
+  }).join('');
+  document.getElementById('sch-list').innerHTML = DB.schulte.slice(0,8).map(function(x){
+    return '<div><span>' + dm(x.d) + '</span><b>' + x.t + ' с · ошибок ' + x.e + '</b></div>';
+  }).join('') || '<div>Попыток пока нет.</div>';
+
+  document.getElementById('sv-cnt').textContent = String(DB.svet.length);
+  document.getElementById('sv-best').textContent = DB.svet.length ? String(Math.min.apply(null, DB.svet.map(function(x){return x.e;}))) : '—';
+  var v7 = DB.svet.slice(0,7).map(function(x){ return x.e; });
+  document.getElementById('sv-avg').textContent = v7.length ? fmt(avg(v7)) : '—';
+  var vser = DB.svet.slice(0,14).reverse();
+  var vmx = vser.length ? Math.max.apply(null, vser.map(function(x){return x.e;})) : 1;
+  document.getElementById('sv-bars').innerHTML = vser.map(function(x){
+    return '<i style="height:' + Math.max(6, Math.round(x.e/(vmx||1)*100)) + '%"></i>';
+  }).join('');
+  document.getElementById('sv-list').innerHTML = DB.svet.slice(0,8).map(function(x){
+    return '<div><span>' + dm(x.d) + '</span><b>' + x.e + ' ошибок' + (ok(x.ms) ? ' · ' + x.ms + ' мс' : '') + '</b></div>';
+  }).join('') || '<div>Записей пока нет.</div>';
+
+  /* заметки */
+  document.getElementById('n-list').innerHTML = DB.notes.map(function(x){
+    var mine = x.a !== 'coach';
+    return '<div class="goal">' +
+      (mine ? '<span class="x" data-act="notedel:' + x.id + '">×</span>' : '') +
+      '<div class="tag' + (mine ? ' done-tag' : '') + '">' +
+        (mine ? 'моя запись' : 'тренер') + ' · ' + dm(x.d) + '</div>' +
+      '<div class="t">' + esc(x.t) + '</div></div>';
+  }).join('') || '<div class="sub" style="margin:0">Заметок пока нет.</div>';
+
+  renderAnalytics();
+  if (document.getElementById('p-rep') && !document.getElementById('p-rep').className) renderReport();
+
+  /* профиль */
+  var dg = document.getElementById('diag');
+  if (dg) dg.innerHTML = 'Версия 3.0 · Telegram: ' + (TG ? 'подключён' : 'нет') +
+    ' · база: ' + (apiReady() ? 'общая' : 'не подключена') +
+    ' · состояние: <span id="sync">' + esc(SYNC) + '</span>';
+  if (DB.me.n) document.getElementById('m-name').value = DB.me.n;
+  if (DB.me.tm) document.getElementById('m-team').value = DB.me.tm;
+  if (DB.me.y) document.getElementById('m-year').value = DB.me.y;
+}
+
+function renderAnalytics(){
+  if (!document.getElementById('map-wrap')) return;
+  var g = DB.gls || [];
+  document.getElementById('map-wrap').innerHTML = rinkSVG(g.map(function(x){ return [x[1], x[2]]; }));
+  document.getElementById('an-total').textContent = g.length ? 'Всего голов записано: ' + g.length
+    : 'Пока нет записей — добавь первый гол выше.';
+  var cnt = [0,0,0,0,0,0,0,0,0], mx = 0;
+  g.forEach(function(x){ cnt[x[3]]++; });
+  cnt.forEach(function(v){ if (v > mx) mx = v; });
+  document.getElementById('net-stat').innerHTML = cnt.map(function(v,i){
+    var op = mx ? (0.12 + 0.72*v/mx) : 0;
+    return '<div style="background:rgba(214,17,46,' + (v ? op.toFixed(2) : 0) + ')"><b>' + v + '</b><span>' + NZ[i] + '</span></div>';
+  }).join('');
+  var sc = {};
+  g.forEach(function(x){ sc[x[4]] = (sc[x[4]] || 0) + 1; });
+  var keys = Object.keys(sc).sort(function(a,b){ return sc[b] - sc[a]; });
+  document.getElementById('sit-stat').innerHTML = keys.length ? keys.map(function(k){
+    return '<div><span>' + SITS[k] + '</span><b>' + sc[k] + ' · ' + Math.round(sc[k]/g.length*100) + '%</b></div>';
+  }).join('') : '<div>Нет данных.</div>';
+  document.getElementById('an-list').innerHTML = g.length ? g.slice(0,10).map(function(x,i){
+    return '<div><span>' + dm(x[0]) + (x[5] ? ' · ' + esc(x[5]) : '') + '</span><b>' + SITS[x[4]] + ' → ' + NZ[x[3]] +
+      ' <span data-act="gdel:' + i + '" style="color:#98A0AA;padding-left:8px">×</span></b></div>';
+  }).join('') : '<div>Записей пока нет.</div>';
+}
+
+/* ══════════════════ КАБИНЕТ ТРЕНЕРА ══════════════════ */
+
+var ROSTER = [], CUR = null;
+
+function loadRoster(){
+  var box = document.getElementById('c-list');
+  if (box) box.innerHTML = '<div class="sub" style="margin:0">Загружаю…</div>';
+  api({ a: 'roster' }, function(res){
+    if (!res || !res.ok){
+      if (box) box.innerHTML = '<div class="sub" style="margin:0">Не удалось загрузить список.</div>';
+      return;
+    }
+    ROSTER = res.list || [];
+    renderRoster();
+  });
+}
+
+function renderRoster(){
+  var box = document.getElementById('c-list');
+  if (!box) return;
+  if (!ROSTER.length){
+    box.innerHTML = '<div class="sub" style="margin:0">Пока никто не заходил. ' +
+      'Отправь вратарям ссылку на приложение — они появятся здесь после первого входа.</div>';
+    return;
+  }
+  box.innerHTML = ROSTER.map(function(g){
+    var bits = [];
+    if (g.lastWbDate) bits.push('самочувствие ' + dm(g.lastWbDate));
+    if (g.schulteBest) bits.push('Шульте ' + g.schulteBest + ' с');
+    if (g.svetLast !== null && g.svetLast !== undefined) bits.push('светофон ' + g.svetLast);
+    bits.push('записей: ' + (g.wbN + g.trN));
+    var warn = g.ready !== null && g.ready !== undefined && g.ready <= -2;
+    return '<button class="tile wide" data-act="gk:' + g.uid + '" style="margin-bottom:8px">' +
+      '<b>' + esc(g.name) + (g.year ? ' · ' + esc(String(g.year)) : '') + '</b>' +
+      '<i>' + esc(bits.join(' · ')) + '</i>' +
+      (warn ? '<i style="color:#E2606F">низкая готовность в последней записи</i>' : '') +
+      '</button>';
+  }).join('');
+}
+
+function openGoalie(uid){
+  CUR = uid;
+  go('gk');
+  var head = ROSTER.filter(function(x){ return String(x.uid) === String(uid); })[0] || {};
+  document.getElementById('gk-name').textContent = head.name || 'Вратарь';
+  document.getElementById('gk-sub').textContent =
+    [head.team, head.year, head.seen ? 'был(а): ' + head.seen : ''].filter(Boolean).join(' · ');
+  document.getElementById('gk-body').innerHTML = '<div class="card"><div class="sub" style="margin:0">Загружаю…</div></div>';
+  document.getElementById('gk-notes').innerHTML = '';
+
+  api({ a: 'goalie', uid: uid }, function(res){
+    if (!res || !res.ok){
+      document.getElementById('gk-body').innerHTML =
+        '<div class="card"><div class="sub" style="margin:0">Не удалось загрузить данные.</div></div>';
+      return;
+    }
+    renderGoalie(res);
+  });
+}
+
+function renderGoalie(res){
+  var d  = res.data || {};
+  var wb = d.wb || [], tr = d.tr || [], sc = d.schulte || [], sv = d.svet || [];
+  var gl = d.gls || [], go_ = d.goals || {};
+  var H = [];
+
+  /* цели */
+  var gm = go_.months ? go_.months[curMonth] : null;
+  H.push(card('Цели', [
+    row('Сезон', go_.season ? esc(go_.season.t) : '—'),
+    row('Месяц', gm ? esc(gm.t) : '—'),
+    row('На занятия', String((go_.days || []).length) + ' записей')
+  ].join('')));
+
+  /* самочувствие */
+  if (wb.length){
+    var last = wb[0];
+    var avg = function(k){
+      var n = 0, s = 0;
+      wb.slice(0,7).forEach(function(x){ if (x.v && x.v[k] !== undefined){ s += x.v[k]; n++; } });
+      return n ? (s/n).toFixed(1) : '—';
+    };
+    H.push(card('Самочувствие · ' + dm(last.d), [
+      stat3(ok(last.sl) ? last.sl : '—', 'сон, ч',
+            (last.v && ok(last.v.rd)) ? signed(last.v.rd) : '—', 'готовность',
+            ok(last.p) ? last.p : '—', 'пульс'),
+      '<div class="list" style="margin-top:8px">' +
+        WB_KEYS.map(function(k){ return '<div><span>' + k[1] + '</span><b>' + avg(k[0]) + '</b></div>'; }).join('') +
+      '</div>',
+      '<div class="sub" style="margin:8px 0 0">Средние за последние 7 записей. Всего записей: ' + wb.length + '.</div>',
+      last.c ? '<div class="sub" style="margin:8px 0 0">Самонаблюдение: ' + esc(last.c) + '</div>' : ''
+    ].join('')));
+  }
+
+  /* когнитивка */
+  if (sc.length || sv.length){
+    H.push(card('Когнитивка', [
+      stat3(sc.length ? Math.min.apply(null, sc.map(function(x){ return x.t; })) : '—', 'Шульте лучш., с',
+            sc.length ? sc[0].t : '—', 'последний, с',
+            sv.length ? sv[0].e : '—', 'светофон, ошиб.'),
+      '<div class="list" style="margin-top:8px">' +
+        sc.slice(0,5).map(function(x){
+          return '<div><span>Шульте · ' + dm(x.d) + '</span><b>' + x.t + ' с · ' + x.e + ' ошиб.</b></div>';
+        }).join('') +
+        sv.slice(0,5).map(function(x){
+          return '<div><span>Светофон · ' + dm(x.d) + '</span><b>' + x.e + ' ошиб.' +
+                 (ok(x.ms) ? ' · ' + x.ms + ' мс' : '') + '</b></div>';
+        }).join('') +
+      '</div>'
+    ].join('')));
+  }
+
+  /* дневник занятий */
+  if (tr.length){
+    H.push(card('Дневник занятий', '<div class="list">' + tr.slice(0,6).map(function(x){
+      return '<div><span>' + dm(x.d) + ' · ' + (TR_TYPES[x.ty] || '') + '</span><b>' +
+        esc((x.t1 || x.t2 || '—').slice(0,60)) + '</b></div>';
+    }).join('') + '</div>' +
+    '<div class="sub" style="margin:8px 0 0">Всего записей: ' + tr.length + '.</div>'));
+  }
+
+  /* голы */
+  if (gl.length){
+    var bysit = {};
+    gl.forEach(function(x){ bysit[x[4]] = (bysit[x[4]] || 0) + 1; });
+    var keys = Object.keys(bysit).sort(function(a,b){ return bysit[b] - bysit[a]; }).slice(0,6);
+    H.push(card('Пропущенные · ' + gl.length, '<div class="list">' + keys.map(function(k){
+      return '<div><span>' + SITS[k] + '</span><b>' + bysit[k] + '</b></div>';
+    }).join('') + '</div>'));
+  }
+
+  if (H.length === 1) H.push(card('Данные', '<div class="sub" style="margin:0">Вратарь пока ничего не заполнил.</div>'));
+  document.getElementById('gk-body').innerHTML = H.join('');
+
+  document.getElementById('gk-notes').innerHTML = (res.notes || []).map(function(x){
+    var coach = x.a === 'coach';
+    return '<div class="goal"><div class="tag' + (coach ? '' : ' done-tag') + '">' +
+      (coach ? 'моя заметка' : 'запись вратаря') + ' · ' + dm(x.d) + '</div>' +
+      '<div class="t">' + esc(x.t) + '</div></div>';
+  }).join('') || '<div class="sub" style="margin:0">Заметок пока нет.</div>';
+}
+
+function coachNote(){
+  var t = val('gk-note').trim();
+  if (!t){ alertMsg('Впиши текст заметки.'); return; }
+  if (!CUR){ return; }
+  document.getElementById('gk-note').value = '';
+  haptic('medium');
+  api({ a: 'note', uid: CUR, text: t }, function(res){
+    if (!res || !res.ok){ alertMsg('Не удалось отправить — нет связи.'); return; }
+    alertMsg('Заметка отправлена вратарю.');
+    document.getElementById('gk-notes').innerHTML = (res.notes || []).map(function(x){
+      var coach = x.a === 'coach';
+      return '<div class="goal"><div class="tag' + (coach ? '' : ' done-tag') + '">' +
+        (coach ? 'моя заметка' : 'запись вратаря') + ' · ' + dm(x.d) + '</div>' +
+        '<div class="t">' + esc(x.t) + '</div></div>';
+    }).join('');
+  });
+}
+
+function card(title, inner){
+  return '<div class="card"><h2>' + title + '</h2>' + inner + '</div>';
+}
+function row(a, b){ return '<div class="list"><div><span>' + a + '</span><b>' + b + '</b></div></div>'; }
+function stat3(a, ta, b, tb, c2, tc){
+  return '<div class="stat"><div><b>' + a + '</b><span>' + ta + '</span></div>' +
+         '<div><b>' + b + '</b><span>' + tb + '</span></div>' +
+         '<div><b>' + c2 + '</b><span>' + tc + '</span></div></div>';
+}
+
+/* ---------- старт ---------- */
+buildGrid(true);
+boot();
+</script>
+</body>
+</html>
