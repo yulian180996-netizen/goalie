@@ -96,6 +96,18 @@
        text-shadow:0 1px 3px rgba(0,0,0,.8);display:flex;align-items:flex-end;justify-content:center}
   .netpic .zgrid button span{padding-bottom:3px;opacity:.75}
   .netpic .zgrid button.on{background:rgba(214,17,46,.55);border-color:#D6112E}
+  /* реакция выбора */
+  .rxgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}
+  .rxb{aspect-ratio:1;background:#12161C;border:1px solid var(--line);color:var(--tx);
+       border-radius:14px;font-size:30px;line-height:1;cursor:pointer;font-family:inherit}
+  .rxb:active{background:#252A33}
+  .rxb.hit{background:#16281B;border-color:#2FA84F}
+  .rxb.miss{background:#3A1A1F;border-color:#5A2029}
+  .rxc{aspect-ratio:1;display:flex;align-items:center;justify-content:center;
+       background:#0E1216;border:1px solid var(--line);border-radius:14px;
+       font-size:42px;font-weight:800;color:#fff}
+  .rxc.go{background:var(--red);border-color:var(--red)}
+  #rx-pad.off{opacity:.45}
 </style>
 </head>
 <body>
@@ -221,13 +233,42 @@
       <div class="list" id="sch-list" style="margin-top:10px"></div>
     </div>
     <div class="card">
-      <h2>Светофон</h2>
-      <div class="sub" style="margin:0">Внеси результат после теста.</div>
+      <h2>Реакция выбора</h2>
+      <div class="sub" style="margin:0">В центре загорается буква — жми стрелку в эту сторону.
+        <b style="color:#fff">В</b> вверх · <b style="color:#fff">Н</b> вниз ·
+        <b style="color:#fff">П</b> вправо · <b style="color:#fff">Л</b> влево. Одна минута.</div>
+      <label>Уровень</label>
+      <div class="chips" id="rx-lvl"></div>
+      <div id="rx-pad">
+        <div class="rxgrid">
+          <div></div>
+          <button class="rxb" data-act="rx:0">↑</button>
+          <div></div>
+          <button class="rxb" data-act="rx:3">←</button>
+          <div class="rxc" id="rx-cue">—</div>
+          <button class="rxb" data-act="rx:2">→</button>
+          <div></div>
+          <button class="rxb" data-act="rx:1">↓</button>
+          <div></div>
+        </div>
+      </div>
+      <div class="stat" style="margin-top:12px">
+        <div><b id="rx-time">60</b><span>секунд</span></div>
+        <div><b id="rx-ok">0</b><span>верно</span></div>
+        <div><b id="rx-err">0</b><span>ошибок</span></div>
+        <div><b id="rx-skip">0</b><span>пропусков</span></div>
+      </div>
+      <button class="btn" id="rx-btn" data-act="rxstart">Начать</button>
+      <div class="sub" id="rx-res" style="margin:10px 0 0"></div>
+    </div>
+    <div class="card">
+      <h2>Светофон — ввод вручную</h2>
+      <div class="sub" style="margin:0">Если проходил на тренажёре в зале.</div>
       <div class="row">
         <div><label>Ошибок</label><input id="sv-err" type="number" inputmode="numeric" placeholder="кол-во"></div>
         <div><label>Время, мс</label><input id="sv-ms" type="number" inputmode="numeric" placeholder="800"></div>
       </div>
-      <button class="btn" data-act="svsave">Сохранить результат</button>
+      <button class="btn sec" data-act="svsave">Сохранить результат</button>
       <div class="stat" style="margin-top:14px">
         <div><b id="sv-best">—</b><span>лучший</span></div>
         <div><b id="sv-avg">—</b><span>средний 7</span></div>
@@ -569,6 +610,7 @@ function go(page){
     var mb = document.getElementById('n-more'); if (mb) mb.className = 'on';
   }
   window.scrollTo(0,0);
+  if (page !== 'cog') abortRx();
   if (page === 'cog' && !running) buildGrid(true);
   if (page === 'an') buildAnalytics();
   if (page === 'rep') renderReport();
@@ -588,6 +630,8 @@ function buildForms(){
   }).join('');
   document.getElementById('wb-date').textContent = human(today);
   document.getElementById('tr-date').textContent = human(today);
+  buildRxLvl();
+  if (!rxRun) rxIdle('Начать');
 }
 document.addEventListener('input', function(ev){
   var el = ev.target;
@@ -619,6 +663,9 @@ document.addEventListener('click', function(ev){
     else if (a[0] === 'trtype') { trType = parseInt(a[1],10); buildForms(); restoreTR(); }
     else if (a[0] === 'trdel') delTR(parseInt(a[1],10));
     else if (a[0] === 'svsave') saveSvet();
+    else if (a[0] === 'rxlvl') { rxLvl = parseInt(a[1],10); buildRxLvl(); }
+    else if (a[0] === 'rxstart') startRx();
+    else if (a[0] === 'rx') rxPress(parseInt(a[1],10));
     else if (a[0] === 'noteadd') addNote();
     else if (a[0] === 'notedel') delNote(a[1]);
     else if (a[0] === 'roster') { go('coach'); loadRoster(); }
@@ -687,6 +734,105 @@ function saveSvet(){
   document.getElementById('sv-err').value = '';
   save('svet', DB.svet, function(){ haptic('medium'); alertMsg('Результат сохранён.'); render(); });
 }
+
+/* ---------- реакция выбора ---------- */
+var RX_LVL  = [['Лёгкий', 1000], ['Средний', 800], ['Высокий', 600]];
+var RX_LET  = ['В', 'Н', 'П', 'Л'];            // 0 вверх · 1 вниз · 2 вправо · 3 влево
+var RX_SEC  = 60;
+var rxLvl = 1, rxRun = false, rxT = null, rxTick = null;
+var rxCur = -1, rxAnswered = true, rxShownAt = 0;
+var rxOk = 0, rxErr = 0, rxSkip = 0, rxRT = [], rxEnd = 0;
+
+function buildRxLvl(){
+  var el = document.getElementById('rx-lvl');
+  if (!el) return;
+  el.innerHTML = RX_LVL.map(function(l, i){
+    return '<button data-act="rxlvl:' + i + '"' + (rxLvl === i ? ' class="on"' : '') + '>' +
+           l[0] + ' · ' + l[1] + ' мс</button>';
+  }).join('');
+}
+
+function rxMark(dir, cls){
+  var b = document.querySelector('[data-act="rx:' + dir + '"]');
+  if (b) b.className = 'rxb ' + cls;
+}
+function rxClear(){
+  for (var i = 0; i < 4; i++){
+    var b = document.querySelector('[data-act="rx:' + i + '"]');
+    if (b) b.className = 'rxb';
+  }
+}
+function rxStats(){ setTxt('rx-ok', rxOk); setTxt('rx-err', rxErr); setTxt('rx-skip', rxSkip); }
+
+function rxIdle(label){
+  clearTimeout(rxT); clearInterval(rxTick);
+  rxRun = false;
+  var cue = document.getElementById('rx-cue');
+  if (cue){ cue.textContent = '—'; cue.className = 'rxc'; }
+  var pad = document.getElementById('rx-pad'); if (pad) pad.className = 'off';
+  setTxt('rx-btn', label); setTxt('rx-time', RX_SEC);
+  rxClear();
+}
+
+function startRx(){
+  if (rxRun) return;
+  rxRun = true;
+  rxOk = rxErr = rxSkip = 0; rxRT = [];
+  rxEnd = Date.now() + RX_SEC * 1000;
+  setTxt('rx-btn', 'Идёт тест…');
+  document.getElementById('rx-res').textContent = '';
+  document.getElementById('rx-pad').className = '';
+  rxStats();
+  rxTick = setInterval(function(){
+    var left = Math.max(0, Math.ceil((rxEnd - Date.now()) / 1000));
+    setTxt('rx-time', left);
+    if (left <= 0) stopRx();
+  }, 200);
+  rxNext();
+}
+
+function rxNext(){
+  if (!rxRun) return;
+  if (Date.now() >= rxEnd){ stopRx(); return; }
+  rxCur = Math.floor(Math.random() * 4);
+  rxAnswered = false;
+  rxShownAt = Date.now();
+  rxClear();
+  var cue = document.getElementById('rx-cue');
+  cue.textContent = RX_LET[rxCur];
+  cue.className = 'rxc go';
+  rxT = setTimeout(function(){
+    if (!rxAnswered){ rxSkip++; rxStats(); rxMark(rxCur, 'miss'); }
+    rxNext();
+  }, RX_LVL[rxLvl][1]);
+}
+
+function rxPress(dir){
+  if (!rxRun || rxAnswered) return;
+  rxAnswered = true;
+  if (dir === rxCur){ rxOk++; rxRT.push(Date.now() - rxShownAt); rxMark(dir, 'hit'); haptic(); }
+  else { rxErr++; rxMark(dir, 'miss'); rxMark(rxCur, 'hit'); haptic('heavy'); }
+  rxStats();
+}
+
+function stopRx(){
+  if (!rxRun) return;
+  var total = rxOk + rxErr + rxSkip;
+  var rt = rxRT.length ? Math.round(rxRT.reduce(function(a, b){ return a + b; }, 0) / rxRT.length) : null;
+  var acc = total ? Math.round(rxOk / total * 100) : 0;
+  rxIdle('Пройти ещё раз');
+
+  document.getElementById('rx-res').innerHTML =
+    'Сигналов: <b style="color:#fff">' + total + '</b> · точность <b style="color:#fff">' + acc + '%</b>' +
+    (rt ? ' · среднее время <b style="color:#fff">' + rt + ' мс</b>' : '');
+
+  DB.svet.unshift({ d: today, e: rxErr, sk: rxSkip, ok: rxOk, n: total,
+                    ms: RX_LVL[rxLvl][1], rt: rt, src: 'app' });
+  DB.svet = DB.svet.slice(0, 60);
+  save('svet', DB.svet, function(){ haptic('medium'); render(); });
+}
+
+function abortRx(){ if (rxRun) rxIdle('Начать'); }
 
 /* ---------- заметки ---------- */
 function addNote(){
@@ -1174,16 +1320,19 @@ function render(){
   }).join('') || '<div>Попыток пока нет.</div>';
 
   document.getElementById('sv-cnt').textContent = String(DB.svet.length);
-  document.getElementById('sv-best').textContent = DB.svet.length ? String(Math.min.apply(null, DB.svet.map(function(x){return x.e;}))) : '—';
-  var v7 = DB.svet.slice(0,7).map(function(x){ return x.e; });
+  var miss = function(x){ return (x.e || 0) + (x.sk || 0); };
+  document.getElementById('sv-best').textContent = DB.svet.length ? String(Math.min.apply(null, DB.svet.map(miss))) : '—';
+  var v7 = DB.svet.slice(0,7).map(miss);
   document.getElementById('sv-avg').textContent = v7.length ? fmt(avg(v7)) : '—';
   var vser = DB.svet.slice(0,14).reverse();
-  var vmx = vser.length ? Math.max.apply(null, vser.map(function(x){return x.e;})) : 1;
+  var vmx = vser.length ? Math.max.apply(null, vser.map(miss)) : 1;
   document.getElementById('sv-bars').innerHTML = vser.map(function(x){
-    return '<i style="height:' + Math.max(6, Math.round(x.e/(vmx||1)*100)) + '%"></i>';
+    return '<i style="height:' + Math.max(6, Math.round(miss(x)/(vmx||1)*100)) + '%"></i>';
   }).join('');
   document.getElementById('sv-list').innerHTML = DB.svet.slice(0,8).map(function(x){
-    return '<div><span>' + dm(x.d) + '</span><b>' + x.e + ' ошибок' + (ok(x.ms) ? ' · ' + x.ms + ' мс' : '') + '</b></div>';
+    return '<div><span>' + dm(x.d) + (x.src === 'app' ? ' · в приложении' : '') + '</span><b>' +
+      x.e + ' ошиб.' + (ok(x.sk) ? ' · ' + x.sk + ' проп.' : '') +
+      (ok(x.ms) ? ' · ' + x.ms + ' мс' : '') + (ok(x.rt) ? ' · ' + x.rt + ' мс реакция' : '') + '</b></div>';
   }).join('') || '<div>Записей пока нет.</div>';
 
   /* заметки */
@@ -1339,7 +1488,8 @@ function renderGoalie(res){
           return '<div><span>Шульте · ' + dm(x.d) + '</span><b>' + x.t + ' с · ' + x.e + ' ошиб.</b></div>';
         }).join('') +
         sv.slice(0,5).map(function(x){
-          return '<div><span>Светофон · ' + dm(x.d) + '</span><b>' + x.e + ' ошиб.' +
+          return '<div><span>Реакция выбора · ' + dm(x.d) + '</span><b>' + x.e + ' ошиб.' +
+                 (ok(x.sk) ? ' · ' + x.sk + ' проп.' : '') +
                  (ok(x.ms) ? ' · ' + x.ms + ' мс' : '') + '</b></div>';
         }).join('') +
       '</div>'
