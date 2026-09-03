@@ -96,6 +96,19 @@
        text-shadow:0 1px 3px rgba(0,0,0,.8);display:flex;align-items:flex-end;justify-content:center}
   .netpic .zgrid button span{padding-bottom:3px;opacity:.75}
   .netpic .zgrid button.on{background:rgba(214,17,46,.55);border-color:#D6112E}
+  /* чек-лист дня */
+  .ck{display:flex;align-items:center;gap:11px;width:100%;text-align:left;background:#12161C;
+      border:1px solid var(--line);border-radius:12px;padding:11px 12px;margin-bottom:8px;
+      color:var(--tx);font-size:13.5px;line-height:1.3;font-family:inherit;cursor:pointer;
+      touch-action:manipulation;-webkit-user-select:none;user-select:none}
+  .ckc{flex:none;width:24px;height:24px;border-radius:50%;border:2px solid var(--line);
+       display:flex;align-items:center;justify-content:center;font-size:13px;
+       color:transparent;transition:background .15s,border-color .15s}
+  .ck.on{background:#12211A;border-color:#2FA84F}
+  .ck.on .ckc{background:#2FA84F;border-color:#2FA84F;color:#fff}
+  .ck.on .ckt{color:#9FD6AE}
+  .ckbar{height:6px;background:#12161C;border-radius:3px;overflow:hidden;margin-top:4px}
+  .ckbar i{display:block;height:100%;background:#2FA84F;border-radius:3px;transition:width .2s}
   /* реакция выбора */
   .rxgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}
   .rxb{aspect-ratio:1;background:#12161C;border:1px solid var(--line);color:var(--tx);
@@ -127,6 +140,13 @@
         <div><b id="h-sch">—</b><span>Шульте, с</span></div>
       </div>
       <div id="h-status" class="sub" style="margin:0"></div>
+    </div>
+    <div class="card">
+      <h2>Чек-лист дня</h2>
+      <div class="sub" style="margin:0 0 10px">Выполнил — отметь.</div>
+      <div id="ck-list"></div>
+      <div class="sub" id="ck-sum" style="margin:10px 0 0"></div>
+      <div class="ckbar"><i id="ck-bar" style="width:0%"></i></div>
     </div>
     <div class="tiles">
       <button class="tile wide hide" id="coach-entry" data-act="roster"
@@ -672,6 +692,7 @@ document.addEventListener('click', function(ev){
   var a = act.split(':');
   try {
     if (a[0] === 'go') go(a[1]);
+    else if (a[0] === 'ck') ckToggle(parseInt(a[1],10));
     else if (a[0] === 'wbsave') saveWB();
     else if (a[0] === 'trsave') saveTR();
     else if (a[0] === 'trtype') { trType = parseInt(a[1],10); buildForms(); restoreTR(); }
@@ -712,6 +733,7 @@ function saveWB(){
   DB.wb = DB.wb.filter(function(x){ return x.d !== today; });
   DB.wb.unshift(rec);
   DB.wb = DB.wb.slice(0,60);
+  ckAuto(0);
   save('wb', DB.wb, function(){ haptic('medium'); alertMsg('Сохранено.'); render(); });
 }
 function val(id){ var e = document.getElementById(id); return e ? e.value : ''; }
@@ -727,6 +749,7 @@ function saveTR(){
   DB.tr = DB.tr.filter(function(x){ return !(x.d === today && x.ty === trType); });
   DB.tr.unshift(rec);
   DB.tr = DB.tr.slice(0,40);
+  ckAuto(5);
   save('tr', DB.tr, function(){ haptic('medium'); alertMsg('Запись сохранена.'); render(); });
 }
 function delTR(i){ DB.tr.splice(i,1); save('tr', DB.tr, function(){ render(); }); }
@@ -738,6 +761,58 @@ function restoreTR(){
   TR_KEYS.forEach(function(k){ setSl(k[0], r && r.v ? r.v[k[0]] : 0); });
 }
 
+
+/* ---------- чек-лист дня ---------- */
+var CHECKS = [
+  'Заполнил дневник самочувствия',
+  'Сделал упражнения на когнитивку (внимание и реакция)',
+  'Выполнил упражнения на самоподготовку (мобильность, реакция)',
+  'Визуализирую успешные моменты, когда надеваю форму (вход в ОБС)',
+  'Контролирую дыхание (саморегуляция)',
+  'Заполнил дневник занятия',
+  'Посмотрел видео с тренировки и заметки тренера',
+  'Проверил цели, что выполнил, поставил фокус на следующее занятие'
+];
+
+function ckDay(){
+  if (!DB.goals) DB.goals = { season:null, months:{}, days:[] };
+  if (!DB.goals.chk) DB.goals.chk = {};
+  if (!DB.goals.chk[today]) DB.goals.chk[today] = [];
+  return DB.goals.chk[today];
+}
+function ckTrim(){
+  var k = Object.keys(DB.goals.chk).sort().reverse();
+  k.slice(60).forEach(function(d){ delete DB.goals.chk[d]; });
+}
+function ckToggle(i){
+  var l = ckDay(), p = l.indexOf(i);
+  if (p >= 0) l.splice(p, 1); else l.push(i);
+  ckTrim();
+  haptic();
+  renderCk();
+  save('goals', DB.goals, function(){});
+}
+function ckAuto(i){
+  var l = ckDay();
+  if (l.indexOf(i) >= 0) return;
+  l.push(i); ckTrim();
+  renderCk();
+  save('goals', DB.goals, function(){});
+}
+function renderCk(){
+  var box = document.getElementById('ck-list');
+  if (!box) return;
+  var l = ckDay();
+  box.innerHTML = CHECKS.map(function(t, i){
+    var on = l.indexOf(i) >= 0;
+    return '<button class="ck' + (on ? ' on' : '') + '" data-act="ck:' + i + '">' +
+           '<span class="ckc">✓</span><span class="ckt">' + t + '</span></button>';
+  }).join('');
+  var n = l.length, pct = Math.round(n / CHECKS.length * 100);
+  setTxt('ck-sum', n === CHECKS.length ? 'Всё выполнено — красавчик' : 'Выполнено ' + n + ' из ' + CHECKS.length);
+  var bar = document.getElementById('ck-bar');
+  if (bar) bar.style.width = pct + '%';
+}
 
 /* ---------- реакция выбора ---------- */
 var RX_LVL  = [['Лёгкий', 1000], ['Средний', 800], ['Высокий', 600]];
@@ -859,6 +934,7 @@ function stopRx(){
   DB.svet.unshift({ d: today, e: rxErr, sk: rxSkip, ok: rxOk, n: total,
                     ms: RX_LVL[rxLvl][1], rt: rt, src: 'app' });
   DB.svet = DB.svet.slice(0, 60);
+  ckAuto(1);
   save('svet', DB.svet, function(){ haptic('medium'); render(); });
 }
 
@@ -951,6 +1027,7 @@ function finishSchulte(){
   var sec = Math.round((Date.now()-t0)/100)/10;
   DB.schulte.unshift({ d: today, t: sec, e: errs });
   DB.schulte = DB.schulte.slice(0,60);
+  ckAuto(1);
   save('schulte', DB.schulte, function(){
     haptic('medium');
     var best = bestSchulte();
@@ -1377,6 +1454,7 @@ function render(){
       '<div class="t">' + esc(x.t) + '</div></div>';
   }).join('') || '<div class="sub" style="margin:0">Заметок пока нет.</div>';
 
+  renderCk();
   renderAnalytics();
   if (document.getElementById('p-rep') && !document.getElementById('p-rep').className) renderReport();
 
