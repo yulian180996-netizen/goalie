@@ -134,7 +134,8 @@
         <e>🧤</e><b>Кабинет тренера</b><i>все вратари, их данные и заметки</i></button>
       <button class="tile" data-act="go:wb"><e>☀️</e><b>Самочувствие</b><i id="t-wb">—</i></button>
       <button class="tile" data-act="go:tr"><e>🏒</e><b>Дневник занятий</b><i id="t-tr">—</i></button>
-      <button class="tile" data-act="go:cog"><e>🧠</e><b>Когнитивка</b><i id="t-cog">—</i></button>
+      <button class="tile" data-act="go:cog"><e>🔢</e><b>Таблица Шульте</b><i id="t-cog">—</i></button>
+      <button class="tile" data-act="go:rx"><e>🧠</e><b>Реакция выбора</b><i id="t-rx">—</i></button>
       <button class="tile" data-act="go:goals"><e>🎯</e><b>Цели</b><i id="t-goals">—</i></button>
       <button class="tile" data-act="go:an"><e>🥅</e><b>Аналитика голов</b><i id="t-an">—</i></button>
       <button class="tile" data-act="go:notes"><e>📝</e><b>Заметки тренера</b><i id="t-notes">—</i></button>
@@ -211,8 +212,8 @@
 
   <!-- КОГНИТИВКА -->
   <section id="p-cog" class="hide">
-    <h1>Когнитивка</h1>
-    <div class="sub">Внимание и концентрация.</div>
+    <h1>Таблица Шульте</h1>
+    <div class="sub">Внимание и скорость сканирования.</div>
     <div class="card">
       <h2>Таблица Шульте 6×6</h2>
       <div class="sub" style="margin:0">Найди числа от 1 до 36 по порядку. Найденные не подсвечиваются — смотри в центр.</div>
@@ -233,8 +234,14 @@
       <div class="bars" id="sch-bars"></div>
       <div class="list" id="sch-list" style="margin-top:10px"></div>
     </div>
+  </section>
+
+  <!-- РЕАКЦИЯ ВЫБОРА -->
+  <section id="p-rx" class="hide">
+    <h1>Реакция выбора</h1>
+    <div class="sub">Одна минута. Экран на время теста фиксируется.</div>
     <div class="card">
-      <h2>Реакция выбора</h2>
+      <h2>Тренажёр</h2>
       <div class="sub" style="margin:0">В центре загорается буква — жми стрелку в эту сторону.
         <b style="color:#fff">В</b> вверх · <b style="color:#fff">Н</b> вниз ·
         <b style="color:#fff">П</b> вправо · <b style="color:#fff">Л</b> влево. Одна минута.</div>
@@ -263,14 +270,8 @@
       <div class="sub" id="rx-res" style="margin:10px 0 0"></div>
     </div>
     <div class="card">
-      <h2>Светофон — ввод вручную</h2>
-      <div class="sub" style="margin:0">Если проходил на тренажёре в зале.</div>
-      <div class="row">
-        <div><label>Ошибок</label><input id="sv-err" type="number" inputmode="numeric" placeholder="кол-во"></div>
-        <div><label>Время, мс</label><input id="sv-ms" type="number" inputmode="numeric" placeholder="800"></div>
-      </div>
-      <button class="btn sec" data-act="svsave">Сохранить результат</button>
-      <div class="stat" style="margin-top:14px">
+      <h2>Результаты</h2>
+      <div class="stat">
         <div><b id="sv-best">—</b><span>лучший</span></div>
         <div><b id="sv-avg">—</b><span>средний 7</span></div>
         <div><b id="sv-cnt">0</b><span>записей</span></div>
@@ -385,6 +386,7 @@
     <div class="sub">Остальные разделы.</div>
     <div class="card menu">
       <button data-act="go:goals">Цели<i>сезон · месяц · занятие</i></button>
+      <button data-act="go:rx">Реакция выбора<i>минута на тренажёре</i></button>
       <button data-act="go:an">Аналитика голов<i>карта и зоны</i></button>
       <button data-act="go:notes">Заметки тренера<i id="m-notes">0</i></button>
       <button data-act="go:rep">Отчёт тренеру<i>сводка и динамика</i></button>
@@ -454,7 +456,7 @@
   <button id="n-home" class="on" data-act="go:home"><span>◆</span>Главная</button>
   <button id="n-wb" data-act="go:wb"><span>☾</span>Самочувствие</button>
   <button id="n-tr" data-act="go:tr"><span>✎</span>Дневник</button>
-  <button id="n-cog" data-act="go:cog"><span>⊞</span>Когнитивка</button>
+  <button id="n-cog" data-act="go:cog"><span>⊞</span>Шульте</button>
   <button id="n-more" data-act="go:more"><span>≡</span>Ещё</button>
 </nav>
 
@@ -596,7 +598,7 @@ function applyRole(){
 }
 
 /* ---------- навигация ---------- */
-var PAGES = ['home','wb','tr','cog','goals','an','notes','more','me','rep','coach','gk'];
+var PAGES = ['home','wb','tr','cog','rx','goals','an','notes','more','me','rep','coach','gk'];
 var NAVS = ['home','wb','tr','cog','more'];
 function go(page){
   PAGES.forEach(function(p){
@@ -607,11 +609,11 @@ function go(page){
     var b = document.getElementById('n-' + p);
     if (b) b.className = (p === page) ? 'on' : '';
   });
-  if (['goals','an','notes','me','rep','coach','gk'].indexOf(page) >= 0){
+  if (['rx','goals','an','notes','me','rep','coach','gk'].indexOf(page) >= 0){
     var mb = document.getElementById('n-more'); if (mb) mb.className = 'on';
   }
   window.scrollTo(0,0);
-  if (page !== 'cog') abortRx();
+  if (page !== 'rx') abortRx();
   if (page === 'cog' && !running) buildGrid(true);
   if (page === 'an') buildAnalytics();
   if (page === 'rep') renderReport();
@@ -674,7 +676,6 @@ document.addEventListener('click', function(ev){
     else if (a[0] === 'trsave') saveTR();
     else if (a[0] === 'trtype') { trType = parseInt(a[1],10); buildForms(); restoreTR(); }
     else if (a[0] === 'trdel') delTR(parseInt(a[1],10));
-    else if (a[0] === 'svsave') saveSvet();
     else if (a[0] === 'rxlvl') { rxLvl = parseInt(a[1],10); buildRxLvl(); }
     else if (a[0] === 'rxstart') startRx();
     else if (a[0] === 'rx') { if (Date.now() - rxTap > 400) rxPress(parseInt(a[1],10)); }
@@ -737,15 +738,6 @@ function restoreTR(){
   TR_KEYS.forEach(function(k){ setSl(k[0], r && r.v ? r.v[k[0]] : 0); });
 }
 
-/* ---------- светофон ---------- */
-function saveSvet(){
-  var e = num(val('sv-err'));
-  if (e === null){ alertMsg('Впиши количество ошибок.'); return; }
-  DB.svet.unshift({ d: today, e: e, ms: num(val('sv-ms')) });
-  DB.svet = DB.svet.slice(0,60);
-  document.getElementById('sv-err').value = '';
-  save('svet', DB.svet, function(){ haptic('medium'); alertMsg('Результат сохранён.'); render(); });
-}
 
 /* ---------- реакция выбора ---------- */
 var RX_LVL  = [['Лёгкий', 1000], ['Средний', 800], ['Высокий', 600]];
@@ -765,21 +757,38 @@ function buildRxLvl(){
   }).join('');
 }
 
-function rxMark(dir, cls){
-  var b = document.querySelector('[data-act="rx:' + dir + '"]');
-  if (b) b.className = 'rxb ' + cls;
-}
 function rxClear(){
   for (var i = 0; i < 4; i++){
     var b = document.querySelector('[data-act="rx:' + i + '"]');
     if (b) b.className = 'rxb';
   }
 }
+var rxLockY = 0;
+function lockScreen(on){
+  try {
+    var b = document.body;
+    if (on){
+      rxLockY = window.scrollY || window.pageYOffset || 0;
+      b.style.position = 'fixed';
+      b.style.top = (-rxLockY) + 'px';
+      b.style.left = '0'; b.style.right = '0'; b.style.width = '100%';
+      if (TG && TG.expand) TG.expand();
+      if (TG && TG.disableVerticalSwipes) TG.disableVerticalSwipes();
+    } else {
+      b.style.position = ''; b.style.top = '';
+      b.style.left = ''; b.style.right = ''; b.style.width = '';
+      window.scrollTo(0, rxLockY);
+      if (TG && TG.enableVerticalSwipes) TG.enableVerticalSwipes();
+    }
+  } catch (e) {}
+}
+
 function rxStats(){ setTxt('rx-ok', rxOk); setTxt('rx-err', rxErr); setTxt('rx-skip', rxSkip); }
 
 function rxIdle(label){
   clearTimeout(rxT); clearInterval(rxTick);
   rxRun = false;
+  lockScreen(false);
   var cue = document.getElementById('rx-cue');
   if (cue){ cue.textContent = '—'; cue.className = 'rxc'; }
   var pad = document.getElementById('rx-pad'); if (pad) pad.className = 'off';
@@ -795,6 +804,7 @@ function startRx(){
   setTxt('rx-btn', 'Идёт тест…');
   document.getElementById('rx-res').textContent = '';
   document.getElementById('rx-pad').className = '';
+  lockScreen(true);
   rxStats();
   rxTick = setInterval(function(){
     var left = Math.max(0, Math.ceil((rxEnd - Date.now()) / 1000));
@@ -817,7 +827,7 @@ function rxNext(){
   cue.textContent = RX_LET[rxCur];
   cue.className = 'rxc go';
   rxT = setTimeout(function(){
-    if (!rxAnswered){ rxSkip++; rxStats(); rxMark(rxCur, 'miss'); }
+    if (!rxAnswered){ rxSkip++; rxStats(); }
     rxNext();
   }, RX_LVL[rxLvl][1]);
 }
@@ -825,8 +835,9 @@ function rxNext(){
 function rxPress(dir){
   if (!rxRun || rxAnswered) return;
   rxAnswered = true;
-  if (dir === rxCur){ rxOk++; rxRT.push(Date.now() - rxShownAt); rxMark(dir, 'hit'); haptic(); }
-  else { rxErr++; rxMark(dir, 'miss'); rxMark(rxCur, 'hit'); haptic('heavy'); }
+  if (dir === rxCur){ rxOk++; rxRT.push(Date.now() - rxShownAt); }
+  else { rxErr++; }
+  haptic();                                      // одинаковый отклик, без подсказки цветом
   rxStats();
   var cue = document.getElementById('rx-cue');
   if (cue) cue.className = 'rxc';
@@ -1255,7 +1266,9 @@ function render(){
   /* подписи плиток на главной */
   setTxt('t-wb', wbToday ? 'сегодня заполнено' : 'сегодня не заполнено');
   setTxt('t-tr', DB.tr.length ? 'записей: ' + DB.tr.length + (DB.tr[0] ? ' · ' + dm(DB.tr[0].d) : '') : 'пока пусто');
-  setTxt('t-cog', DB.schulte.length ? 'Шульте лучший ' + bestSchulte() + ' с' : 'Шульте и Светофон');
+  setTxt('t-cog', DB.schulte.length ? 'лучший ' + bestSchulte() + ' с' : 'найди 1–36 по порядку');
+  setTxt('t-rx', DB.svet.length ? 'последний: ' + DB.svet[0].ok + ' верно, ' +
+    ((DB.svet[0].e || 0) + (DB.svet[0].sk || 0)) + ' промах.' : 'стрелки по букве');
   setTxt('t-goals', DB.goals.season ? cut(DB.goals.season.t, 30) : 'цель сезона не задана');
   setTxt('t-an', DB.gls.length ? 'голов: ' + DB.gls.length : 'карта и зоны');
   setTxt('t-notes', DB.notes.length ? 'заметок: ' + DB.notes.length : 'пока пусто');
