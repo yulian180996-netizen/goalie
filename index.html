@@ -10,7 +10,7 @@
          --tx:#EDEFF2; --tx2:#98A0AA; --ok:#2FA84F; }
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
   body{margin:0;background:var(--ink);color:var(--tx);
-       font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;font-size:15px;padding-bottom:78px}
+       font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;font-size:15px;padding-bottom:24px}
   .wrap{padding:14px 14px 0}
   h1{font-size:19px;margin:0 0 2px}
   .sub{color:var(--tx2);font-size:13px;margin-bottom:14px}
@@ -36,12 +36,12 @@
   .list div{display:flex;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:1px solid var(--line);color:var(--tx2)}
   .list div:last-child{border:0}
   .list b{color:var(--tx);font-weight:600;text-align:right}
-  nav{position:fixed;left:0;right:0;bottom:0;background:#101419;border-top:1px solid var(--line);
-      display:flex;padding:6px 4px calc(6px + env(safe-area-inset-bottom))}
-  nav button{flex:1;background:0;border:0;color:var(--tx2);font-size:10.5px;padding:7px 2px;cursor:pointer}
-  nav button.on{color:var(--red);font-weight:700}
-  nav span{display:block;font-size:19px;line-height:1.15}
   .hide{display:none}
+  header{position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:8px;
+         background:var(--ink);padding:8px 12px 8px 4px;border-bottom:1px solid var(--line)}
+  header button{background:0;border:0;color:var(--tx);font-size:30px;line-height:1;
+                padding:2px 12px 6px;cursor:pointer;font-family:inherit;touch-action:manipulation}
+  header span{font-size:15px;font-weight:700;color:var(--tx)}
   /* бегунки */
   .sl{margin-bottom:15px}
   .slh{display:flex;justify-content:space-between;align-items:baseline;font-size:13.5px;margin-bottom:3px}
@@ -81,7 +81,7 @@
   .chips button{background:#12161C;border:1px solid var(--line);color:var(--tx2);border-radius:9px;
        padding:8px 10px;font-size:12.5px;cursor:pointer}
   .chips button.on{background:var(--red);border-color:var(--red);color:#fff;font-weight:700}
-  .svgbox{margin-top:8px;background:#0E1216;border:1px solid var(--line);border-radius:12px;padding:6px}
+  .svgbox{margin-top:8px;background:#1B2028;border:1px solid var(--line);border-radius:12px;padding:6px}
   .svgbox svg{width:100%;height:auto;display:block;touch-action:manipulation}
   .netgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;margin-top:6px}
   .netgrid div{background:#12161C;border:1px solid var(--line);border-radius:9px;padding:11px 4px;text-align:center;font-size:13px}
@@ -96,6 +96,12 @@
        text-shadow:0 1px 3px rgba(0,0,0,.8);display:flex;align-items:flex-end;justify-content:center}
   .netpic .zgrid button span{padding-bottom:3px;opacity:.75}
   .netpic .zgrid button.on{background:rgba(214,17,46,.55);border-color:#D6112E}
+  /* площадка */
+  .rink{position:relative;line-height:0}
+  .rink img{width:100%;display:block;border-radius:10px}
+  .rdot{position:absolute;width:11px;height:11px;margin:-5.5px 0 0 -5.5px;border-radius:50%;
+        background:rgba(214,17,46,.8);border:1.5px solid #fff;box-shadow:0 1px 3px rgba(0,0,0,.5)}
+  .rdot.pick{width:17px;height:17px;margin:-8.5px 0 0 -8.5px;background:var(--red);border-width:2.5px}
   /* чек-лист дня */
   .ck{display:flex;align-items:center;gap:11px;width:100%;text-align:left;background:#12161C;
       border:1px solid var(--line);border-radius:12px;padding:11px 12px;margin-bottom:8px;
@@ -125,6 +131,11 @@
 </style>
 </head>
 <body>
+
+<header id="top" class="hide">
+  <button id="back" data-act="back">‹</button>
+  <span id="top-title"></span>
+</header>
 
 <div class="wrap">
 
@@ -160,7 +171,6 @@
       <button class="tile" data-act="go:an"><e>🥅</e><b>Аналитика голов</b><i id="t-an">—</i></button>
       <button class="tile" data-act="go:notes"><e>📝</e><b>Заметки тренера</b><i id="t-notes">—</i></button>
       <button class="tile" data-act="go:me"><e>👤</e><b>Профиль</b><i id="t-me">—</i></button>
-      <button class="tile" data-act="go:rep"><e>📤</e><b>Отчёт тренеру</b><i id="t-rep">сводка и динамика</i></button>
     </div>
   </section>
 
@@ -368,22 +378,6 @@
     </div>
   </section>
 
-  <!-- ОТЧЁТ -->
-  <section id="p-rep" class="hide">
-    <h1>Отчёт</h1>
-    <div class="sub">Считается автоматически по твоим записям.</div>
-    <div class="card">
-      <h2>Период</h2>
-      <div class="chips" id="rep-per"></div>
-    </div>
-    <div id="rep-body"></div>
-    <div class="card">
-      <h2>Отправить тренеру</h2>
-      <div class="sub" style="margin:0">Скопируй текст и вставь в чат.</div>
-      <button class="btn" data-act="report">Скопировать отчёт</button>
-    </div>
-  </section>
-
   <!-- ЗАМЕТКИ ТРЕНЕРА -->
   <section id="p-notes" class="hide">
     <h1>Заметки тренера</h1>
@@ -397,21 +391,6 @@
     <div class="card">
       <h2>Все заметки</h2>
       <div id="n-list"></div>
-    </div>
-  </section>
-
-  <!-- ЕЩЁ -->
-  <section id="p-more" class="hide">
-    <h1>Ещё</h1>
-    <div class="sub">Остальные разделы.</div>
-    <div class="card menu">
-      <button data-act="go:goals">Цели<i>сезон · месяц · занятие</i></button>
-      <button data-act="go:rx">Реакция выбора<i>минута на тренажёре</i></button>
-      <button data-act="go:an">Аналитика голов<i>карта и зоны</i></button>
-      <button data-act="go:notes">Заметки тренера<i id="m-notes">0</i></button>
-      <button data-act="go:rep">Отчёт тренеру<i>сводка и динамика</i></button>
-      <button data-act="go:me">Профиль и данные<i>импорт, экспорт</i></button>
-      <button id="m-coach" class="hide" data-act="roster">Кабинет тренера<i>все вратари</i></button>
     </div>
   </section>
 
@@ -472,13 +451,6 @@
   </section>
 </div>
 
-<nav>
-  <button id="n-home" class="on" data-act="go:home"><span>◆</span>Главная</button>
-  <button id="n-wb" data-act="go:wb"><span>☾</span>Самочувствие</button>
-  <button id="n-tr" data-act="go:tr"><span>✎</span>Дневник</button>
-  <button id="n-cog" data-act="go:cog"><span>⊞</span>Шульте</button>
-  <button id="n-more" data-act="go:more"><span>≡</span>Ещё</button>
-</nav>
 
 <script>
 var TG = (window.Telegram && window.Telegram.WebApp) ? window.Telegram.WebApp : null;
@@ -611,33 +583,36 @@ function boot(){
 function applyRole(){
   var box = document.getElementById('coach-entry');
   if (box) box.className = IS_COACH ? '' : 'hide';
-  var mb = document.getElementById('m-coach');
-  if (mb) mb.className = IS_COACH ? '' : 'hide';
   var h = document.getElementById('hello');
   if (IS_COACH && h) h.textContent = 'Тренерский доступ';
 }
 
 /* ---------- навигация ---------- */
-var PAGES = ['home','wb','tr','cog','rx','goals','an','notes','more','me','rep','coach','gk'];
-var NAVS = ['home','wb','tr','cog','more'];
-function go(page){
+var PAGES = ['home','wb','tr','cog','rx','goals','an','notes','me','coach','gk'];
+var TITLES = { home:'', wb:'Самочувствие', tr:'Дневник занятий', cog:'Таблица Шульте',
+  rx:'Реакция выбора', goals:'Цели', an:'Аналитика голов', notes:'Заметки тренера',
+  me:'Профиль', coach:'Кабинет тренера', gk:'Карточка вратаря' };
+var navStack = [];
+function go(page, back){
+  if (!back && CUR_PAGE && CUR_PAGE !== page) navStack.push(CUR_PAGE);
+  if (page === 'home') navStack = [];
+  CUR_PAGE = page;
   PAGES.forEach(function(p){
     var el = document.getElementById('p-' + p);
     if (el) el.className = (p === page) ? '' : 'hide';
   });
-  NAVS.forEach(function(p){
-    var b = document.getElementById('n-' + p);
-    if (b) b.className = (p === page) ? 'on' : '';
-  });
-  if (['rx','goals','an','notes','me','rep','coach','gk'].indexOf(page) >= 0){
-    var mb = document.getElementById('n-more'); if (mb) mb.className = 'on';
+  var top = document.getElementById('top');
+  if (top){
+    top.className = (page === 'home') ? 'hide' : '';
+    setTxt('top-title', TITLES[page] || '');
   }
   window.scrollTo(0,0);
   if (page !== 'rx') abortRx();
   if (page === 'cog' && !running) buildGrid(true);
   if (page === 'an') buildAnalytics();
-  if (page === 'rep') renderReport();
 }
+var CUR_PAGE = 'home';
+function goBack(){ go(navStack.length ? navStack.pop() : 'home', true); }
 
 /* ---------- бегунки ---------- */
 function sliderHTML(key, title){
@@ -691,7 +666,8 @@ document.addEventListener('click', function(ev){
   if (!act) return;
   var a = act.split(':');
   try {
-    if (a[0] === 'go') go(a[1]);
+    if (a[0] === 'back') goBack();
+    else if (a[0] === 'go') go(a[1]);
     else if (a[0] === 'ck') ckToggle(parseInt(a[1],10));
     else if (a[0] === 'wbsave') saveWB();
     else if (a[0] === 'trsave') saveTR();
@@ -717,8 +693,6 @@ document.addEventListener('click', function(ev){
     else if (a[0] === 'angoal') saveGoal();
     else if (a[0] === 'gdel') delGoal(parseInt(a[1],10));
     else if (a[0] === 'mesave') saveMe();
-    else if (a[0] === 'report') report();
-    else if (a[0] === 'per') { PER = parseInt(a[1],10); renderReport(); }
     else if (a[0] === 'export') exportAll();
     else if (a[0] === 'import') doImport();
   } catch(e){ alertMsg('Ошибка: ' + e.message); }
@@ -1039,27 +1013,17 @@ function bestSchulte(){ return DB.schulte.length ? DB.schulte.reduce(function(a,
 
 /* ---------- аналитика голов ---------- */
 var anPick = { x:null, y:null, z:null, s:null };
-function rinkSVG(dots){
+function rinkHTML(dots){
   var d = '';
-  d += '<rect x="2" y="2" width="196" height="166" rx="26" fill="#F7F9FB" stroke="#2C313B" stroke-width="2"/>';
-  d += '<line x1="2" y1="18" x2="198" y2="18" stroke="#2B6CB0" stroke-width="4"/>';
-  d += '<line x1="8" y1="150" x2="192" y2="150" stroke="#D6112E" stroke-width="2.5"/>';
-  d += '<circle cx="52" cy="86" r="26" fill="none" stroke="#D6112E" stroke-width="1.6"/>';
-  d += '<circle cx="148" cy="86" r="26" fill="none" stroke="#D6112E" stroke-width="1.6"/>';
-  d += '<circle cx="52" cy="86" r="2.6" fill="#D6112E"/><circle cx="148" cy="86" r="2.6" fill="#D6112E"/>';
-  d += '<path d="M78 150 A22 22 0 0 1 122 150 Z" fill="#DCEAF7" stroke="#D6112E" stroke-width="1.4"/>';
-  d += '<rect x="88" y="150" width="24" height="9" fill="#15181D" rx="2"/>';
   if (dots && dots.length){
-    for (var i=0;i<dots.length;i++){
-      var px = 4 + dots[i][0]/100*192, py = 4 + dots[i][1]/100*162;
-      d += '<circle cx="' + px.toFixed(1) + '" cy="' + py.toFixed(1) + '" r="4" fill="#D6112E" fill-opacity="0.75" stroke="#fff" stroke-width="1"/>';
+    for (var i = 0; i < dots.length; i++){
+      d += '<i class="rdot" style="left:' + dots[i][0] + '%;top:' + dots[i][1] + '%"></i>';
     }
   }
   if (anPick.x !== null && !dots){
-    var mx = 4 + anPick.x/100*192, my = 4 + anPick.y/100*162;
-    d += '<circle cx="' + mx.toFixed(1) + '" cy="' + my.toFixed(1) + '" r="6" fill="#D6112E" stroke="#fff" stroke-width="2"/>';
+    d += '<i class="rdot pick" style="left:' + anPick.x + '%;top:' + anPick.y + '%"></i>';
   }
-  return '<svg viewBox="0 0 200 170" xmlns="http://www.w3.org/2000/svg">' + d + '</svg>';
+  return '<div class="rink"><img src="rink.png" alt="Площадка">' + d + '</div>';
 }
 function netHTML(){
   var b = '';
@@ -1071,12 +1035,13 @@ function netHTML(){
 function buildAnalytics(){
   var rw = document.getElementById('rink-wrap');
   if (!rw) return;
-  rw.innerHTML = rinkSVG(null);
+  rw.innerHTML = rinkHTML(null);
   rw.onclick = function(ev){
-    var r = rw.getBoundingClientRect();
+    var img = rw.querySelector('img');
+    var r = (img || rw).getBoundingClientRect();
     anPick.x = Math.max(0, Math.min(100, Math.round((ev.clientX - r.left) / r.width * 100)));
     anPick.y = Math.max(0, Math.min(100, Math.round((ev.clientY - r.top) / r.height * 100)));
-    haptic(); rw.innerHTML = rinkSVG(null);
+    haptic(); rw.innerHTML = rinkHTML(null);
   };
   document.getElementById('net-wrap').innerHTML = netHTML();
   document.getElementById('sit-chips').innerHTML = SITS.map(function(t,i){
@@ -1159,7 +1124,6 @@ function last7(){
 /* ================= ОТЧЁТ ================= */
 var PER = 7;
 function limDate(days){ return days ? new Date(Date.now() - days*864e5).toISOString().slice(0,10) : '0000-00-00'; }
-function inPer(d){ return d >= limDate(PER); }
 function avgKey(arr, key){
   var vv = arr.map(function(x){ return x.v ? x.v[key] : null; }).filter(ok);
   return vv.length ? Math.round(avg(vv)*10)/10 : null;
@@ -1174,140 +1138,7 @@ function repData(){
     gl: DB.gls.filter(function(x){ return x[0] >= lim; })
   };
 }
-function renderReport(){
-  var host = document.getElementById('rep-body');
-  if (!host) return;
-  document.getElementById('rep-per').innerHTML = [[7,'7 дней'],[30,'30 дней'],[0,'весь период']].map(function(o){
-    return '<button data-act="per:' + o[0] + '"' + (PER === o[0] ? ' class="on"' : '') + '>' + o[1] + '</button>';
-  }).join('');
 
-  var D = repData(), H = '';
-
-  /* самочувствие */
-  H += '<div class="card"><h2>Самочувствие</h2>';
-  if (D.wb.length){
-    H += '<div class="stat">' +
-      '<div><b>' + D.wb.length + '</b><span>записей</span></div>' +
-      '<div><b>' + fmt(avg(D.wb.map(function(x){return x.sl;}).filter(ok))) + '</b><span>сон, ч</span></div>' +
-      '<div><b>' + fmt(avg(D.wb.map(function(x){return x.p;}).filter(ok))) + '</b><span>пульс</span></div></div>';
-    H += '<div class="list">' + WB_KEYS.map(function(k){
-      var a = avgKey(D.wb, k[0]);
-      return '<div><span>' + k[1] + '</span><b>' + (a === null ? '—' : signed(a)) + '</b></div>';
-    }).join('') + '</div>';
-    var wts = D.wb.map(function(x){ return x.w; }).filter(ok);
-    if (wts.length) H += '<div class="sub" style="margin:10px 0 0">Вес: ' + wts[0] + ' кг' +
-      (wts.length > 1 ? ' (было ' + wts[wts.length-1] + ')' : '') + '</div>';
-  } else H += '<div class="sub" style="margin:0">Нет записей за период.</div>';
-  H += '</div>';
-
-  /* занятия */
-  H += '<div class="card"><h2>Занятия</h2>';
-  if (D.tr.length){
-    H += '<div class="sub" style="margin:0 0 8px">Записей: ' + D.tr.length + '</div><div class="list">' +
-      TR_KEYS.map(function(k){
-        var a = avgKey(D.tr, k[0]);
-        return '<div><span>' + k[1] + '</span><b>' + (a === null ? '—' : signed(a)) + '</b></div>';
-      }).join('') + '</div>';
-  } else H += '<div class="sub" style="margin:0">Нет записей за период.</div>';
-  H += '</div>';
-
-  /* когнитивка */
-  H += '<div class="card"><h2>Когнитивка</h2>';
-  if (D.sch.length || D.sv.length){
-    H += '<div class="list">';
-    if (D.sch.length) H += '<div><span>Шульте, лучший</span><b>' + Math.min.apply(null, D.sch.map(function(x){return x.t;})) + ' с</b></div>' +
-      '<div><span>Шульте, средний</span><b>' + fmt(avg(D.sch.map(function(x){return x.t;}))) + ' с</b></div>' +
-      '<div><span>Шульте, попыток</span><b>' + D.sch.length + '</b></div>';
-    if (D.sv.length) H += '<div><span>Светофон, лучший</span><b>' + Math.min.apply(null, D.sv.map(function(x){return x.e;})) + ' ош.</b></div>' +
-      '<div><span>Светофон, средний</span><b>' + fmt(avg(D.sv.map(function(x){return x.e;}))) + ' ош.</b></div>';
-    H += '</div>';
-  } else H += '<div class="sub" style="margin:0">Нет данных за период.</div>';
-  H += '</div>';
-
-  /* голы */
-  H += '<div class="card"><h2>Пропущенные голы</h2>';
-  if (D.gl.length){
-    var sc = {}, zc = {};
-    D.gl.forEach(function(x){ sc[x[4]] = (sc[x[4]]||0)+1; zc[x[3]] = (zc[x[3]]||0)+1; });
-    var top = function(o, names){
-      return Object.keys(o).sort(function(a,b){ return o[b]-o[a]; }).slice(0,3).map(function(k){
-        return '<div><span>' + names[k] + '</span><b>' + o[k] + ' · ' + Math.round(o[k]/D.gl.length*100) + '%</b></div>';
-      }).join('');
-    };
-    H += '<div class="sub" style="margin:0 0 8px">Всего: ' + D.gl.length + '</div>';
-    H += '<div class="sub" style="margin:0 0 4px">Чаще всего ситуации</div><div class="list">' + top(sc, SITS) + '</div>';
-    H += '<div class="sub" style="margin:10px 0 4px">Чаще всего зоны</div><div class="list">' + top(zc, NZ) + '</div>';
-  } else H += '<div class="sub" style="margin:0">Голов за период не записано.</div>';
-  H += '</div>';
-
-  /* цели */
-  H += '<div class="card"><h2>Цели</h2><div class="list">';
-  H += '<div><span>Сезон</span><b>' + (DB.goals.season ? esc(cut(DB.goals.season.t, 40)) : '—') + '</b></div>';
-  H += '<div><span>Месяц</span><b>' + (DB.goals.months[curMonth] ? esc(cut(DB.goals.months[curMonth].t, 40)) : '—') + '</b></div>';
-  var dd = DB.goals.days.filter(function(x){ return inPer(x.d); });
-  H += '<div><span>Цели на занятия</span><b>' + (dd.length ? dd.filter(function(x){return x.ok;}).length + ' из ' + dd.length : '—') + '</b></div>';
-  H += '</div></div>';
-
-  /* последние занятия текстом */
-  if (D.tr.length){
-    H += '<div class="card"><h2>Последние занятия</h2>' + D.tr.slice(0,3).map(function(x){
-      return '<div class="goal"><div class="tag">' + dm(x.d) + ' · ' + TR_TYPES[x.ty||0] + '</div>' +
-        (x.t1 ? '<div class="t">Задача: ' + esc(x.t1) + '</div>' : '') +
-        (x.t2 ? '<div class="c">Результат: ' + esc(x.t2) + '</div>' : '') +
-        (x.t3 ? '<div class="c">Внимание: ' + esc(x.t3) + '</div>' : '') + '</div>';
-    }).join('') + '</div>';
-  }
-  host.innerHTML = H;
-}
-
-function report(){
-  var D = repData(), L = [];
-  var perTxt = PER ? ('последние ' + PER + ' дней') : 'весь период';
-  L.push('Отчёт вратаря' + (DB.me.n ? ': ' + DB.me.n : ''));
-  L.push('Период: ' + perTxt);
-  L.push('');
-  if (D.wb.length){
-    L.push('САМОЧУВСТВИЕ (записей ' + D.wb.length + ')');
-    L.push('  Сон: ' + fmt(avg(D.wb.map(function(x){return x.sl;}).filter(ok))) + ' ч');
-    L.push('  Пульс в покое: ' + fmt(avg(D.wb.map(function(x){return x.p;}).filter(ok))));
-    WB_KEYS.forEach(function(k){
-      var a = avgKey(D.wb, k[0]);
-      if (a !== null) L.push('  ' + k[1] + ': ' + signed(a));
-    });
-    var wts = D.wb.map(function(x){ return x.w; }).filter(ok);
-    if (wts.length) L.push('  Вес: ' + wts[0] + ' кг');
-  } else L.push('САМОЧУВСТВИЕ: нет записей');
-  L.push('');
-  if (D.tr.length){
-    L.push('ЗАНЯТИЯ (записей ' + D.tr.length + ')');
-    TR_KEYS.forEach(function(k){
-      var a = avgKey(D.tr, k[0]);
-      if (a !== null) L.push('  ' + k[1] + ': ' + signed(a));
-    });
-    var last = D.tr[0];
-    if (last && (last.t1 || last.t2 || last.t3)){
-      L.push('  Последнее занятие ' + dm(last.d) + ':');
-      if (last.t1) L.push('    Задача: ' + last.t1);
-      if (last.t2) L.push('    Результат: ' + last.t2);
-      if (last.t3) L.push('    Внимание: ' + last.t3);
-    }
-  }
-  L.push('');
-  if (D.sch.length) L.push('Шульте: лучший ' + Math.min.apply(null, D.sch.map(function(x){return x.t;})) +
-    ' с, средний ' + fmt(avg(D.sch.map(function(x){return x.t;}))) + ' с, попыток ' + D.sch.length);
-  if (D.sv.length) L.push('Светофон: лучший ' + Math.min.apply(null, D.sv.map(function(x){return x.e;})) +
-    ' ош., средний ' + fmt(avg(D.sv.map(function(x){return x.e;}))));
-  if (D.gl.length){
-    var sc = {};
-    D.gl.forEach(function(x){ sc[x[4]] = (sc[x[4]]||0)+1; });
-    var tops = Object.keys(sc).sort(function(a,b){ return sc[b]-sc[a]; }).slice(0,3)
-      .map(function(k){ return SITS[k] + ' ' + sc[k]; }).join(', ');
-    L.push('Пропущено голов: ' + D.gl.length + ' (чаще: ' + tops + ')');
-  }
-  if (DB.goals.season) L.push('Цель сезона: ' + DB.goals.season.t);
-  if (DB.goals.months[curMonth]) L.push('Цель месяца: ' + DB.goals.months[curMonth].t);
-  copy(L.join('\n'), 'Отчёт скопирован — вставь его в чат тренеру.');
-}
 function copy(text, msg){
   var ta = document.createElement('textarea');
   ta.value = text; ta.style.position='fixed'; ta.style.opacity='0';
@@ -1338,7 +1169,6 @@ function render(){
   document.getElementById('h-sch').textContent = schToday.length ? String(Math.min.apply(null, schToday.map(function(x){return x.t;}))) : '—';
   document.getElementById('h-status').innerHTML = wbToday
     ? '<span class="ok">Самочувствие на сегодня заполнено.</span>' : 'Самочувствие сегодня ещё не заполнено.';
-  document.getElementById('m-notes').textContent = String(DB.notes.length);
 
   /* подписи плиток на главной */
   setTxt('t-wb', wbToday ? 'сегодня заполнено' : 'сегодня не заполнено');
@@ -1456,7 +1286,6 @@ function render(){
 
   renderCk();
   renderAnalytics();
-  if (document.getElementById('p-rep') && !document.getElementById('p-rep').className) renderReport();
 
   /* профиль */
   var dg = document.getElementById('diag');
@@ -1471,7 +1300,7 @@ function render(){
 function renderAnalytics(){
   if (!document.getElementById('map-wrap')) return;
   var g = DB.gls || [];
-  document.getElementById('map-wrap').innerHTML = rinkSVG(g.map(function(x){ return [x[1], x[2]]; }));
+  document.getElementById('map-wrap').innerHTML = rinkHTML(g.map(function(x){ return [x[1], x[2]]; }));
   document.getElementById('an-total').textContent = g.length ? 'Всего голов записано: ' + g.length
     : 'Пока нет записей — добавь первый гол выше.';
   var cnt = [0,0,0,0,0,0,0,0,0], mx = 0;
