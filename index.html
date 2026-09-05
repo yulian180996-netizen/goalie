@@ -105,6 +105,10 @@
        text-shadow:0 1px 3px rgba(0,0,0,.8);display:flex;align-items:flex-end;justify-content:center}
   .netpic .zgrid button span{padding-bottom:3px;opacity:.75}
   .netpic .zgrid button.on{background:rgba(214,17,46,.55);border-color:#D6112E}
+  .chart{margin-top:8px;background:#0E1216;border:1px solid var(--line);border-radius:12px;padding:8px 4px}
+  .chart svg{width:100%;height:auto;display:block}
+  .lg{display:flex;gap:14px;justify-content:center;margin-top:8px;font-size:11.5px;color:var(--tx2)}
+  .lg i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px}
   /* оценки 1-5 */
   .rt{margin-bottom:12px}
   .rth{font-size:12.5px;color:var(--tx2);margin-bottom:5px}
@@ -209,6 +213,7 @@
       <button class="tile" data-act="go:rx"><e>🧠</e><b>Реакция выбора</b><i id="t-rx">—</i></button>
       <button class="tile" data-act="go:goals"><e>🎯</e><b>Цели</b><i id="t-goals">—</i></button>
       <button class="tile" data-act="go:an"><e>🥅</e><b>Разбор игр</b><i id="t-an">—</i></button>
+      <button class="tile" data-act="go:rad"><e>🕸</e><b>Оценка вратаря</b><i id="t-rad">—</i></button>
       <button class="tile" data-act="lib:Психология"><e>🧩</e><b>Психология</b><i id="t-psy">—</i></button>
       <button class="tile" data-act="lib:Теория"><e>📚</e><b>Теория</b><i id="t-th">—</i></button>
       <button class="tile" data-act="go:notes"><e>📝</e><b>Заметки тренера</b><i id="t-notes">—</i></button>
@@ -236,7 +241,7 @@
     </div>
     <div class="card">
       <h2>Динамика готовности</h2>
-      <div class="bars" id="wb-bars"></div>
+      <div id="wb-bars"></div>
       <div class="sub" style="margin:8px 0 0">Последние 14 записей. Выше — лучше.</div>
     </div>
     <div class="card">
@@ -303,7 +308,7 @@
         <div><b id="sch-avg">—</b><span>средний 7</span></div>
         <div><b id="sch-cnt">0</b><span>попыток</span></div>
       </div>
-      <div class="bars" id="sch-bars"></div>
+      <div id="sch-bars"></div>
       <div class="list" id="sch-list" style="margin-top:10px"></div>
     </div>
   </section>
@@ -348,7 +353,7 @@
         <div><b id="sv-avg">—</b><span>средний 7</span></div>
         <div><b id="sv-cnt">0</b><span>записей</span></div>
       </div>
-      <div class="bars" id="sv-bars"></div>
+      <div id="sv-bars"></div>
       <div class="list" id="sv-list" style="margin-top:10px"></div>
     </div>
   </section>
@@ -502,6 +507,36 @@
     </div>
   </section>
 
+  <!-- ОЦЕНКА ВРАТАРЯ -->
+  <section id="p-rad" class="hide">
+    <h1>Оценка вратаря</h1>
+    <div class="sub">Пять сторон игры по десятибалльной. Твоя самооценка и взгляд тренера — на одной фигуре.</div>
+    <div class="card">
+      <h2>Профиль</h2>
+      <div id="rad-chart"></div>
+      <div class="lg">
+        <span><i style="background:#D6112E"></i>моя оценка</span>
+        <span><i style="background:#2FA84F"></i>тренер</span>
+      </div>
+      <div class="list" id="rad-nums" style="margin-top:10px"></div>
+    </div>
+    <div class="card">
+      <h2>Поставить самооценку</h2>
+      <div class="sub" style="margin:0 0 4px">Дата: <b id="rad-date" style="color:#fff"></b></div>
+      <div id="rad-sliders"></div>
+      <button class="btn" data-act="radsave">Сохранить оценку</button>
+    </div>
+    <div class="card">
+      <h2>Динамика</h2>
+      <div class="chips" id="rad-pick"></div>
+      <div id="rad-line"></div>
+    </div>
+    <div class="card">
+      <h2>История оценок</h2>
+      <div class="list" id="rad-list"></div>
+    </div>
+  </section>
+
   <!-- БИБЛИОТЕКА -->
   <section id="p-lib" class="hide">
     <h1 id="lib-h">Материалы</h1>
@@ -564,6 +599,16 @@
     <div class="sub" id="gk-sub"></div>
     <button class="btn sec" data-act="go:coach" style="margin:0 0 12px">← К списку</button>
     <div id="gk-body"></div>
+    <div class="card">
+      <h2>Оценка вратаря</h2>
+      <div id="gk-radar"></div>
+      <div class="lg">
+        <span><i style="background:#D6112E"></i>самооценка</span>
+        <span><i style="background:#2FA84F"></i>моя оценка</span>
+      </div>
+      <div id="gk-rsl" style="margin-top:12px"></div>
+      <button class="btn sec" data-act="crate">Поставить оценку</button>
+    </div>
     <div class="card">
       <h2>Заметка вратарю</h2>
       <div class="sub" style="margin:0">Он увидит её в разделе «Заметки тренера».</div>
@@ -683,6 +728,7 @@ function boot(){
   });
   DB.notes = lget('notes') || [];
   LIB = lget('lib') || { m:[], q:[] };
+  DB.rates = lget('rates') || [];
   buildForms();
   render();
 
@@ -701,6 +747,8 @@ function boot(){
     DB.notes = res.notes || [];
     lset('notes', DB.notes);
     if (res.lib){ LIB = res.lib; lset('lib', LIB); }
+    DB.rates = res.rates || [];
+    lset('rates', DB.rates);
     setSync('на связи');
     applyRole();
     buildForms();
@@ -718,10 +766,10 @@ function applyRole(){
 }
 
 /* ---------- навигация ---------- */
-var PAGES = ['home','wb','tr','cog','rx','goals','an','notes','me','coach','gk','lib','mat','game'];
+var PAGES = ['home','wb','tr','cog','rx','goals','an','notes','me','coach','gk','lib','mat','game','rad'];
 var TITLES = { home:'', wb:'Самочувствие', tr:'Дневник занятий', cog:'Таблица Шульте',
   rx:'Реакция выбора', goals:'Цели', an:'Разбор игр', notes:'Заметки тренера',
-  me:'Профиль', coach:'Кабинет тренера', gk:'Карточка вратаря', lib:'Материалы', mat:'Материал', game:'Игра' };
+  me:'Профиль', coach:'Кабинет тренера', gk:'Карточка вратаря', lib:'Материалы', mat:'Материал', game:'Игра', rad:'Оценка вратаря' };
 var navStack = [];
 function go(page, back){
   if (!back && CUR_PAGE && CUR_PAGE !== page) navStack.push(CUR_PAGE);
@@ -741,6 +789,7 @@ function go(page, back){
   if (page === 'cog' && !running) buildGrid(true);
   if (page === 'an') renderAnalytics();
   if (page === 'lib') renderLib();
+  if (page === 'rad') renderRadar();
 }
 var CUR_PAGE = 'home';
 function goBack(){ go(navStack.length ? navStack.pop() : 'home', true); }
@@ -826,6 +875,7 @@ document.addEventListener('click', function(ev){
     else if (a[0] === 'roster') { go('coach'); loadRoster(); }
     else if (a[0] === 'gk') openGoalie(a[1]);
     else if (a[0] === 'cnote') coachNote();
+    else if (a[0] === 'crate') coachRate();
     else if (a[0] === 'hit') { if (Date.now() - rxTap > 400) hit(parseInt(a[1],10)); }
     else if (a[0] === 'schstart') startSchulte();
     else if (a[0] === 'season') saveSeason();
@@ -842,6 +892,8 @@ document.addEventListener('click', function(ev){
     else if (a[0] === 'ggdel') delGoalPoint(parseInt(a[1],10));
     else if (a[0] === 'gsave') saveGame();
     else if (a[0] === 'gdelgame') delGame();
+    else if (a[0] === 'radsave') saveRating();
+    else if (a[0] === 'radk') { RADSEL = a[1]; renderRadar(); }
     else if (a[0] === 'sit') pickSit(parseInt(a[1],10));
     else if (a[0] === 'mesave') saveMe();
     else if (a[0] === 'export') exportAll();
@@ -886,6 +938,157 @@ function restoreTR(){
   TR_KEYS.forEach(function(k){ setSl(k[0], r && r.v ? r.v[k[0]] : 0); });
 }
 
+
+/* ---------- линейный график ---------- */
+function lineSVG(pts, opt){
+  opt = opt || {};
+  var W = 300, H = 104, L = 8, R = 8, T = 12, B = 18;
+  if (!pts.length) return '<div class="sub" style="margin:0">Пока нет данных.</div>';
+  var vals = pts.map(function(p){ return p.v; });
+  var mn = (opt.min !== undefined) ? opt.min : Math.min.apply(null, vals);
+  var mx = (opt.max !== undefined) ? opt.max : Math.max.apply(null, vals);
+  if (mx === mn){ mx = mn + 1; mn = mn - 1; }
+  var pad = (mx - mn) * 0.12; mn -= pad; mx += pad;
+  var x = function(i){ return L + (pts.length === 1 ? (W-L-R)/2 : i * (W - L - R) / (pts.length - 1)); };
+  var y = function(v){ return T + (1 - (v - mn) / (mx - mn)) * (H - T - B); };
+
+  var g = '';
+  for (var k = 0; k <= 3; k++){
+    var gy = T + k * (H - T - B) / 3;
+    g += '<line x1="' + L + '" y1="' + gy.toFixed(1) + '" x2="' + (W-R) + '" y2="' + gy.toFixed(1) +
+         '" stroke="#2C313B" stroke-width="0.7"/>';
+  }
+  var d = pts.map(function(p, i){ return (i ? 'L' : 'M') + x(i).toFixed(1) + ' ' + y(p.v).toFixed(1); }).join(' ');
+  var area = d + ' L' + x(pts.length-1).toFixed(1) + ' ' + (H-B) + ' L' + x(0).toFixed(1) + ' ' + (H-B) + ' Z';
+  var dots = pts.map(function(p, i){
+    return '<circle cx="' + x(i).toFixed(1) + '" cy="' + y(p.v).toFixed(1) + '" r="' +
+           (i === pts.length-1 ? 3.6 : 2.2) + '" fill="' + (i === pts.length-1 ? '#fff' : '#D6112E') +
+           '" stroke="#D6112E" stroke-width="1.6"/>';
+  }).join('');
+  var lab = '<text x="' + L + '" y="' + (H-5) + '" fill="#687079" font-size="9">' + pts[0].d + '</text>' +
+            '<text x="' + (W-R) + '" y="' + (H-5) + '" fill="#687079" font-size="9" text-anchor="end">' +
+            pts[pts.length-1].d + '</text>' +
+            '<text x="' + (W-R) + '" y="' + (T-3) + '" fill="#fff" font-size="10" text-anchor="end">' +
+            (opt.last !== undefined ? opt.last : pts[pts.length-1].v) + '</text>';
+  return '<div class="chart"><svg viewBox="0 0 ' + W + ' ' + H + '" xmlns="http://www.w3.org/2000/svg">' +
+         g + '<path d="' + area + '" fill="rgba(214,17,46,.14)"/>' +
+         '<path d="' + d + '" fill="none" stroke="#D6112E" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>' +
+         dots + lab + '</svg></div>';
+}
+
+/* ---------- радар ---------- */
+var RADK = [['tech','Техника'], ['tac','Тактика'], ['mind','Игровое мышление'],
+            ['psy','Психология'], ['phys','Физическая подготовка']];
+
+function radarSVG(sets){
+  var S = 260, c = S/2, r = 88, n = RADK.length, MAXV = 10;
+  var ang = function(i){ return -Math.PI/2 + i * 2*Math.PI/n; };
+  var pt = function(i, v){
+    var rr = r * Math.max(0, Math.min(1, v / MAXV));
+    return [(c + rr*Math.cos(ang(i))).toFixed(1), (c + rr*Math.sin(ang(i))).toFixed(1)];
+  };
+  var g = '';
+  for (var ring = 1; ring <= 5; ring++){
+    var p = [];
+    for (var i = 0; i < n; i++) p.push(pt(i, MAXV*ring/5).join(','));
+    g += '<polygon points="' + p.join(' ') + '" fill="none" stroke="#2C313B" stroke-width="0.8"/>';
+  }
+  for (var i2 = 0; i2 < n; i2++){
+    var e = pt(i2, MAXV);
+    g += '<line x1="' + c + '" y1="' + c + '" x2="' + e[0] + '" y2="' + e[1] + '" stroke="#2C313B" stroke-width="0.8"/>';
+  }
+  var body = '';
+  sets.forEach(function(st){
+    var p = [];
+    for (var i = 0; i < n; i++) p.push(pt(i, st.v[RADK[i][0]] || 0).join(','));
+    body += '<polygon points="' + p.join(' ') + '" fill="' + st.fill + '" stroke="' + st.line +
+            '" stroke-width="2" stroke-linejoin="round"/>';
+    for (var k = 0; k < n; k++){
+      var q = pt(k, st.v[RADK[k][0]] || 0);
+      body += '<circle cx="' + q[0] + '" cy="' + q[1] + '" r="2.6" fill="' + st.line + '"/>';
+    }
+  });
+  var labs = '';
+  var short = ['Техника','Тактика','Мышление','Психология','Физика'];
+  for (var j = 0; j < n; j++){
+    var lp = pt(j, MAXV * 1.24);
+    var anc = (j === 0) ? 'middle' : (Number(lp[0]) > c + 4 ? 'start' : (Number(lp[0]) < c - 4 ? 'end' : 'middle'));
+    labs += '<text x="' + lp[0] + '" y="' + (Number(lp[1]) + 3).toFixed(1) + '" fill="#98A0AA" font-size="10" text-anchor="' + anc + '">' +
+            short[j] + '</text>';
+  }
+  return '<div class="chart"><svg viewBox="0 0 ' + S + ' ' + S + '" xmlns="http://www.w3.org/2000/svg">' +
+         g + body + labs + '</svg></div>';
+}
+
+/* ---------- оценка вратаря ---------- */
+var RADSEL = 'tech';
+
+function radList(){
+  if (!DB.goals) DB.goals = { season:null, months:{}, days:[] };
+  if (!DB.goals.rad) DB.goals.rad = [];
+  return DB.goals.rad;
+}
+function lastRate(by){
+  var l = radList().filter(function(x){ return x.by === by; });
+  return l.length ? l[0] : null;
+}
+function coachRates(){ return (DB.rates || []).slice(); }
+function lastCoachRate(){ return coachRates().length ? coachRates()[0] : null; }
+
+function renderRadar(){
+  var box = document.getElementById('rad-chart');
+  if (!box) return;
+  document.getElementById('rad-date').textContent = human(today);
+
+  var self = lastRate('self'), coach = lastCoachRate();
+  var sets = [];
+  if (self)  sets.push({ v: self.v,  fill:'rgba(214,17,46,.22)',  line:'#D6112E' });
+  if (coach) sets.push({ v: coach.v, fill:'rgba(47,168,79,.18)',  line:'#2FA84F' });
+  box.innerHTML = sets.length ? radarSVG(sets)
+    : '<div class="sub" style="margin:0">Оценок пока нет — поставь первую ниже.</div>';
+
+  document.getElementById('rad-nums').innerHTML = RADK.map(function(k){
+    var a = self ? (self.v[k[0]] || 0) : null, b = coach ? (coach.v[k[0]] || 0) : null;
+    return '<div><span>' + k[1] + '</span><b>' + (a !== null ? a : '—') +
+           (b !== null ? ' <span style="color:#4FA765">· ' + b + '</span>' : '') + '</b></div>';
+  }).join('');
+
+  document.getElementById('rad-sliders').innerHTML = RADK.map(function(k){
+    return '<div class="sl"><div class="slh"><span>' + k[1] + '</span><b id="v-r' + k[0] + '">' +
+      (self ? (self.v[k[0]] || 5) : 5) + '</b></div>' +
+      '<input type="range" min="1" max="10" step="1" value="' + (self ? (self.v[k[0]] || 5) : 5) +
+      '" id="r-r' + k[0] + '" data-v="r' + k[0] + '">' +
+      '<div class="sle"><span>1</span><span>5</span><span>10</span></div></div>';
+  }).join('');
+
+  document.getElementById('rad-pick').innerHTML = RADK.map(function(k){
+    return '<button data-act="radk:' + k[0] + '"' + (RADSEL === k[0] ? ' class="on"' : '') + '>' + k[1] + '</button>';
+  }).join('');
+  var ser = radList().filter(function(x){ return x.by === 'self'; }).slice(0,14).reverse();
+  document.getElementById('rad-line').innerHTML = lineSVG(ser.map(function(x){
+    return { d: dm(x.d), v: x.v[RADSEL] || 0 };
+  }), { min:1, max:10 });
+
+  var all = radList().map(function(x){ return { d:x.d, by:'моя', v:x.v }; })
+    .concat(coachRates().map(function(x){ return { d:x.d, by:'тренер', v:x.v }; }));
+  all.sort(function(a,b){ return a.d < b.d ? 1 : (a.d > b.d ? -1 : 0); });
+  document.getElementById('rad-list').innerHTML = all.length ? all.slice(0,12).map(function(x){
+    var mean = RADK.reduce(function(p,k){ return p + (x.v[k[0]] || 0); }, 0) / RADK.length;
+    return '<div><span>' + dm(x.d) + ' · ' + x.by + '</span><b>' + mean.toFixed(1).replace('.', ',') + '</b></div>';
+  }).join('') : '<div>Записей пока нет.</div>';
+}
+
+function saveRating(){
+  var v = {};
+  RADK.forEach(function(k){ v[k[0]] = getSl('r' + k[0]) || 5; });
+  var l = radList();
+  l = l.filter(function(x){ return !(x.by === 'self' && x.d === today); });
+  l.unshift({ d: today, by: 'self', v: v });
+  l.sort(function(a,b){ return a.d < b.d ? 1 : (a.d > b.d ? -1 : 0); });
+  DB.goals.rad = l.slice(0, 60);
+  haptic('medium');
+  save('goals', DB.goals, function(){ alertMsg('Оценка сохранена.'); renderRadar(); render(); });
+}
 
 /* ---------- фраза дня ---------- */
 var qIdx = -1;
@@ -1536,10 +1739,9 @@ function render(){
     WB_KEYS.forEach(function(k){ setSl(k[0], wbToday.v ? wbToday.v[k[0]] : 0); });
   }
   var ser = DB.wb.slice(0,14).reverse();
-  document.getElementById('wb-bars').innerHTML = ser.map(function(x){
-    var rd = x.v ? x.v.rd : 0;
-    return '<i style="height:' + Math.max(6, (rd + 3) / 6 * 100) + '%"></i>';
-  }).join('') || '';
+  document.getElementById('wb-bars').innerHTML = lineSVG(ser.map(function(x){
+    return { d: dm(x.d), v: (x.v && ok(x.v.rd)) ? x.v.rd : 0 };
+  }), { min:-3, max:3, last: ser.length ? signed(ser[ser.length-1].v ? ser[ser.length-1].v.rd : 0) : '' });
   var a7 = last7();
   document.getElementById('wb-avg').innerHTML = a7.length ? (
     '<div><span>Сон</span><b>' + fmt(avg(a7.map(function(x){return x.sl;}).filter(ok))) + ' ч</b></div>' +
@@ -1596,10 +1798,9 @@ function render(){
   var s7 = DB.schulte.slice(0,7).map(function(x){ return x.t; });
   document.getElementById('sch-avg').textContent = s7.length ? fmt(avg(s7)) : '—';
   var sser = DB.schulte.slice(0,14).reverse();
-  var smx = sser.length ? Math.max.apply(null, sser.map(function(x){return x.t;})) : 1;
-  document.getElementById('sch-bars').innerHTML = sser.map(function(x){
-    return '<i style="height:' + Math.max(6, Math.round(x.t/smx*100)) + '%"></i>';
-  }).join('');
+  document.getElementById('sch-bars').innerHTML = lineSVG(sser.map(function(x){
+    return { d: dm(x.d), v: x.t };
+  }), { last: sser.length ? sser[sser.length-1].t + ' с' : '' });
   document.getElementById('sch-list').innerHTML = DB.schulte.slice(0,8).map(function(x){
     return '<div><span>' + dm(x.d) + '</span><b>' + x.t + ' с · ошибок ' + x.e + '</b></div>';
   }).join('') || '<div>Попыток пока нет.</div>';
@@ -1610,10 +1811,9 @@ function render(){
   var v7 = DB.svet.slice(0,7).map(miss);
   document.getElementById('sv-avg').textContent = v7.length ? fmt(avg(v7)) : '—';
   var vser = DB.svet.slice(0,14).reverse();
-  var vmx = vser.length ? Math.max.apply(null, vser.map(miss)) : 1;
-  document.getElementById('sv-bars').innerHTML = vser.map(function(x){
-    return '<i style="height:' + Math.max(6, Math.round(miss(x)/(vmx||1)*100)) + '%"></i>';
-  }).join('');
+  document.getElementById('sv-bars').innerHTML = lineSVG(vser.map(function(x){
+    return { d: dm(x.d), v: miss(x) };
+  }), { last: vser.length ? miss(vser[vser.length-1]) + ' промах.' : '' });
   document.getElementById('sv-list').innerHTML = DB.svet.slice(0,8).map(function(x){
     return '<div><span>' + dm(x.d) + (x.src === 'app' ? ' · в приложении' : '') + '</span><b>' +
       x.e + ' ошиб.' + (ok(x.sk) ? ' · ' + x.sk + ' проп.' : '') +
@@ -1632,6 +1832,10 @@ function render(){
 
   renderCk();
   renderQuote();
+  var lr = lastRate('self');
+  setTxt('t-rad', lr
+    ? 'средняя ' + (RADK.reduce(function(p,k){ return p + (lr.v[k[0]] || 0); }, 0) / RADK.length).toFixed(1).replace('.', ',')
+    : 'пять сторон игры');
   var dn = libDone();
   ['Психология','Теория'].forEach(function(sec, k){
     var it = libItems(sec), d = it.filter(function(x){ return dn[x.id]; }).length;
@@ -1880,6 +2084,7 @@ function renderGoalie(res){
 
   if (H.length === 1) H.push(card('Данные', '<div class="sub" style="margin:0">Вратарь пока ничего не заполнил.</div>'));
   document.getElementById('gk-body').innerHTML = H.join('');
+  renderGkRadar(res);
 
   document.getElementById('gk-notes').innerHTML = (res.notes || []).map(function(x){
     var coach = x.a === 'coach';
@@ -1889,6 +2094,33 @@ function renderGoalie(res){
   }).join('') || '<div class="sub" style="margin:0">Заметок пока нет.</div>';
 }
 
+function renderGkRadar(res){
+  var d = res.data || {};
+  var self = ((d.goals && d.goals.rad) || []).filter(function(x){ return x.by === 'self'; })[0] || null;
+  var coach = (res.rates || [])[0] || null;
+  var sets = [];
+  if (self)  sets.push({ v: self.v,  fill:'rgba(214,17,46,.22)', line:'#D6112E' });
+  if (coach) sets.push({ v: coach.v, fill:'rgba(47,168,79,.18)', line:'#2FA84F' });
+  document.getElementById('gk-radar').innerHTML = sets.length ? radarSVG(sets)
+    : '<div class="sub" style="margin:0">Оценок пока нет.</div>';
+  document.getElementById('gk-rsl').innerHTML = RADK.map(function(k){
+    var v = coach ? (coach.v[k[0]] || 5) : (self ? (self.v[k[0]] || 5) : 5);
+    return '<div class="sl"><div class="slh"><span>' + k[1] + '</span><b id="v-c' + k[0] + '">' + v + '</b></div>' +
+      '<input type="range" min="1" max="10" step="1" value="' + v + '" id="r-c' + k[0] + '" data-v="c' + k[0] + '">' +
+      '<div class="sle"><span>1</span><span>5</span><span>10</span></div></div>';
+  }).join('');
+}
+function coachRate(){
+  if (!CUR) return;
+  var v = {};
+  RADK.forEach(function(k){ v[k[0]] = getSl('c' + k[0]) || 5; });
+  haptic('medium');
+  api({ a:'rate', uid: CUR, v: v }, function(res){
+    if (!res || !res.ok){ alertMsg('Не удалось сохранить — нет связи.'); return; }
+    alertMsg('Оценка сохранена.');
+    openGoalie(CUR);
+  });
+}
 function coachNote(){
   var t = val('gk-note').trim();
   if (!t){ alertMsg('Впиши текст заметки.'); return; }
