@@ -1749,6 +1749,12 @@ function openGoalie(uid){
   });
 }
 
+function goalsOf(d){
+  var out = [];
+  (d.games || []).forEach(function(g){ (g.gls || []).forEach(function(x){ out.push(x); }); });
+  (d.gls || []).forEach(function(x){ out.push([x[1], x[2], x[3], x[4]]); });
+  return out;
+}
 function renderGoalie(res){
   var d  = res.data || {};
   var wb = d.wb || [], tr = d.tr || [], sc = d.schulte || [], sv = d.svet || [];
@@ -1811,13 +1817,26 @@ function renderGoalie(res){
     '<div class="sub" style="margin:8px 0 0">Всего записей: ' + tr.length + '.</div>'));
   }
 
-  /* голы */
-  if (gl.length){
+  /* голы: карта, зоны и ситуации */
+  var gg = goalsOf(d);
+  if (gg.length){
     var bysit = {};
-    gl.forEach(function(x){ bysit[x[4]] = (bysit[x[4]] || 0) + 1; });
-    var keys = Object.keys(bysit).sort(function(a,b){ return bysit[b] - bysit[a]; }).slice(0,6);
-    H.push(card('Пропущенные · ' + gl.length, '<div class="list">' + keys.map(function(k){
-      return '<div><span>' + SITS[k] + '</span><b>' + bysit[k] + '</b></div>';
+    gg.forEach(function(x){ bysit[x[3]] = (bysit[x[3]] || 0) + 1; });
+    var keys = Object.keys(bysit).sort(function(a,b){ return bysit[b] - bysit[a]; });
+    var dir = gg.filter(function(x){ return x[3] === 0; });
+
+    H.push(card('Откуда забивают · ' + gg.length,
+      '<div class="svgbox">' + rinkHTML(gg.map(function(x){ return [x[0], x[1]]; })) + '</div>'));
+
+    H.push(card('Куда забивают',
+      '<div class="sub" style="margin:0 0 6px">Все голы</div>' + netStat(gg) +
+      (dir.length
+        ? '<div class="sub" style="margin:12px 0 6px">С прямого броска — реагирование · ' + dir.length + '</div>' + netStat(dir)
+        : '<div class="sub" style="margin:12px 0 0">Голов с реагирования пока нет.</div>')));
+
+    H.push(card('Ситуации', '<div class="list">' + keys.map(function(k){
+      return '<div><span>' + SITS[k] + '</span><b>' + bysit[k] + ' · ' +
+             Math.round(bysit[k] / gg.length * 100) + '%</b></div>';
     }).join('') + '</div>'));
   }
 
