@@ -52,7 +52,11 @@
   .sl{margin-bottom:15px}
   .slh{display:flex;justify-content:space-between;align-items:baseline;font-size:13.5px;margin-bottom:3px}
   .slh b{font-size:16px;color:#fff;min-width:30px;text-align:right}
-  .sle{display:flex;justify-content:space-between;font-size:10.5px;color:var(--tx2);margin-top:1px}
+  .sle{display:flex;justify-content:space-between;align-items:flex-start;gap:6px;
+       font-size:10px;line-height:1.25;color:var(--tx2);margin-top:1px}
+  .sle .lo{flex:1;text-align:left}
+  .sle .hi{flex:1;text-align:right}
+  .sle .mid{flex:none;white-space:nowrap;opacity:.65}
   input[type=range]{-webkit-appearance:none;appearance:none;width:100%;background:transparent;padding:0;border:0;height:24px}
   input[type=range]::-webkit-slider-runnable-track{height:6px;background:#2C313B;border-radius:3px}
   input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;height:22px;margin-top:-8px;
@@ -697,15 +701,31 @@ function haptic(t){ try { if(TG && TG.HapticFeedback) TG.HapticFeedback.impactOc
 function alertMsg(m){ if (TG && TG.showPopup) { try { TG.showPopup({message:m}); return; } catch(e){} } alert(m); }
 
 /* ---------- показатели ---------- */
+/* ключ · название · что значит −3 · что значит +3
+   у «Усталости», «Психологического утомления» и «Крепатуры» плюс — это хуже,
+   поэтому подписи расставлены по смыслу, а не механически */
 var WB_KEYS = [
-  ['q','Качество сна'], ['f','Усталость'], ['des','Желание тренироваться'], ['mo','Настроение'],
-  ['pf','Психологическое утомление'], ['rd','Готовность'], ['sor','Крепатура (мышечная боль)']
+  ['q',  'Качество сна',              'почти не спал',    'выспался'],
+  ['f',  'Усталость',                 'свежий',           'разбитый'],
+  ['des','Желание тренироваться',     'нет желания',      'рвусь на лёд'],
+  ['mo', 'Настроение',                'подавленное',      'отличное'],
+  ['pf', 'Психологическое утомление', 'голова свежая',    'перегружен'],
+  ['rd', 'Готовность',                'не готов',         'готов на всё'],
+  ['sor','Крепатура (мышечная боль)', 'мышцы свежие',     'сильно забиты']
 ];
 var TR_KEYS = [
-  ['inv','Включённость в работу'], ['att','Уровень внимания'], ['emo','Контроль эмоций (дыхание)'],
-  ['fat','Усталость'], ['trk','Отслеживание'], ['mov','Скорость и качество перемещений'],
-  ['reb','Переключения на добивания'], ['fin','Игра до конца'], ['stk','Игра клюшкой'],
-  ['scan','Сканирование и чтение игры'], ['voi','Подсказки голосом'], ['joy','Удовольствие от процесса']
+  ['inv', 'Включённость в работу',          'отбывал номер',   'выложился'],
+  ['att', 'Уровень внимания',               'рассеян',         'предельно собран'],
+  ['emo', 'Контроль эмоций (дыхание)',      'сорвался',        'держал себя'],
+  ['fat', 'Усталость',                      'легко',           'тяжело'],
+  ['trk', 'Отслеживание',                   'терял шайбу',     'вёл до конца'],
+  ['mov', 'Скорость и качество перемещений','медленно, грязно','быстро и чётко'],
+  ['reb', 'Переключения на добивания',      'опаздывал',       'успевал везде'],
+  ['fin', 'Игра до конца',                  'бросал момент',   'доигрывал всё'],
+  ['stk', 'Игра клюшкой',                   'не помогал',      'активно играл'],
+  ['scan','Сканирование и чтение игры',     'не читал игру',   'видел заранее'],
+  ['voi', 'Подсказки голосом',              'молчал',          'постоянно говорил'],
+  ['joy', 'Удовольствие от процесса',       'не в кайф',       'в удовольствие']
 ];
 var TR_TYPES = ['Тренировка','Игра','Зал'];
 var SITS = ['Реагирование','Бросок с приёма','Бросок в касание','Атака с угла','Атака из-за ворот',
@@ -795,14 +815,16 @@ var CUR_PAGE = 'home';
 function goBack(){ go(navStack.length ? navStack.pop() : 'home', true); }
 
 /* ---------- бегунки ---------- */
-function sliderHTML(key, title){
+function sliderHTML(key, title, lo, hi){
   return '<div class="sl"><div class="slh"><span>' + title + '</span><b id="v-' + key + '">0</b></div>' +
     '<input type="range" min="-3" max="3" step="1" value="0" id="r-' + key + '" data-v="' + key + '">' +
-    '<div class="sle"><span>−3</span><span>как обычно</span><span>+3</span></div></div>';
+    '<div class="sle"><span class="lo">−3 ' + (lo || '') + '</span>' +
+    '<span class="mid">0 — как обычно</span>' +
+    '<span class="hi">' + (hi || '') + ' +3</span></div></div>';
 }
 function buildForms(){
-  document.getElementById('wb-sliders').innerHTML = WB_KEYS.map(function(k){ return sliderHTML(k[0], k[1]); }).join('');
-  document.getElementById('tr-sliders').innerHTML = TR_KEYS.map(function(k){ return sliderHTML(k[0], k[1]); }).join('');
+  document.getElementById('wb-sliders').innerHTML = WB_KEYS.map(function(k){ return sliderHTML(k[0], k[1], k[2], k[3]); }).join('');
+  document.getElementById('tr-sliders').innerHTML = TR_KEYS.map(function(k){ return sliderHTML(k[0], k[1], k[2], k[3]); }).join('');
   document.getElementById('tr-type').innerHTML = TR_TYPES.map(function(t,i){
     return '<button data-act="trtype:' + i + '"' + (trType === i ? ' class="on"' : '') + '>' + t + '</button>';
   }).join('');
@@ -1967,10 +1989,18 @@ function renderGoalie(res){
 
   /* цели */
   var gm = go_.months ? go_.months[curMonth] : null;
+  var days = go_.days || [];
   H.push(card('Цели', [
     row('Сезон', go_.season ? esc(go_.season.t) : '—'),
     row('Месяц', gm ? esc(gm.t) : '—'),
-    row('На занятия', String((go_.days || []).length) + ' записей')
+    days.length
+      ? '<div class="sub" style="margin:10px 0 4px">Задачи на занятие · ' + days.length + '</div>' +
+        '<div class="list">' + days.slice(0,5).map(function(x){
+          return '<div><span' + (x.ok ? '' : ' style="opacity:.6"') + '>' + dm(x.d) + ' · ' + esc(cut(x.t, 70)) +
+                 '</span><b style="color:' + (x.ok ? '#2FA84F' : 'var(--tx2)') + '">' +
+                 (x.ok ? '✓' : '—') + '</b></div>';
+        }).join('') + '</div>'
+      : row('На занятия', '—')
   ].join('')));
 
   /* самочувствие */
@@ -1978,17 +2008,21 @@ function renderGoalie(res){
     var last = wb[0];
     var avg = function(k){
       var n = 0, s = 0;
-      wb.slice(0,7).forEach(function(x){ if (x.v && x.v[k] !== undefined){ s += x.v[k]; n++; } });
-      return n ? (s/n).toFixed(1) : '—';
+      wb.slice(0,7).forEach(function(x){ if (x.v && ok(x.v[k])){ s += x.v[k]; n++; } });
+      return n ? fmt(s/n) : '—';
     };
     H.push(card('Самочувствие · ' + dm(last.d), [
       stat3(ok(last.sl) ? last.sl : '—', 'сон, ч',
             (last.v && ok(last.v.rd)) ? signed(last.v.rd) : '—', 'готовность',
             ok(last.p) ? last.p : '—', 'пульс'),
       '<div class="list" style="margin-top:8px">' +
-        WB_KEYS.map(function(k){ return '<div><span>' + k[1] + '</span><b>' + avg(k[0]) + '</b></div>'; }).join('') +
+        WB_KEYS.map(function(k){
+          var v = (last.v && ok(last.v[k[0]])) ? signed(last.v[k[0]]) : '—';
+          return '<div><span>' + k[1] + '</span><b>' + v + dim(' · ср. ' + avg(k[0])) + '</b></div>';
+        }).join('') +
       '</div>',
-      '<div class="sub" style="margin:8px 0 0">Средние за последние 7 записей. Всего записей: ' + wb.length + '.</div>',
+      '<div class="sub" style="margin:8px 0 0">Слева — оценка за ' + dm(last.d) +
+        ', справа среднее за последние 7 записей. Всего записей: ' + wb.length + '.</div>',
       last.c ? '<div class="sub" style="margin:8px 0 0">Самонаблюдение: ' + esc(last.c) + '</div>' : ''
     ].join('')));
   }
@@ -2012,13 +2046,57 @@ function renderGoalie(res){
     ].join('')));
   }
 
-  /* дневник занятий */
+  /* дневник занятий — последняя запись целиком, дальше списком */
   if (tr.length){
-    H.push(card('Дневник занятий', '<div class="list">' + tr.slice(0,6).map(function(x){
-      return '<div><span>' + dm(x.d) + ' · ' + (TR_TYPES[x.ty] || '') + '</span><b>' +
-        esc((x.t1 || x.t2 || '—').slice(0,60)) + '</b></div>';
-    }).join('') + '</div>' +
-    '<div class="sub" style="margin:8px 0 0">Всего записей: ' + tr.length + '.</div>'));
+    var lt = tr[0];
+    var tavg = function(k){
+      var n = 0, s = 0;
+      tr.slice(0,7).forEach(function(x){ if (x.v && ok(x.v[k])){ s += x.v[k]; n++; } });
+      return n ? fmt(s/n) : '—';
+    };
+    H.push(card('Последнее занятие · ' + dm(lt.d) + ' · ' + (TR_TYPES[lt.ty] || ''), [
+      lt.t1 ? '<div class="sub" style="margin:0 0 6px"><b style="color:#fff">Задача:</b> ' + esc(lt.t1) + '</div>' : '',
+      lt.t2 ? '<div class="sub" style="margin:0 0 6px"><b style="color:#fff">Что получилось:</b> ' + esc(lt.t2) + '</div>' : '',
+      lt.t3 ? '<div class="sub" style="margin:0 0 6px"><b style="color:#fff">Фокус дальше:</b> ' + esc(lt.t3) + '</div>' : '',
+      '<div class="list" style="margin-top:8px">' +
+        TR_KEYS.map(function(k){
+          var v = (lt.v && ok(lt.v[k[0]])) ? signed(lt.v[k[0]]) : '—';
+          return '<div><span>' + k[1] + '</span><b>' + v + dim(' · ср. ' + tavg(k[0])) + '</b></div>';
+        }).join('') +
+      '</div>',
+      '<div class="sub" style="margin:8px 0 0">Справа среднее за последние 7 занятий.</div>'
+    ].join('')));
+
+    if (tr.length > 1){
+      H.push(card('Дневник занятий · ' + tr.length, '<div class="list">' + tr.slice(1,7).map(function(x){
+        return '<div><span>' + dm(x.d) + ' · ' + (TR_TYPES[x.ty] || '') + '</span><b>' +
+          esc(cut(x.t1 || x.t2 || '—', 60)) + '</b></div>';
+      }).join('') + '</div>'));
+    }
+  }
+
+  /* чек-лист дня */
+  var chk = go_.chk || {};
+  var cdays = Object.keys(chk).sort().reverse();
+  if (cdays.length){
+    var cl = chk[cdays[0]] || [];
+    var week = cdays.slice(0,7);
+    var wsum = week.reduce(function(p,k){ return p + (chk[k] || []).length; }, 0);
+    H.push(card('Чек-лист · ' + dm(cdays[0]), [
+      stat3(cl.length + ' из ' + CHECKS.length, 'в этот день',
+            fmt(wsum / week.length), 'в среднем за ' + week.length + ' дн.',
+            cdays.length, 'дней с отметками'),
+      '<div class="list" style="margin-top:8px">' + CHECKS.map(function(t, i){
+        var on = cl.indexOf(i) > -1;
+        return '<div><span' + (on ? '' : ' style="opacity:.5"') + '>' + t + '</span><b style="color:' +
+               (on ? '#2FA84F' : 'var(--tx2)') + '">' + (on ? '✓' : '—') + '</b></div>';
+      }).join('') + '</div>',
+      week.length > 1
+        ? '<div class="list" style="margin-top:8px">' + week.map(function(k){
+            return '<div><span>' + dm(k) + '</span><b>' + (chk[k] || []).length + ' из ' + CHECKS.length + '</b></div>';
+          }).join('') + '</div>'
+        : ''
+    ].join('')));
   }
 
   /* голы: карта, зоны и ситуации */
@@ -2143,6 +2221,8 @@ function card(title, inner){
   return '<div class="card"><h2>' + title + '</h2>' + inner + '</div>';
 }
 function row(a, b){ return '<div class="list"><div><span>' + a + '</span><b>' + b + '</b></div></div>'; }
+/* приглушённая приписка справа от основного числа */
+function dim(t){ return '<span style="color:var(--tx2);font-weight:300">' + t + '</span>'; }
 function stat3(a, ta, b, tb, c2, tc){
   return '<div class="stat"><div><b>' + a + '</b><span>' + ta + '</span></div>' +
          '<div><b>' + b + '</b><span>' + tb + '</span></div>' +
