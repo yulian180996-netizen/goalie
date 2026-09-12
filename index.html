@@ -2,654 +2,2235 @@
 <html lang="ru">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Планировщик</title>
-<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Вратарь · Спартак</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>
-  :root{
-    --red:#D6112E; --ink:#15181D; --card:#1C2027; --line:#2C313B;
-    --tx:#E6E9ED; --tx2:#8A929B; --green:#2FA84F; --yellow:#E9A400;
-  }
+  :root{ --red:#D6112E; --ink:#15181D; --card:#1C2027; --line:#2C313B;
+         --tx:#EDEFF2; --tx2:#98A0AA; --ok:#2FA84F; }
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
   body{margin:0;background:var(--ink);color:var(--tx);
-       font-family:'Unbounded',system-ui,sans-serif;font-size:13.5px;font-weight:300;
-       padding:0 0 30px}
-  .wrap{padding:0 14px}
-  h1{font-size:21px;font-weight:700;margin:2px 0 2px}
-  h2{font-size:15px;font-weight:700;margin:0 0 10px}
-  .sub{color:var(--tx2);font-size:12px;margin:0 0 14px;line-height:1.35}
-  .hide{display:none!important}
-
-  .top{display:flex;align-items:center;gap:10px;padding:12px 14px 8px;position:sticky;top:0;
-       background:var(--ink);z-index:20}
-  .back{flex:none;width:32px;height:32px;border-radius:9px;border:1px solid var(--line);
-        background:var(--card);color:var(--tx);font-size:16px;line-height:1;cursor:pointer}
-  .kick{color:var(--red);font-size:10.5px;font-weight:700;letter-spacing:1.4px}
-
-  .tiles{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:6px}
-  .tile{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 12px;
-        text-align:left;color:var(--tx);font-family:inherit;font-size:13px;font-weight:400;cursor:pointer}
-  .tile b{display:block;font-size:14px;font-weight:700;margin-bottom:3px}
-  .tile span{color:var(--tx2);font-size:11.5px;font-weight:300;line-height:1.3;display:block}
-  .tile.wide{grid-column:1/-1}
-  .tile.red{background:var(--red);border-color:var(--red)}
-  .tile.red span{color:#F7C9D0}
-
-  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:13px;margin-bottom:11px}
-  label{display:block;font-size:11.5px;color:var(--tx2);margin:9px 0 4px}
-  input,select,textarea{width:100%;background:#12161C;border:1px solid var(--line);border-radius:10px;
-    color:var(--tx);padding:9px 10px;font-family:inherit;font-size:13.5px;font-weight:300}
-  textarea{min-height:70px;resize:vertical;line-height:1.4}
-  .btn{display:block;width:100%;background:var(--red);border:0;border-radius:11px;color:#fff;
-       padding:12px;font-family:inherit;font-size:14px;font-weight:700;margin-top:12px;cursor:pointer}
-  .btn.sec{background:transparent;border:1px solid var(--line);color:var(--tx);font-weight:400}
-  .btn.sm{padding:9px;font-size:12.5px;font-weight:400;margin-top:8px}
-  .row2{display:flex;gap:9px}
-  .row2>*{flex:1}
-
-  .seg{display:flex;gap:6px;margin:2px 0 4px;flex-wrap:wrap}
-  .seg button{flex:1;min-width:74px;background:#12161C;border:1px solid var(--line);border-radius:9px;
-    color:var(--tx2);padding:8px 6px;font-family:inherit;font-size:12px;font-weight:400;cursor:pointer}
-  .seg button.on{background:var(--red);border-color:var(--red);color:#fff;font-weight:700}
-
-  .list>div{display:flex;justify-content:space-between;gap:10px;align-items:baseline;
-            padding:7px 0;border-bottom:1px solid var(--line)}
-  .list>div:last-child{border-bottom:0}
-  .list span{color:var(--tx2);font-size:12px}
-
-  /* разделы льда */
-  .sec{background:var(--card);border:1px solid var(--line);border-radius:14px;margin-bottom:10px;overflow:hidden}
-  .sech{display:flex;align-items:center;gap:9px;padding:12px 13px;cursor:pointer}
-  .sech b{font-size:13px;font-weight:700;flex:1}
-  .tag{flex:none;font-size:10.5px;font-weight:400;color:var(--tx2);
-       border:1px solid var(--line);border-radius:20px;padding:2px 8px}
-  .tag.g{color:var(--green);border-color:#2b4a35}
-  .secb{padding:0 13px 12px;border-top:1px solid var(--line)}
-
-  .sk{display:flex;align-items:flex-start;gap:10px;padding:9px 0;border-bottom:1px solid var(--line)}
-  .sk:last-child{border-bottom:0}
-  .sk .nm{flex:1;line-height:1.35;font-size:12.5px}
-  .sk .nm small{display:block;color:var(--tx2);font-size:10.5px;margin-top:2px;font-weight:300}
-  .chk{flex:none;width:26px;height:26px;border-radius:8px;border:1px solid var(--line);
-       background:#12161C;color:var(--tx2);font-size:13px;line-height:1;cursor:pointer;
-       font-family:inherit;padding:0}
-  .chk.on{background:var(--green);border-color:var(--green);color:#fff}
-  .x{flex:none;background:none;border:0;color:var(--tx2);font-size:16px;cursor:pointer;
-     font-family:inherit;padding:0 2px;line-height:1}
-  .empty{color:var(--tx2);font-size:11.5px;padding:8px 0;line-height:1.4;margin:0}
-
-  /* выбор навыков */
-  .ov{position:fixed;inset:0;background:var(--ink);z-index:50;display:flex;flex-direction:column}
-  .ovh{display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid var(--line)}
-  .ovh b{flex:1;font-size:13.5px;font-weight:700}
-  .ovb{flex:1;overflow-y:auto;padding:4px 14px 20px}
-  .grp{color:var(--red);font-size:10.5px;font-weight:700;letter-spacing:1px;margin:14px 0 2px}
-
-  /* матрица */
-  .mx{overflow-x:auto;-webkit-overflow-scrolling:touch;margin:0 -14px;padding:0 14px}
-  table.m{border-collapse:collapse;font-size:11px;font-weight:300}
-  table.m th,table.m td{border:1px solid var(--line);padding:5px 6px;white-space:nowrap}
-  table.m th{font-weight:700;font-size:10px;color:var(--tx2);background:#12161C}
-  table.m td.n{white-space:normal;min-width:180px;max-width:230px;line-height:1.3;
-               position:sticky;left:0;background:var(--card);z-index:2}
-  table.m th.n{position:sticky;left:0;z-index:3}
-  table.m tr.h td{background:#12161C;color:var(--red);font-weight:700;font-size:10px;letter-spacing:.8px}
-  table.m td.c{text-align:center;width:34px}
-  .dot{color:var(--yellow)}
-  .ok{color:var(--green)}
-
-  .note{color:var(--tx2);font-size:11px;line-height:1.4;margin:10px 0 0}
-  .saving{position:fixed;left:0;right:0;bottom:0;background:var(--red);color:#fff;
-          text-align:center;padding:7px;font-size:11.5px;z-index:60}
+       font-family:'Unbounded',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+       font-size:13.5px;font-weight:300;letter-spacing:-0.01em;padding-bottom:24px}
+  h1,h2,b,strong{font-weight:700;letter-spacing:-0.02em}
+  input,textarea,select,button{font-family:inherit}
+  .wrap{padding:14px 14px 0}
+  h1{font-size:19px;margin:0 0 2px}
+  .sub{color:var(--tx2);font-size:13px;margin-bottom:14px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:12px}
+  .card h2{font-size:15px;margin:0 0 10px;display:flex;align-items:center;gap:8px}
+  .card h2:before{content:'';width:4px;height:15px;background:var(--red);border-radius:2px}
+  label{display:block;font-size:13px;color:var(--tx2);margin:12px 0 6px}
+  input,textarea,select{width:100%;background:#12161C;border:1px solid var(--line);color:var(--tx);
+       border-radius:10px;padding:11px;font-size:15px;font-family:inherit}
+  textarea{min-height:64px;resize:vertical}
+  .btn{width:100%;background:var(--red);color:#fff;border:0;border-radius:11px;padding:14px;
+       font-size:15px;font-weight:700;cursor:pointer;margin-top:14px}
+  .btn.sec{background:#252A33;color:var(--tx)}
+  .row{display:flex;gap:10px}
+  .row>*{flex:1}
+  .stat{display:flex;gap:8px;margin-bottom:10px}
+  .stat div{flex:1;background:#12161C;border:1px solid var(--line);border-radius:11px;padding:10px;text-align:center}
+  .stat b{display:block;font-size:20px;color:#fff}
+  .stat span{font-size:11px;color:var(--tx2)}
+  .bars{display:flex;align-items:flex-end;gap:3px;height:60px;margin-top:8px}
+  .bars i{flex:1;background:var(--red);border-radius:3px 3px 0 0;opacity:.85;min-height:2px}
+  .list{font-size:13px}
+  .list div{display:flex;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:1px solid var(--line);color:var(--tx2)}
+  .list div:last-child{border:0}
+  .list b{color:var(--tx);font-weight:600;text-align:right}
+  .hide{display:none}
+  header{position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:8px;
+         background:var(--ink);padding:8px 12px 8px 4px;border-bottom:1px solid var(--line)}
+  header button{background:0;border:0;color:var(--tx);font-size:30px;line-height:1;
+                padding:2px 12px 6px;cursor:pointer;font-family:inherit;touch-action:manipulation}
+  header span{font-size:15px;font-weight:700;color:var(--tx)}
+  /* бегунки */
+  .sl{margin-bottom:15px}
+  .slh{display:flex;justify-content:space-between;align-items:baseline;font-size:13.5px;margin-bottom:3px}
+  .slh b{font-size:16px;color:#fff;min-width:30px;text-align:right}
+  .sle{display:flex;justify-content:space-between;align-items:flex-start;gap:6px;
+       font-size:10px;line-height:1.25;color:var(--tx2);margin-top:1px}
+  .sle .lo{flex:1;text-align:left}
+  .sle .hi{flex:1;text-align:right}
+  .sle .mid{flex:none;white-space:nowrap;opacity:.65}
+  input[type=range]{-webkit-appearance:none;appearance:none;width:100%;background:transparent;padding:0;border:0;height:24px}
+  input[type=range]::-webkit-slider-runnable-track{height:6px;background:#2C313B;border-radius:3px}
+  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;height:22px;margin-top:-8px;
+       border-radius:50%;background:var(--red);border:2px solid #fff}
+  input[type=range]::-moz-range-track{height:6px;background:#2C313B;border-radius:3px}
+  input[type=range]::-moz-range-thumb{width:20px;height:20px;border-radius:50%;background:var(--red);border:2px solid #fff}
+  /* Шульте */
+  #grid{display:grid;grid-template-columns:repeat(6,1fr);gap:6px;margin-top:10px}
+  #grid button{aspect-ratio:1;background:#12161C;border:1px solid var(--line);color:var(--tx);
+       border-radius:9px;font-size:16px;font-weight:600;cursor:pointer;font-family:inherit;
+       touch-action:manipulation;-webkit-user-select:none;user-select:none;
+       -webkit-tap-highlight-color:transparent}
+  #grid button:active{background:#252A33}
+  #grid button.bad{background:#3A1A1F;border-color:#5A2029}
+  .big{font-size:30px;font-weight:800;text-align:center;margin:6px 0}
+  .goal{background:#12161C;border:1px solid var(--line);border-radius:11px;padding:11px;margin-bottom:8px}
+  .goal .t{font-size:14px;margin-bottom:4px;white-space:pre-wrap}
+  .goal .c{font-size:12px;color:var(--tx2);white-space:pre-wrap}
+  .goal .x{float:right;color:var(--tx2);cursor:pointer;font-size:18px;line-height:1}
+  .tag{display:inline-block;font-size:11px;background:#2A1116;color:#E2606F;border-radius:6px;padding:2px 7px;margin-bottom:6px}
+  .done-tag{background:#16281B;color:#4FA765}
+  .ok{color:var(--ok)}
+  .tiles{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .tile{background:#12161C;border:1px solid var(--line);border-radius:14px;padding:13px 12px;
+       cursor:pointer;text-align:left;color:var(--tx);font-family:inherit}
+  .tile e{display:block;font-size:25px;line-height:1.1;margin-bottom:7px;font-style:normal}
+  .tile b{display:block;font-size:13.5px;font-weight:700;margin-bottom:3px}
+  .tile i{display:block;font-size:11.5px;color:var(--tx2);font-style:normal;line-height:1.3}
+  .tile.wide{grid-column:1 / -1}
+  .menu button{width:100%;text-align:left;background:#12161C;border:1px solid var(--line);color:var(--tx);
+       border-radius:11px;padding:14px;font-size:15px;margin-bottom:8px;cursor:pointer;display:flex;justify-content:space-between}
+  .menu button i{font-style:normal;color:var(--tx2)}
+  /* аналитика голов */
+  .chips{display:flex;flex-wrap:wrap;gap:6px}
+  .chips button{background:#12161C;border:1px solid var(--line);color:var(--tx2);border-radius:9px;
+       padding:8px 10px;font-size:12.5px;cursor:pointer}
+  .chips button.on{background:var(--red);border-color:var(--red);color:#fff;font-weight:700}
+  .svgbox{margin-top:8px;background:#1B2028;border:1px solid var(--line);border-radius:12px;padding:6px}
+  .svgbox svg{width:100%;height:auto;display:block;touch-action:manipulation}
+  .netgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;margin-top:6px}
+  .netgrid div{background:#12161C;border:1px solid var(--line);border-radius:9px;padding:11px 4px;text-align:center;font-size:13px}
+  .netgrid b{display:block;font-size:17px;color:#fff}
+  .netgrid span{font-size:10px;color:var(--tx2)}
+  .netpic{position:relative;border-radius:10px;overflow:hidden;margin-top:8px;background:#0E1216}
+  .netpic img{width:100%;display:block}
+  .netpic .zgrid{position:absolute;left:0;top:0;right:0;bottom:0;
+       display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr)}
+  .netpic .zgrid button{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.28);
+       color:#fff;font-size:9.5px;font-weight:600;cursor:pointer;padding:0;
+       text-shadow:0 1px 3px rgba(0,0,0,.8);display:flex;align-items:flex-end;justify-content:center}
+  .netpic .zgrid button span{padding-bottom:3px;opacity:.75}
+  .netpic .zgrid button.on{background:rgba(214,17,46,.55);border-color:#D6112E}
+  .chart{margin-top:8px;background:#0E1216;border:1px solid var(--line);border-radius:12px;padding:8px 4px}
+  .chart svg{width:100%;height:auto;display:block}
+  .lg{display:flex;gap:14px;justify-content:center;margin-top:8px;font-size:11.5px;color:var(--tx2)}
+  .lg i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+  /* оценки 1-5 */
+  .rt{margin-bottom:12px}
+  .rth{font-size:12.5px;color:var(--tx2);margin-bottom:5px}
+  .rt .chips button{min-width:38px;text-align:center;padding:9px 10px}
+  /* тепловая карта зон */
+  .netpic .zgrid.stat{pointer-events:none}
+  .netpic .zgrid .zc{border:1px solid rgba(255,255,255,.28);display:flex;flex-direction:column;
+       align-items:center;justify-content:center;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.8)}
+  .netpic .zgrid .zc b{font-size:17px}
+  .netpic .zgrid .zc span{font-size:9px;opacity:.75}
+  .lib .lc.num{color:#fff;font-size:12px;font-weight:700}
+  /* фраза дня */
+  .quote{background:linear-gradient(135deg,#2A1116,#1C2027);border-color:#5A2029;cursor:pointer}
+  .quote .qt{font-size:15px;line-height:1.45;color:#fff}
+  .quote .qa{font-size:12px;color:#E2606F;margin-top:8px}
+  /* библиотека */
+  .lib{display:flex;align-items:flex-start;gap:11px;width:100%;text-align:left;background:#12161C;
+       border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:8px;
+       color:var(--tx);font-family:inherit;cursor:pointer}
+  .lib .lc{flex:none;width:22px;height:22px;border-radius:50%;border:2px solid var(--line);
+           display:flex;align-items:center;justify-content:center;font-size:12px;color:transparent;margin-top:1px}
+  .lib.on .lc{background:#2FA84F;border-color:#2FA84F;color:#fff}
+  .lib b{display:block;font-size:14.5px;font-weight:700;margin-bottom:3px}
+  .lib i{display:block;font-size:12px;color:var(--tx2);font-style:normal;line-height:1.35}
+  .matimg{width:100%;border-radius:12px;display:block;margin-bottom:12px}
+  .mattext{font-size:14.5px;line-height:1.55;white-space:pre-wrap}
+  a.btn{display:block;text-align:center;text-decoration:none;box-sizing:border-box}
+  /* площадка */
+  .rink{position:relative;line-height:0}
+  .rink img{width:100%;display:block;border-radius:10px}
+  .rdot{position:absolute;width:11px;height:11px;margin:-5.5px 0 0 -5.5px;border-radius:50%;
+        background:rgba(214,17,46,.8);border:1.5px solid #fff;box-shadow:0 1px 3px rgba(0,0,0,.5)}
+  .rdot.pick{width:17px;height:17px;margin:-8.5px 0 0 -8.5px;background:var(--red);border-width:2.5px}
+  /* чек-лист дня */
+  .ck{display:flex;align-items:center;gap:11px;width:100%;text-align:left;background:#12161C;
+      border:1px solid var(--line);border-radius:12px;padding:11px 12px;margin-bottom:8px;
+      color:var(--tx);font-size:13.5px;line-height:1.3;font-family:inherit;cursor:pointer;
+      touch-action:manipulation;-webkit-user-select:none;user-select:none}
+  .ckc{flex:none;width:24px;height:24px;border-radius:50%;border:2px solid var(--line);
+       display:flex;align-items:center;justify-content:center;font-size:13px;
+       color:transparent;transition:background .15s,border-color .15s}
+  .ck.on{background:#12211A;border-color:#2FA84F}
+  .ck.on .ckc{background:#2FA84F;border-color:#2FA84F;color:#fff}
+  .ck.on .ckt{color:#9FD6AE}
+  .ckbar{height:6px;background:#12161C;border-radius:3px;overflow:hidden;margin-top:4px}
+  .ckbar i{display:block;height:100%;background:#2FA84F;border-radius:3px;transition:width .2s}
+  /* реакция выбора */
+  .rxgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}
+  .rxb{aspect-ratio:1;background:#12161C;border:1px solid var(--line);color:var(--tx);
+       border-radius:14px;font-size:30px;line-height:1;cursor:pointer;font-family:inherit;
+       touch-action:manipulation;user-select:none;-webkit-user-select:none}
+  .rxb:active{background:#252A33}
+  .rxb.hit{background:#16281B;border-color:#2FA84F}
+  .rxb.miss{background:#3A1A1F;border-color:#5A2029}
+  .rxc{aspect-ratio:1;display:flex;align-items:center;justify-content:center;
+       background:#0E1216;border:1px solid var(--line);border-radius:14px;
+       font-size:42px;font-weight:800;color:#fff}
+  .rxc.go{background:var(--red);border-color:var(--red)}
+  #rx-pad.off{opacity:.45}
 </style>
 </head>
 <body>
 
-<div class="top">
-  <button class="back hide" id="back" onclick="go(hist.pop()||'home')">‹</button>
-  <div>
-    <div class="kick" id="kick">СПАРТАК-МАХ</div>
-    <h1 id="ttl">Планировщик</h1>
-  </div>
-</div>
+<header id="top" class="hide">
+  <button id="back" data-act="back">‹</button>
+  <span id="top-title"></span>
+</header>
 
 <div class="wrap">
 
-<!-- ГЛАВНАЯ -->
-<div id="p-home">
-  <div class="card" id="curcard"></div>
-  <div class="tiles">
-    <button class="tile red" onclick="go('ice')"><b>Лёд</b><span id="t-ice">—</span></button>
-    <button class="tile" onclick="go('ofp')"><b>ОФП</b><span id="t-ofp">когнитивка, зал, заминка</span></button>
-    <button class="tile" onclick="go('theory')"><b>Теория</b><span id="t-th">—</span></button>
-    <button class="tile" onclick="go('psy')"><b>Психология</b><span id="t-psy">—</span></button>
-    <button class="tile wide" onclick="go('matrix')"><b>Матрица навыков</b><span>что отработано по микроциклам</span></button>
-    <button class="tile wide" onclick="go('cycles')"><b>Микроциклы</b><span id="t-cy">—</span></button>
-  </div>
-  <p class="note" id="synced"></p>
-</div>
-
-<!-- МИКРОЦИКЛЫ -->
-<div id="p-cycles" class="hide">
-  <p class="sub">Микроцикл — рамка планирования. Один микроцикл — один столбец в матрице.</p>
-  <div id="cylist"></div>
-  <button class="btn" onclick="newCycle()">+ Новый микроцикл</button>
-</div>
-
-<div id="p-cycle" class="hide">
-  <div class="card">
-    <label>Название</label>
-    <input id="cy-n" placeholder="Микроцикл 1">
-    <div class="row2">
-      <div><label>Начало</label><input id="cy-d1" type="date"></div>
-      <div><label>Конец</label><input id="cy-d2" type="date"></div>
-    </div>
-    <label>Акцент микроцикла</label>
-    <textarea id="cy-note" placeholder="Главная задача недели"></textarea>
-  </div>
-  <button class="btn" onclick="saveCycle()">Сохранить</button>
-  <button class="btn sec" onclick="makeCurrent()">Сделать текущим</button>
-  <button class="btn sec" onclick="delCycle()">Удалить микроцикл</button>
-</div>
-
-<!-- ЛЁД -->
-<div id="p-ice" class="hide">
-  <p class="sub" id="ice-sub"></p>
-  <div id="ice-secs"></div>
-  <p class="note">Галочка — навык отработан, дата ставится сегодняшняя. Нажать ещё раз — снять.</p>
-</div>
-
-<!-- ОФП -->
-<div id="p-ofp" class="hide">
-  <p class="sub" id="ofp-sub"></p>
-  <div class="card">
-    <h2>Когнитивка</h2>
-    <label>Над чем работаем</label>
-    <textarea id="o-cw" placeholder="Например: периферия, переключение внимания"></textarea>
-    <label>Описание упражнения</label>
-    <textarea id="o-ce" placeholder="Упражнения, дозировка, оборудование"></textarea>
-  </div>
-  <div class="card">
-    <h2>Тренажёрный зал</h2>
-    <label>План на микроцикл</label>
-    <textarea id="o-gym" style="min-height:130px" placeholder="Пн — …&#10;Ср — …&#10;Пт — …"></textarea>
-  </div>
-  <div class="card">
-    <h2>Заминка</h2>
-    <label>Глаза</label><textarea id="o-eye"></textarea>
-    <label>Когнитивка</label><textarea id="o-cog"></textarea>
-    <label>Дыхание</label><textarea id="o-br"></textarea>
-    <label>Мобильность</label><textarea id="o-mb"></textarea>
-  </div>
-  <button class="btn" onclick="saveOfp()">Сохранить</button>
-</div>
-
-<!-- ТЕОРИЯ -->
-<div id="p-theory" class="hide">
-  <p class="sub">15 минут перед сбором — общее или персональное занятие.</p>
-  <div class="card">
-    <div class="row2">
-      <div><label>Дата</label><input id="th-d" type="date"></div>
-      <div><label>Формат</label>
-        <select id="th-k"><option value="общее">общее</option><option value="персональное">персональное</option></select>
+  <!-- ГЛАВНАЯ -->
+  <section id="p-home">
+    <h1 id="hello">Привет!</h1>
+    <div class="sub" id="today"></div>
+    <div class="card">
+      <h2>Сегодня</h2>
+      <div class="stat">
+        <div><b id="h-sleep">—</b><span>сон, ч</span></div>
+        <div><b id="h-ready">—</b><span>готовность</span></div>
+        <div><b id="h-sch">—</b><span>Шульте, с</span></div>
       </div>
+      <div id="h-status" class="sub" style="margin:0"></div>
     </div>
-    <label>С кем</label>
-    <input id="th-who" placeholder="вся группа / фамилия">
-    <label>Занятие</label>
-    <textarea id="th-t" style="min-height:110px" placeholder="Тема, что разбирали, материалы"></textarea>
-    <button class="btn sm" onclick="addTheory()">Добавить запись</button>
-  </div>
-  <div id="th-list"></div>
-</div>
+    <div class="card quote hide" id="q-card" data-act="qnext">
+      <div class="qt" id="q-text"></div>
+      <div class="qa" id="q-auth"></div>
+    </div>
+    <div class="card">
+      <h2>Чек-лист дня</h2>
+      <div class="sub" style="margin:0 0 10px">Выполнил — отметь.</div>
+      <div id="ck-list"></div>
+      <div class="sub" id="ck-sum" style="margin:10px 0 0"></div>
+      <div class="ckbar"><i id="ck-bar" style="width:0%"></i></div>
+    </div>
+    <div class="tiles">
+      <button class="tile wide hide" id="coach-entry" data-act="roster"
+              style="background:#2A1116;border-color:#5A2029">
+        <e>🧤</e><b>Кабинет тренера</b><i>все вратари, их данные и заметки</i></button>
+      <button class="tile" data-act="go:wb"><e>☀️</e><b>Самочувствие</b><i id="t-wb">—</i></button>
+      <button class="tile" data-act="go:tr"><e>🏒</e><b>Дневник занятий</b><i id="t-tr">—</i></button>
+      <button class="tile" data-act="go:cog"><e>🔢</e><b>Таблица Шульте</b><i id="t-cog">—</i></button>
+      <button class="tile" data-act="go:rx"><e>🧠</e><b>Реакция выбора</b><i id="t-rx">—</i></button>
+      <button class="tile" data-act="go:goals"><e>🎯</e><b>Цели</b><i id="t-goals">—</i></button>
+      <button class="tile" data-act="go:an"><e>🥅</e><b>Разбор игр</b><i id="t-an">—</i></button>
+      <button class="tile" data-act="go:rad"><e>🕸</e><b>Оценка вратаря</b><i id="t-rad">—</i></button>
+      <button class="tile" data-act="lib:Психология"><e>🧩</e><b>Психология</b><i id="t-psy">—</i></button>
+      <button class="tile" data-act="lib:Теория"><e>📚</e><b>Теория</b><i id="t-th">—</i></button>
+      <button class="tile" data-act="go:notes"><e>📝</e><b>Заметки тренера</b><i id="t-notes">—</i></button>
+      <button class="tile" data-act="go:me"><e>👤</e><b>Профиль</b><i id="t-me">—</i></button>
+    </div>
+  </section>
 
-<!-- ПСИХОЛОГИЯ -->
-<div id="p-psy" class="hide">
-  <p class="sub" id="psy-sub"></p>
-  <div class="card">
-    <h2>План — над чем работаем</h2>
-    <textarea id="ps-plan" style="min-height:110px" placeholder="Направление работы на микроцикл"></textarea>
-    <button class="btn sm" onclick="savePsy()">Сохранить план</button>
-  </div>
-  <div class="card">
-    <h2>Журнал</h2>
-    <div class="row2">
-      <div><label>Дата</label><input id="ps-d" type="date"></div>
-      <div><label>Статус</label>
-        <select id="ps-s"><option value="было">работали</option><option value="план">будем</option></select>
+  <!-- САМОЧУВСТВИЕ -->
+  <section id="p-wb" class="hide">
+    <h1>Дневник самочувствия</h1>
+    <div class="sub">Заполняй утром — за минуту.</div>
+    <div class="card">
+      <h2>Запись</h2>
+      <div class="sub" style="margin:0 0 4px">Дата: <b id="wb-date" style="color:#fff"></b></div>
+      <div class="row">
+        <div><label>Сон, часов</label><input id="i-sleep" type="number" inputmode="decimal" placeholder="например 8,5"></div>
+        <div><label>Пульс в покое</label><input id="i-pulse" type="number" inputmode="numeric" placeholder="уд/мин"></div>
       </div>
+      <div id="wb-sliders" style="margin-top:16px"></div>
+      <label>Вес, кг</label>
+      <input id="i-weight" type="number" inputmode="decimal" placeholder="кг">
+      <label>Самонаблюдение</label>
+      <textarea id="i-note" placeholder="Что чувствую, что мешает, что заметил за собой"></textarea>
+      <button class="btn" data-act="wbsave">Сохранить</button>
     </div>
-    <label>Над чем</label>
-    <textarea id="ps-t"></textarea>
-    <button class="btn sm" onclick="addPsy()">Добавить</button>
-  </div>
-  <div id="ps-list"></div>
+    <div class="card">
+      <h2>Динамика готовности</h2>
+      <div id="wb-bars"></div>
+      <div class="sub" style="margin:8px 0 0">Последние 14 записей. Выше — лучше.</div>
+    </div>
+    <div class="card">
+      <h2>Средние за 7 дней</h2>
+      <div class="list" id="wb-avg"></div>
+    </div>
+    <div class="card">
+      <h2>История</h2>
+      <div class="list" id="wb-list"></div>
+    </div>
+  </section>
+
+  <!-- ДНЕВНИК ТРЕНИРОВОК -->
+  <section id="p-tr" class="hide">
+    <h1>Дневник тренировок и игр</h1>
+    <div class="sub">Заполняй сразу после занятия.</div>
+    <div class="card">
+      <h2>Запись</h2>
+      <div class="sub" style="margin:0 0 4px">Дата: <b id="tr-date" style="color:#fff"></b></div>
+      <label>Тип занятия</label>
+      <div class="chips" id="tr-type"></div>
+      <label>Какую задачу ставил</label>
+      <textarea id="t-task" placeholder="Что хотел отработать сегодня"></textarea>
+      <label>Получилось ли её достичь</label>
+      <textarea id="t-done" placeholder="Что вышло, что нет и почему"></textarea>
+      <label>На что обратить внимание в будущем</label>
+      <textarea id="t-next" placeholder="Вывод на следующее занятие"></textarea>
+      <div id="tr-sliders" style="margin-top:16px"></div>
+      <button class="btn" data-act="trsave">Сохранить</button>
+    </div>
+    <div class="card">
+      <h2>Динамика включённости</h2>
+      <div class="bars" id="tr-bars"></div>
+      <div class="sub" style="margin:8px 0 0">Последние 14 занятий.</div>
+    </div>
+    <div class="card">
+      <h2>Средние за 7 занятий</h2>
+      <div class="list" id="tr-avg"></div>
+    </div>
+    <div class="card">
+      <h2>История</h2>
+      <div id="tr-list"></div>
+    </div>
+  </section>
+
+  <!-- КОГНИТИВКА -->
+  <section id="p-cog" class="hide">
+    <h1>Таблица Шульте</h1>
+    <div class="sub">Внимание и скорость сканирования.</div>
+    <div class="card">
+      <h2>Таблица Шульте 6×6</h2>
+      <div class="sub" style="margin:0">Найди числа от 1 до 36 по порядку. Найденные не подсвечиваются — смотри в центр.</div>
+      <div class="big"><span id="timer">0.0</span> с</div>
+      <div class="sub" style="text-align:center;margin:0">
+        Ищем: <b id="next-num" style="color:#fff">1</b> · ошибок: <b id="errs" style="color:#fff">0</b>
+      </div>
+      <div id="grid"></div>
+      <button class="btn" data-act="schstart">Новая попытка</button>
+    </div>
+    <div class="card">
+      <h2>Результаты Шульте</h2>
+      <div class="stat">
+        <div><b id="sch-best">—</b><span>лучший</span></div>
+        <div><b id="sch-avg">—</b><span>средний 7</span></div>
+        <div><b id="sch-cnt">0</b><span>попыток</span></div>
+      </div>
+      <div id="sch-bars"></div>
+      <div class="list" id="sch-list" style="margin-top:10px"></div>
+    </div>
+  </section>
+
+  <!-- РЕАКЦИЯ ВЫБОРА -->
+  <section id="p-rx" class="hide">
+    <h1>Реакция выбора</h1>
+    <div class="sub">Одна минута. Экран на время теста фиксируется.</div>
+    <div class="card">
+      <h2>Тренажёр</h2>
+      <div class="sub" style="margin:0">В центре загорается буква — жми стрелку в эту сторону.
+        <b style="color:#fff">В</b> вверх · <b style="color:#fff">Н</b> вниз ·
+        <b style="color:#fff">П</b> вправо · <b style="color:#fff">Л</b> влево. Одна минута.</div>
+      <label>Уровень</label>
+      <div class="chips" id="rx-lvl"></div>
+      <div id="rx-pad">
+        <div class="rxgrid">
+          <div></div>
+          <button class="rxb" data-act="rx:0">↑</button>
+          <div></div>
+          <button class="rxb" data-act="rx:3">←</button>
+          <div class="rxc" id="rx-cue">—</div>
+          <button class="rxb" data-act="rx:2">→</button>
+          <div></div>
+          <button class="rxb" data-act="rx:1">↓</button>
+          <div></div>
+        </div>
+      </div>
+      <div class="stat" style="margin-top:12px">
+        <div><b id="rx-time">60</b><span>секунд</span></div>
+        <div><b id="rx-ok">0</b><span>верно</span></div>
+        <div><b id="rx-err">0</b><span>ошибок</span></div>
+        <div><b id="rx-skip">0</b><span>пропусков</span></div>
+      </div>
+      <button class="btn" id="rx-btn" data-act="rxstart">Начать</button>
+      <div class="sub" id="rx-res" style="margin:10px 0 0"></div>
+    </div>
+    <div class="card">
+      <h2>Результаты</h2>
+      <div class="stat">
+        <div><b id="sv-best">—</b><span>лучший</span></div>
+        <div><b id="sv-avg">—</b><span>средний 7</span></div>
+        <div><b id="sv-cnt">0</b><span>записей</span></div>
+      </div>
+      <div id="sv-bars"></div>
+      <div class="list" id="sv-list" style="margin-top:10px"></div>
+    </div>
+  </section>
+
+  <!-- ЦЕЛИ -->
+  <section id="p-goals" class="hide">
+    <h1>Цели</h1>
+    <div class="sub">Сезон → месяц → занятие.</div>
+    <div class="card">
+      <h2>Цель на сезон</h2>
+      <label>Что хочу сделать</label>
+      <input id="g-season" placeholder="Например: закрепиться в основе">
+      <label>Критерий — как пойму, что достиг</label>
+      <input id="g-season-c" placeholder="Например: 90% отражённых за сезон">
+      <button class="btn" data-act="season">Сохранить</button>
+    </div>
+    <div class="card">
+      <h2>Цель на месяц</h2>
+      <label>Что делаю в этом месяце</label>
+      <input id="g-month" placeholder="Например: контроль отскоков">
+      <label>Критерий</label>
+      <input id="g-month-c" placeholder="Например: не больше 1 добивания за игру">
+      <button class="btn" data-act="month">Сохранить</button>
+      <div id="g-month-list" style="margin-top:12px"></div>
+    </div>
+    <div class="card">
+      <h2>Цель на занятие</h2>
+      <label>Что отрабатываю</label>
+      <input id="g-day" placeholder="Например: игра клюшкой за воротами">
+      <button class="btn" data-act="dayadd">Добавить</button>
+      <div id="g-day-list" style="margin-top:12px"></div>
+    </div>
+  </section>
+
+  <!-- РАЗБОР ИГР -->
+  <section id="p-an" class="hide">
+    <h1>Разбор игр</h1>
+    <div class="sub">Записывай каждую игру — статистика соберётся сама.</div>
+    <div class="card">
+      <h2>Моя статистика</h2>
+      <div class="stat">
+        <div><b id="s-games">0</b><span>игр</span></div>
+        <div><b id="s-sh">0</b><span>бросков</span></div>
+        <div><b id="s-ga">0</b><span>пропущено</span></div>
+        <div><b id="s-sv">—</b><span>отражено</span></div>
+      </div>
+      <div class="stat">
+        <div><b id="s-grade">—</b><span>оценка игры</span></div>
+        <div><b id="s-mood">—</b><span>настрой</span></div>
+        <div><b id="s-state">—</b><span>состояние</span></div>
+        <div><b id="s-min">0</b><span>минут</span></div>
+      </div>
+      <button class="btn" data-act="newgame">Записать игру</button>
+    </div>
+    <div class="card">
+      <h2>Куда забивают</h2>
+      <div class="sub" style="margin:0">Все голы</div>
+      <div id="net-all"></div>
+      <div class="sub" style="margin:12px 0 0">Только с прямого броска — реагирование</div>
+      <div id="net-dir"></div>
+    </div>
+    <div class="card">
+      <h2>Откуда забивают</h2>
+      <div class="svgbox" id="map-wrap"></div>
+      <div class="sub" style="margin:8px 0 0" id="an-total"></div>
+    </div>
+    <div class="card">
+      <h2>Ситуации</h2>
+      <div class="list" id="sit-stat"></div>
+    </div>
+    <div class="card">
+      <h2>История игр</h2>
+      <div id="games-list"></div>
+    </div>
+  </section>
+
+  <!-- КАРТОЧКА ИГРЫ -->
+  <section id="p-game" class="hide">
+    <h1 id="game-h">Новая игра</h1>
+    <div class="sub">Заполни по горячим следам — так точнее.</div>
+
+    <div class="card">
+      <h2>Игра</h2>
+      <div class="row">
+        <div><label>Дата</label><input id="g-date" type="date"></div>
+        <div><label>Соперник</label><input id="g-opp" placeholder="Команда"></div>
+      </div>
+      <div class="row">
+        <div><label>Счёт</label><input id="g-sc" placeholder="3:2"></div>
+        <div><label>Минут на льду</label><input id="g-min" type="number" inputmode="numeric" placeholder="60"></div>
+      </div>
+      <label>Результат</label>
+      <div class="chips" id="g-res"></div>
+      <div class="row" style="margin-top:12px">
+        <div><label>Бросков</label><input id="g-sh" type="number" inputmode="numeric" placeholder="0"></div>
+        <div><label>Пропущено</label><input id="g-ga" type="number" inputmode="numeric" placeholder="0"></div>
+      </div>
+      <div class="big" id="g-svp">—</div>
+      <div class="sub" style="text-align:center;margin:0">отражено бросков</div>
+      <label>Что запомнилось</label>
+      <textarea id="g-note" placeholder="Ключевые моменты, эпизоды, выводы"></textarea>
+    </div>
+
+    <div class="card">
+      <h2>Опросник</h2>
+      <label>Цели и задачи на игру</label>
+      <textarea id="q-goal" placeholder="Что планировал сделать"></textarea>
+      <label>Что получилось</label>
+      <textarea id="q-got" placeholder="Что вышло, а что нет"></textarea>
+      <div id="q-rates" style="margin-top:14px"></div>
+      <label>Свой пункт</label>
+      <input id="q-custname" placeholder="Например: питание перед игрой">
+      <div id="q-cust"></div>
+    </div>
+
+    <div class="card">
+      <h2>Оценка игры</h2>
+      <div id="e-rates"></div>
+    </div>
+
+    <div class="card">
+      <h2>Пропущенные</h2>
+      <div class="sub" style="margin:0">Один гол — три отметки: откуда, куда и в какой ситуации.</div>
+      <label>1. Откуда забили</label>
+      <div class="svgbox" id="rink-wrap"></div>
+      <label>2. Куда забили</label>
+      <div id="net-wrap"></div>
+      <label>3. Ситуация</label>
+      <div class="chips" id="sit-chips"></div>
+      <button class="btn sec" data-act="gadd">Добавить гол</button>
+      <div id="gg-list" style="margin-top:12px"></div>
+    </div>
+
+    <button class="btn" data-act="gsave">Сохранить игру</button>
+    <button class="btn sec" id="g-del" data-act="gdelgame">Удалить игру</button>
+  </section>
+
+  <!-- ЗАМЕТКИ ТРЕНЕРА -->
+  <section id="p-notes" class="hide">
+    <h1>Заметки тренера</h1>
+    <div class="sub">Что сказал тренер по играм и тренировкам.</div>
+    <div class="card">
+      <h2>Новая заметка</h2>
+      <label>Текст</label>
+      <textarea id="n-text" placeholder="На что обратить внимание"></textarea>
+      <button class="btn" data-act="noteadd">Добавить</button>
+    </div>
+    <div class="card">
+      <h2>Все заметки</h2>
+      <div id="n-list"></div>
+    </div>
+  </section>
+
+  <!-- ОЦЕНКА ВРАТАРЯ -->
+  <section id="p-rad" class="hide">
+    <h1>Оценка вратаря</h1>
+    <div class="sub">Пять сторон игры по десятибалльной. Твоя самооценка и взгляд тренера — на одной фигуре.</div>
+    <div class="card">
+      <h2>Профиль</h2>
+      <div id="rad-chart"></div>
+      <div class="lg">
+        <span><i style="background:#D6112E"></i>моя оценка</span>
+        <span><i style="background:#2FA84F"></i>тренер</span>
+      </div>
+      <div class="list" id="rad-nums" style="margin-top:10px"></div>
+    </div>
+    <div class="card">
+      <h2>Поставить самооценку</h2>
+      <div class="sub" style="margin:0 0 4px">Дата: <b id="rad-date" style="color:#fff"></b></div>
+      <div id="rad-sliders"></div>
+      <button class="btn" data-act="radsave">Сохранить оценку</button>
+    </div>
+    <div class="card">
+      <h2>Динамика</h2>
+      <div class="chips" id="rad-pick"></div>
+      <div id="rad-line"></div>
+    </div>
+    <div class="card">
+      <h2>История оценок</h2>
+      <div class="list" id="rad-list"></div>
+    </div>
+  </section>
+
+  <!-- БИБЛИОТЕКА -->
+  <section id="p-lib" class="hide">
+    <h1 id="lib-h">Материалы</h1>
+    <div class="sub" id="lib-sub"></div>
+    <div id="lib-list"></div>
+  </section>
+
+  <!-- МАТЕРИАЛ -->
+  <section id="p-mat" class="hide">
+    <h1 id="mat-h"></h1>
+    <div class="sub" id="mat-sub"></div>
+    <div class="card">
+      <img id="mat-img" class="matimg hide" alt="">
+      <div class="mattext" id="mat-text"></div>
+      <a id="mat-link" class="btn hide" target="_blank" rel="noopener">Смотреть видео</a>
+      <button class="btn sec" id="mat-done" data-act="matdone">Отметить «изучил»</button>
+    </div>
+  </section>
+
+  <!-- ПРОФИЛЬ -->
+  <section id="p-me" class="hide">
+    <h1>Профиль</h1>
+    <div class="sub">Данные хранятся в твоём Telegram.</div>
+    <div class="card">
+      <h2>Вратарь</h2>
+      <label>Имя и фамилия</label><input id="m-name" placeholder="Иванов Юрий">
+      <label>Команда</label><input id="m-team" placeholder="Спартак-МАХ">
+      <label>Год рождения</label><input id="m-year" type="number" inputmode="numeric" placeholder="2008">
+      <button class="btn" data-act="mesave">Сохранить</button>
+    </div>
+    <div class="card">
+      <h2>Данные</h2>
+      <div class="sub" style="margin:0">Экспорт — на случай смены телефона.</div>
+      <button class="btn sec" data-act="export">Скопировать все данные</button>
+      <div class="sub" id="diag" style="margin:12px 0 0;font-size:11px"></div>
+    </div>
+    <div class="card">
+      <h2>Код от тренера</h2>
+      <div class="sub" style="margin:0">Введи код из сообщения — профиль и цели заполнятся сами.
+        Делается один раз.</div>
+      <label>Код</label>
+      <textarea id="imp" placeholder="Например: KP4QDW"></textarea>
+      <button class="btn" data-act="import">Загрузить</button>
+    </div>
+  </section>
+
+  <!-- КАБИНЕТ ТРЕНЕРА -->
+  <section id="p-coach" class="hide">
+    <h1>Кабинет тренера</h1>
+    <div class="sub">Все вратари и их данные.</div>
+    <div class="card">
+      <h2>Вратари</h2>
+      <div id="c-list"><div class="sub" style="margin:0">Загружаю…</div></div>
+    </div>
+  </section>
+
+  <!-- КАРТОЧКА ВРАТАРЯ -->
+  <section id="p-gk" class="hide">
+    <h1 id="gk-name">Вратарь</h1>
+    <div class="sub" id="gk-sub"></div>
+    <button class="btn sec" data-act="go:coach" style="margin:0 0 12px">← К списку</button>
+    <div id="gk-body"></div>
+    <div class="card">
+      <h2>Оценка вратаря</h2>
+      <div id="gk-radar"></div>
+      <div class="lg">
+        <span><i style="background:#D6112E"></i>самооценка</span>
+        <span><i style="background:#2FA84F"></i>моя оценка</span>
+      </div>
+      <div id="gk-rsl" style="margin-top:12px"></div>
+      <button class="btn sec" data-act="crate">Поставить оценку</button>
+    </div>
+    <div class="card">
+      <h2>Заметка вратарю</h2>
+      <div class="sub" style="margin:0">Он увидит её в разделе «Заметки тренера».</div>
+      <label>Текст</label>
+      <textarea id="gk-note" placeholder="На что обратить внимание"></textarea>
+      <button class="btn" data-act="cnote">Отправить заметку</button>
+    </div>
+    <div class="card">
+      <h2>Все заметки</h2>
+      <div id="gk-notes"></div>
+    </div>
+  </section>
 </div>
 
-<!-- МАТРИЦА -->
-<div id="p-matrix" class="hide">
-  <p class="sub">Строка — навык, столбец — микроцикл. <span class="dot">•</span> в плане, <span class="ok">✓</span> отработано.</p>
-  <div class="seg" style="margin-bottom:10px">
-    <button id="mx-a" class="on" onclick="mxMode(0)">Только задействованные</button>
-    <button id="mx-b" onclick="mxMode(1)">Все навыки</button>
-  </div>
-  <div class="mx" id="mxbox"></div>
-  <button class="btn sec sm" onclick="reimport()">Перечитать навыки из таблицы</button>
-</div>
-
-</div><!-- /wrap -->
-
-<!-- ВЫБОР НАВЫКОВ -->
-<div class="ov hide" id="ov">
-  <div class="ovh">
-    <button class="back" onclick="closeOv()">‹</button>
-    <b id="ov-t"></b>
-  </div>
-  <div class="ovb" id="ov-b"></div>
-</div>
-
-<div class="saving hide" id="sv">сохраняю…</div>
 
 <script>
-/* ═══ НАСТРОЙКА ═══ */
-var API_URL = 'https://script.google.com/macros/s/AKfycbz4guqY5rnkKiYqfXwvY6vGQv-03MFN4wfhxf4MWvWQt-Z3dY5grZv7BMj_QogDOe5P/exec';
+var TG = (window.Telegram && window.Telegram.WebApp) ? window.Telegram.WebApp : null;
+if (TG) { TG.ready(); TG.expand(); try { TG.setHeaderColor('#15181D'); TG.setBackgroundColor('#15181D'); } catch(e){} }
+/* ═══════════ АДРЕС БАЗЫ ═══════════
+   Сюда вставляется URL веб-приложения Apps Script (шаг 4 инструкции).
+   Пока он не вставлен, приложение работает только на этом телефоне. */
+var API_URL = 'https://script.google.com/macros/s/AKfycbySUUoLkv6qaywWfDZ9Qn1fob2Z2o4Md7npra59c_F24DreU8iSc9tzdsoedyC_6-tM/exec';
 
-/* короткие имена разделов */
-var SHORT = {
-  'ТЕХНИКА КАТАНИЯ':'ТХК',
-  'СПЕЦИАЛЬНАЯ ТЕХНИКА':'СТК',
-  'ТЕХНИКА ВЛАДЕНИЯ КЛЮШКОЙ':'Клюшка',
-  'ТЕХНИКА ЛОВЛИ И ОТБИВАНИЯ БРОСКОВ':'Техника ловли',
-  'ИНДИВИДУАЛЬНАЯ ТАКТИКА':'Тактика',
-  'ПОДВИЖНЫЕ ИГРЫ':'Игры'
-};
+var INIT = (TG && TG.initData) ? TG.initData : '';
+var TGU  = (TG && TG.initDataUnsafe && TG.initDataUnsafe.user) ? TG.initDataUnsafe.user : null;
+var UID  = TGU ? String(TGU.id) : 'local';
+var IS_COACH = false;
+var SYNC = 'нет связи';          // что показываем в профиле
+var QUEUE = {};                  // что не успело уйти на сервер
 
-var tg = window.Telegram && Telegram.WebApp;
-if (tg) { tg.ready(); tg.expand(); if (tg.disableVerticalSwipes) tg.disableVerticalSwipes(); }
-function buzz(s){ try{ tg.HapticFeedback.impactOccurred(s||'light'); }catch(e){} }
+function apiReady(){ return API_URL.indexOf('http') === 0; }
 
-var SK = [], SECS = [];
-var D = { cycles:[], ice:{}, ofp:{}, theory:{}, psy:{}, settings:{} };
-var KEYS = ['cycles','ice','ofp','theory','psy','settings'];
-var hist = [], page = 'home', edit = null, mxAll = 0, openSec = {};
-
-function $(id){ return document.getElementById(id); }
-function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){
-  return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
-function today(){ var d=new Date(); return d.getFullYear()+'-'+p2(d.getMonth()+1)+'-'+p2(d.getDate()); }
-function p2(n){ return n<10?'0'+n:''+n; }
-function ru(s){ if(!s) return ''; var a=String(s).split('-'); return a.length>2 ? a[2]+'.'+a[1] : s; }
-function uid(){ return 'x'+Date.now().toString(36)+Math.floor(Math.random()*1e4).toString(36); }
-function short(s){ return SHORT[s] || s; }
-function wordN(n,a,b,c){ var d=n%100; if(d>10&&d<20) return c; d=n%10;
-  if(d===1) return a; if(d>=2&&d<=4) return b; return c; }
-
-/* ═══ ОБМЕН С БЭКЕНДОМ ═══ */
-function api(body, cb){
-  body.initData = (tg && tg.initData) || '';
-  fetch(API_URL, { method:'POST', body: JSON.stringify(body) })
+function api(payload, cb){
+  if (!apiReady()) { if (cb) cb(null); return; }
+  payload.initData = INIT;
+  var done = false;
+  var t = setTimeout(function(){ if(!done){ done = true; if (cb) cb(null); } }, 15000);
+  fetch(API_URL, { method: 'POST', body: JSON.stringify(payload) })
     .then(function(r){ return r.json(); })
-    .then(cb)
-    .catch(function(){ cb({ ok:false, err:'нет связи' }); });
+    .then(function(j){ if(done) return; done = true; clearTimeout(t); if (cb) cb(j); })
+    .catch(function(){ if(done) return; done = true; clearTimeout(t); if (cb) cb(null); });
 }
 
-var qKeys = {}, qTimer = null;
-function save(key){
-  if(!D[key]) D[key] = (key === 'cycles') ? [] : {};
-  try { localStorage.setItem('pl_'+key, JSON.stringify(D[key])); } catch(e){}
-  qKeys[key] = 1;
-  clearTimeout(qTimer);
-  qTimer = setTimeout(flush, 800);
+/* ---------- локальный кэш (мгновенный отклик и работа без сети) ---------- */
+function lget(key){ return parse(localStorage.getItem('gk_' + UID + '_' + key)); }
+function lset(key, obj){ try { localStorage.setItem('gk_' + UID + '_' + key, JSON.stringify(obj)); } catch(e){} }
+
+/* ---------- сохранение: сразу в кэш, следом на сервер ---------- */
+function save(key, obj, cb){
+  lset(key, obj);
+  if (cb) cb();
+  QUEUE[key] = JSON.stringify(obj);
+  flushQueue();
 }
-function flush(){
-  var keys = Object.keys(qKeys); if(!keys.length) return;
-  qKeys = {}; $('sv').classList.remove('hide');
-  var left = keys.length, bad = '';
-  keys.forEach(function(k){
-    api({ a:'push', key:k, json: JSON.stringify(D[k]) }, function(j){
-      if(!j || !j.ok) bad = (j && j.err) || 'не сохранилось';
-      if(--left <= 0){
-        $('sv').classList.add('hide');
-        $('synced').textContent = bad || stampTxt();
-      }
-    });
+
+var flushing = false;
+function flushQueue(){
+  if (flushing || !apiReady()) return;
+  var keys = Object.keys(QUEUE);
+  if (!keys.length) return;
+  flushing = true;
+  var k = keys[0], body = QUEUE[k];
+  api({ a: 'push', key: k, json: body }, function(res){
+    flushing = false;
+    if (res && res.ok){
+      if (QUEUE[k] === body) delete QUEUE[k];
+      setSync('сохранено');
+      flushQueue();
+    } else {
+      setSync('нет связи — сохранится позже');
+      setTimeout(flushQueue, 20000);
+    }
   });
 }
-function stampTxt(){ var d=new Date(); return 'сохранено в '+p2(d.getHours())+':'+p2(d.getMinutes()); }
+setInterval(flushQueue, 30000);
+window.addEventListener('online', flushQueue);
+
+function setSync(s){
+  SYNC = s;
+  var el = document.getElementById('sync');
+  if (el) el.textContent = s;
+}
+
+function parse(v){ if(!v) return null; try { return JSON.parse(v); } catch(e){ return null; } }
+function haptic(t){ try { if(TG && TG.HapticFeedback) TG.HapticFeedback.impactOccurred(t || 'light'); } catch(e){} }
+function alertMsg(m){ if (TG && TG.showPopup) { try { TG.showPopup({message:m}); return; } catch(e){} } alert(m); }
+
+/* ---------- показатели ---------- */
+/* ключ · название · что значит −3 · что значит +3
+   у «Усталости», «Психологического утомления» и «Крепатуры» плюс — это хуже,
+   поэтому подписи расставлены по смыслу, а не механически */
+var WB_KEYS = [
+  ['q',  'Качество сна',              'почти не спал',    'выспался'],
+  ['f',  'Усталость',                 'свежий',           'разбитый'],
+  ['des','Желание тренироваться',     'нет желания',      'рвусь на лёд'],
+  ['mo', 'Настроение',                'подавленное',      'отличное'],
+  ['pf', 'Психологическое утомление', 'голова свежая',    'перегружен'],
+  ['rd', 'Готовность',                'не готов',         'готов на всё'],
+  ['sor','Крепатура (мышечная боль)', 'мышцы свежие',     'сильно забиты']
+];
+var TR_KEYS = [
+  ['inv', 'Включённость в работу',          'отбывал номер',   'выложился'],
+  ['att', 'Уровень внимания',               'рассеян',         'предельно собран'],
+  ['emo', 'Контроль эмоций (дыхание)',      'сорвался',        'держал себя'],
+  ['fat', 'Усталость',                      'легко',           'тяжело'],
+  ['trk', 'Отслеживание',                   'терял шайбу',     'вёл до конца'],
+  ['mov', 'Скорость и качество перемещений','медленно, грязно','быстро и чётко'],
+  ['reb', 'Переключения на добивания',      'опаздывал',       'успевал везде'],
+  ['fin', 'Игра до конца',                  'бросал момент',   'доигрывал всё'],
+  ['stk', 'Игра клюшкой',                   'не помогал',      'активно играл'],
+  ['scan','Сканирование и чтение игры',     'не читал игру',   'видел заранее'],
+  ['voi', 'Подсказки голосом',              'молчал',          'постоянно говорил'],
+  ['joy', 'Удовольствие от процесса',       'не в кайф',       'в удовольствие']
+];
+var TR_TYPES = ['Тренировка','Игра','Зал'];
+var SITS = ['Реагирование','Бросок с приёма','Бросок в касание','Атака с угла','Атака из-за ворот',
+            'Трафик','Подправление','Добивание','Выход 1 на 1','Блокирование','Клюшка','Буллит'];
+var NZ = ['Верх лев','Верх центр','Верх прав','Блин','Корпус','Ловушка','Низ лев','Домик','Низ прав'];
+
+var DB = { wb:[], tr:[], schulte:[], svet:[], goals:{season:null,months:{},days:[]}, gls:[], games:[], notes:[], me:{} };
+var LIB = { m:[], q:[] };
+var today = new Date().toISOString().slice(0,10);
+var curMonth = today.slice(0,7);
+var trType = 0;
+
+var DATA_KEYS = ['wb','tr','schulte','svet','goals','gls','games','me'];
 
 function boot(){
-  KEYS.forEach(function(k){
-    try{ var v = localStorage.getItem('pl_'+k); if(v) D[k] = JSON.parse(v); }catch(e){}
+  /* 1. поднимаем кэш — приложение открывается мгновенно и работает без сети */
+  DATA_KEYS.forEach(function(k){
+    var v = lget(k);
+    if (v !== null && v !== undefined) DB[k] = v;
   });
-  try{ var s = localStorage.getItem('pl_skills'); if(s){ s = JSON.parse(s); SK = s.sk||[]; SECS = s.se||[]; } }catch(e){}
-  go('home');
-  api({ a:'pull' }, function(j){
-    if(!j.ok){ $('synced').textContent = j.err || 'нет связи'; return; }
-    SK = j.skills || []; SECS = j.sections || [];
-    try{ localStorage.setItem('pl_skills', JSON.stringify({ sk:SK, se:SECS })); }catch(e){}
-    Object.keys(j.data || {}).forEach(function(k){ if(KEYS.indexOf(k)>-1) D[k] = j.data[k]; });
-    if(!D.cycles || !D.cycles.length) D.cycles = D.cycles || [];
-    $('synced').textContent = stampTxt();
-    render();
-  });
-}
-function reimport(){
-  $('sv').classList.remove('hide');
-  api({ a:'reimport' }, function(j){
-    $('sv').classList.add('hide');
-    if(!j.ok){ alert(j.err); return; }
-    SK = j.skills || []; SECS = j.sections || [];
-    try{ localStorage.setItem('pl_skills', JSON.stringify({ sk:SK, se:SECS })); }catch(e){}
-    alert('Навыков загружено: ' + j.n);
-    render();
-  });
-}
-
-/* ═══ НАВИГАЦИЯ ═══ */
-var TITLES = { home:'Планировщик', cycles:'Микроциклы', cycle:'Микроцикл',
-  ice:'Лёд', ofp:'ОФП', theory:'Теория', psy:'Психология', matrix:'Матрица навыков' };
-
-function go(p){
-  if(p !== page && p !== 'home') hist.push(page);
-  if(p === 'home') hist = [];
-  page = p;
-  ['home','cycles','cycle','ice','ofp','theory','psy','matrix'].forEach(function(x){
-    $('p-'+x).classList.toggle('hide', x !== p);
-  });
-  $('back').classList.toggle('hide', p === 'home');
-  $('ttl').textContent = TITLES[p] || 'Планировщик';
-  var c = cur();
-  $('kick').textContent = (p === 'home' || !c) ? 'СПАРТАК-МАХ' : String(c.n || 'МИКРОЦИКЛ').toUpperCase();
-  window.scrollTo(0,0); buzz();
+  DB.notes = lget('notes') || [];
+  LIB = lget('lib') || { m:[], q:[] };
+  DB.rates = lget('rates') || [];
+  buildForms();
   render();
-}
 
-/* ═══ МИКРОЦИКЛЫ ═══ */
-function cur(){
-  var id = D.settings && D.settings.cur, c = null;
-  (D.cycles||[]).forEach(function(x){ if(x.id === id) c = x; });
-  if(!c && (D.cycles||[]).length) c = D.cycles[D.cycles.length-1];
-  return c;
-}
-function curId(){ var c = cur(); return c ? c.id : null; }
-
-function newCycle(){
-  D.cycles = D.cycles || [];
-  edit = { id: uid(), n: 'Микроцикл ' + (D.cycles.length + 1), d1: today(), d2: '', note: '' };
-  D.cycles.push(edit);
-  D.settings.cur = edit.id;
-  save('cycles'); save('settings');
-  go('cycle');
-}
-function openCycle(id){
-  (D.cycles||[]).forEach(function(x){ if(x.id === id) edit = x; });
-  go('cycle');
-}
-function saveCycle(){
-  if(!edit) return;
-  edit.n = $('cy-n').value.trim() || edit.n;
-  edit.d1 = $('cy-d1').value; edit.d2 = $('cy-d2').value; edit.note = $('cy-note').value;
-  save('cycles'); buzz('medium'); go('cycles');
-}
-function makeCurrent(){
-  if(!edit) return;
-  D.settings.cur = edit.id; save('settings'); buzz('medium'); go('home');
-}
-function delCycle(){
-  if(!edit) return;
-  if(!confirm('Удалить микроцикл и всё, что в нём?')) return;
-  var id = edit.id;
-  D.cycles = (D.cycles||[]).filter(function(x){ return x.id !== id; });
-  delete D.ice[id]; delete D.ofp[id]; delete D.theory[id]; delete D.psy[id];
-  if(D.settings.cur === id) D.settings.cur = (D.cycles[D.cycles.length-1]||{}).id || '';
-  KEYS.forEach(save);
-  edit = null; go('cycles');
-}
-
-/* ═══ ЛЁД ═══ */
-function ice(){ var id = curId(); if(!id) return {}; D.ice[id] = D.ice[id] || {}; return D.ice[id]; }
-
-function secList(){ return SECS.length ? SECS : Object.keys(SHORT); }
-
-function pick(si){
-  var sec = secList()[si];
-  if(!curId() || !sec) return;
-  $('ov-t').textContent = short(sec);
-  var list = SK.filter(function(s){ return s.sec === sec; });
-  var h = '', grp = null, I = ice();
-  if(!list.length) h = '<p class="empty">В справочнике нет навыков этого раздела. ' +
-    'Добавь их руками в лист <b>skills_custom</b> базы — переимпорт их не трогает.</p>';
-  list.forEach(function(s){
-    if(s.grp !== grp){ grp = s.grp; if(grp) h += '<div class="grp">' + esc(grp) + '</div>'; }
-    var on = I[s.id] ? ' on' : '';
-    h += '<div class="sk"><div class="nm">' + esc(s.num ? s.num + '. ' : '') + esc(s.n) + '</div>' +
-         '<button class="chk' + on + '" onclick="togPlan(\'' + s.id + '\',this)">' + (on ? '✓' : '+') + '</button></div>';
-  });
-  $('ov-b').innerHTML = h;
-  $('ov').classList.remove('hide');
-}
-function togPlan(sid, el){
-  var I = ice();
-  if(I[sid]){ delete I[sid]; el.classList.remove('on'); el.textContent = '+'; }
-  else { I[sid] = { p:1, d:'' }; el.classList.add('on'); el.textContent = '✓'; }
-  save('ice'); buzz();
-}
-function closeOv(){ $('ov').classList.add('hide'); render(); }
-
-function togDone(sid){
-  var I = ice(); if(!I[sid]) return;
-  I[sid].d = I[sid].d ? '' : today();
-  save('ice'); buzz('medium'); render();
-}
-function unplan(sid){ delete ice()[sid]; save('ice'); buzz(); render(); }
-function togSec(si){ var s = secList()[si]; openSec[s] = !openSec[s]; render(); }
-
-/* ═══ ОФП ═══ */
-var OF = [['o-cw','cog_what'],['o-ce','cog_ex'],['o-gym','gym'],
-          ['o-eye','cool_eyes'],['o-cog','cool_cog'],['o-br','cool_breath'],['o-mb','cool_mob']];
-function ofp(){ var id = curId(); if(!id) return {}; D.ofp[id] = D.ofp[id] || {}; return D.ofp[id]; }
-function saveOfp(){
-  if(!curId()) return;
-  var o = ofp();
-  OF.forEach(function(p){ o[p[1]] = $(p[0]).value; });
-  save('ofp'); buzz('medium'); render();
-}
-
-/* ═══ ТЕОРИЯ ═══ */
-function th(){ var id = curId(); if(!id) return []; D.theory[id] = D.theory[id] || []; return D.theory[id]; }
-function addTheory(){
-  if(!curId()){ alert('Сначала создай микроцикл'); return; }
-  var t = $('th-t').value.trim(); if(!t) return;
-  th().unshift({ id: uid(), d: $('th-d').value || today(), kind: $('th-k').value,
-                 who: $('th-who').value.trim(), text: t });
-  $('th-t').value = ''; $('th-who').value = '';
-  save('theory'); buzz('medium'); render();
-}
-function delTheory(i){ th().splice(i,1); save('theory'); render(); }
-
-/* ═══ ПСИХОЛОГИЯ ═══ */
-function psy(){ var id = curId(); if(!id) return { plan:'', log:[] };
-  D.psy[id] = D.psy[id] || { plan:'', log:[] }; return D.psy[id]; }
-function savePsy(){ if(!curId()) return; psy().plan = $('ps-plan').value; save('psy'); buzz('medium'); }
-function addPsy(){
-  if(!curId()){ alert('Сначала создай микроцикл'); return; }
-  var t = $('ps-t').value.trim(); if(!t) return;
-  var p = psy(); p.log = p.log || [];
-  p.log.unshift({ id: uid(), d: $('ps-d').value || today(), s: $('ps-s').value, text: t });
-  $('ps-t').value = ''; save('psy'); buzz('medium'); render();
-}
-function delPsy(i){ psy().log.splice(i,1); save('psy'); render(); }
-
-/* ═══ МАТРИЦА ═══ */
-function mxMode(v){ mxAll = v; $('mx-a').classList.toggle('on', !v); $('mx-b').classList.toggle('on', !!v); render(); }
-
-/* ═══ ОТРИСОВКА ═══ */
-function render(){
-  ({ home:rHome, cycles:rCycles, cycle:rCycle, ice:rIce,
-     ofp:rOfp, theory:rTheory, psy:rPsy, matrix:rMatrix }[page] || function(){})();
-}
-
-function rHome(){
-  var c = cur();
-  if(!c){
-    $('curcard').innerHTML = '<h2>Микроцикл не задан</h2>' +
-      '<p class="empty">Создай микроцикл — всё планирование крепится к нему.</p>' +
-      '<button class="btn" onclick="newCycle()">+ Новый микроцикл</button>';
-    $('t-ice').textContent = '—'; $('t-th').textContent = '—';
-    $('t-psy').textContent = '—'; $('t-ofp').textContent = 'когнитивка, зал, заминка';
-  } else {
-    var I = D.ice[c.id] || {}, ids = Object.keys(I);
-    var done = ids.filter(function(k){ return I[k].d; }).length;
-    $('curcard').innerHTML =
-      '<h2>' + esc(c.n) + '</h2>' +
-      '<p class="empty" style="padding:0 0 8px">' +
-        (c.d1 ? ru(c.d1) + (c.d2 ? ' — ' + ru(c.d2) : '') : 'даты не заданы') +
-        (c.note ? '<br>' + esc(c.note) : '') + '</p>' +
-      '<div class="list"><div><span>Навыков в плане</span><b>' + ids.length + '</b></div>' +
-      '<div><span>Отработано</span><b>' + done + '</b></div></div>' +
-      '<button class="btn sec sm" onclick="openCycle(\'' + c.id + '\')">Изменить микроцикл</button>';
-    $('t-ice').textContent = ids.length ? (done + ' из ' + ids.length + ' отработано') : 'навыки не выбраны';
-    var T = D.theory[c.id] || [];
-    $('t-th').textContent = T.length ? T.length + ' ' + wordN(T.length,'запись','записи','записей') : 'нет записей';
-    var P = D.psy[c.id] || {};
-    $('t-psy').textContent = P.plan ? 'план задан' : 'план не задан';
-    var o = D.ofp[c.id] || {};
-    var f = OF.filter(function(p){ return String(o[p[1]]||'').trim(); }).length;
-    $('t-ofp').textContent = f ? 'заполнено ' + f + ' из 7' : 'когнитивка, зал, заминка';
-  }
-  var n = (D.cycles||[]).length;
-  $('t-cy').textContent = n ? (n + ' ' + wordN(n,'микроцикл','микроцикла','микроциклов')) : 'ни одного';
-}
-
-function rCycles(){
-  var h = '', id = curId();
-  (D.cycles||[]).slice().reverse().forEach(function(c){
-    var I = D.ice[c.id] || {}, ids = Object.keys(I);
-    var done = ids.filter(function(k){ return I[k].d; }).length;
-    h += '<div class="card" style="cursor:pointer" onclick="openCycle(\'' + c.id + '\')">' +
-      '<div style="display:flex;align-items:center;gap:8px">' +
-        '<b style="flex:1;font-size:13.5px">' + esc(c.n) + '</b>' +
-        (c.id === id ? '<span class="tag g">текущий</span>' : '') + '</div>' +
-      '<p class="empty" style="padding:5px 0 0">' +
-        (c.d1 ? ru(c.d1) + (c.d2 ? ' — ' + ru(c.d2) : '') : 'даты не заданы') +
-        ' · ' + done + '/' + ids.length + ' навыков' +
-        (c.note ? '<br>' + esc(c.note) : '') + '</p></div>';
-  });
-  $('cylist').innerHTML = h || '<p class="empty">Пока пусто.</p>';
-}
-
-function rCycle(){
-  if(!edit) return;
-  $('cy-n').value = edit.n || ''; $('cy-d1').value = edit.d1 || '';
-  $('cy-d2').value = edit.d2 || ''; $('cy-note').value = edit.note || '';
-}
-
-function rIce(){
-  var c = cur();
-  if(!c){ $('ice-sub').textContent = 'Сначала создай микроцикл.'; $('ice-secs').innerHTML = ''; return; }
-  $('ice-sub').textContent = 'План на «' + c.n + '». В каждом разделе выбери навыки и отмечай отработанные.';
-  var I = ice(), h = '';
-  var list = secList();
-  list.forEach(function(sec, si){
-    var plan = SK.filter(function(s){ return s.sec === sec && I[s.id]; });
-    var done = plan.filter(function(s){ return I[s.id].d; }).length;
-    var op = openSec[sec];
-    h += '<div class="sec"><div class="sech" onclick="togSec(' + si + ')">' +
-         '<b>' + esc(short(sec)) + '</b>' +
-         '<span class="tag' + (plan.length && done === plan.length ? ' g' : '') + '">' +
-            (plan.length ? done + '/' + plan.length : 'не задан') + '</span>' +
-         '<span style="color:var(--tx2);font-size:13px">' + (op ? '▲' : '▼') + '</span></div>';
-    if(op){
-      h += '<div class="secb">';
-      if(!plan.length) h += '<p class="empty">Навыки не выбраны.</p>';
-      plan.forEach(function(s){
-        var e = I[s.id];
-        h += '<div class="sk">' +
-          '<button class="chk' + (e.d ? ' on' : '') + '" onclick="togDone(\'' + s.id + '\')">' + (e.d ? '✓' : '') + '</button>' +
-          '<div class="nm">' + esc(s.n) +
-            '<small>' + esc(s.grp || '') +
-            (e.d ? (s.grp ? ' · ' : '') + 'отработано ' + ru(e.d) : '') + '</small></div>' +
-          '<button class="x" onclick="unplan(\'' + s.id + '\')">×</button></div>';
-      });
-      h += '<button class="btn sec sm" onclick="pick(' + si + ')">Выбрать навыки</button></div>';
-    }
-    h += '</div>';
-  });
-  $('ice-secs').innerHTML = h;
-}
-
-function rOfp(){
-  var c = cur();
-  $('ofp-sub').textContent = c ? 'План на «' + c.n + '».' : 'Сначала создай микроцикл.';
-  var o = ofp();
-  OF.forEach(function(p){ $(p[0]).value = o[p[1]] || ''; });
-}
-
-function rTheory(){
-  if(!$('th-d').value) $('th-d').value = today();
-  var h = '';
-  th().forEach(function(r, i){
-    h += '<div class="card"><div style="display:flex;gap:8px;align-items:baseline">' +
-      '<b style="flex:1;font-size:12.5px">' + ru(r.d) + ' · ' + esc(r.kind) +
-        (r.who ? ' · ' + esc(r.who) : '') + '</b>' +
-      '<button class="x" onclick="delTheory(' + i + ')">×</button></div>' +
-      '<p class="empty" style="color:var(--tx);padding:6px 0 0;white-space:pre-wrap">' + esc(r.text) + '</p></div>';
-  });
-  $('th-list').innerHTML = h || '<p class="empty">Записей пока нет.</p>';
-}
-
-function rPsy(){
-  var c = cur();
-  $('psy-sub').textContent = c ? 'План на «' + c.n + '».' : 'Сначала создай микроцикл.';
-  if(!$('ps-d').value) $('ps-d').value = today();
-  var p = psy();
-  $('ps-plan').value = p.plan || '';
-  var h = '';
-  (p.log||[]).forEach(function(r, i){
-    h += '<div class="card"><div style="display:flex;gap:8px;align-items:baseline">' +
-      '<b style="flex:1;font-size:12.5px">' + ru(r.d) + '</b>' +
-      '<span class="tag' + (r.s === 'было' ? ' g' : '') + '">' + (r.s === 'было' ? 'работали' : 'будем') + '</span>' +
-      '<button class="x" onclick="delPsy(' + i + ')">×</button></div>' +
-      '<p class="empty" style="color:var(--tx);padding:6px 0 0;white-space:pre-wrap">' + esc(r.text) + '</p></div>';
-  });
-  $('ps-list').innerHTML = h || '<p class="empty">Журнал пуст.</p>';
-}
-
-function rMatrix(){
-  var cy = (D.cycles||[]);
-  if(!cy.length){ $('mxbox').innerHTML = '<p class="empty">Нет микроциклов.</p>'; return; }
-  var used = {};
-  cy.forEach(function(c){ Object.keys(D.ice[c.id]||{}).forEach(function(k){ used[k] = 1; }); });
-
-  var h = '<table class="m"><tr><th class="n">Навык</th>';
-  cy.forEach(function(c){ h += '<th>' + esc(shortCy(c)) + '</th>'; });
-  h += '</tr>';
-
-  var list = secList();
-  var any = false;
-  list.forEach(function(sec){
-    var rows = SK.filter(function(s){ return s.sec === sec && (mxAll || used[s.id]); });
-    if(!rows.length) return;
-    any = true;
-    h += '<tr class="h"><td colspan="' + (cy.length+1) + '">' + esc(short(sec)) + '</td></tr>';
-    rows.forEach(function(s){
-      h += '<tr><td class="n">' + esc(s.n) + '</td>';
-      cy.forEach(function(c){
-        var e = (D.ice[c.id]||{})[s.id];
-        h += '<td class="c">' + (!e ? '' : (e.d ? '<span class="ok">✓</span>' : '<span class="dot">•</span>')) + '</td>';
-      });
-      h += '</tr>';
+  /* 2. подтягиваем актуальное с сервера */
+  if (!apiReady()){ setSync('база не подключена'); return; }
+  setSync('синхронизация…');
+  api({ a: 'pull' }, function(res){
+    if (!res || !res.ok){ setSync('нет связи — работаю по кэшу'); return; }
+    IS_COACH = !!res.isCoach;
+    DATA_KEYS.forEach(function(k){
+      if (res.data && res.data[k] !== undefined && res.data[k] !== null){
+        DB[k] = res.data[k];
+        lset(k, DB[k]);
+      }
     });
+    DB.notes = res.notes || [];
+    lset('notes', DB.notes);
+    if (res.lib){ LIB = res.lib; lset('lib', LIB); }
+    DB.rates = res.rates || [];
+    lset('rates', DB.rates);
+    setSync('на связи');
+    applyRole();
+    buildForms();
+    render();
+    if (IS_COACH) loadRoster();
   });
-  h += '</table>';
-  $('mxbox').innerHTML = any ? h : '<p class="empty">Ни один навык ещё не попал в план.</p>';
-}
-function shortCy(c){
-  var n = String(c.n || ''), m = n.match(/(\d+)/);
-  return m ? 'МЦ' + m[1] : (c.d1 ? ru(c.d1) : n.slice(0,6));
 }
 
+/* ---------- роль: вратарь или тренер ---------- */
+function applyRole(){
+  var box = document.getElementById('coach-entry');
+  if (box) box.className = IS_COACH ? '' : 'hide';
+  var h = document.getElementById('hello');
+  if (IS_COACH && h) h.textContent = 'Тренерский доступ';
+}
+
+/* ---------- навигация ---------- */
+var PAGES = ['home','wb','tr','cog','rx','goals','an','notes','me','coach','gk','lib','mat','game','rad'];
+var TITLES = { home:'', wb:'Самочувствие', tr:'Дневник занятий', cog:'Таблица Шульте',
+  rx:'Реакция выбора', goals:'Цели', an:'Разбор игр', notes:'Заметки тренера',
+  me:'Профиль', coach:'Кабинет тренера', gk:'Карточка вратаря', lib:'Материалы', mat:'Материал', game:'Игра', rad:'Оценка вратаря' };
+var navStack = [];
+function go(page, back){
+  if (!back && CUR_PAGE && CUR_PAGE !== page) navStack.push(CUR_PAGE);
+  if (page === 'home') navStack = [];
+  CUR_PAGE = page;
+  PAGES.forEach(function(p){
+    var el = document.getElementById('p-' + p);
+    if (el) el.className = (p === page) ? '' : 'hide';
+  });
+  var top = document.getElementById('top');
+  if (top){
+    top.className = (page === 'home') ? 'hide' : '';
+    setTxt('top-title', TITLES[page] || '');
+  }
+  window.scrollTo(0,0);
+  if (page !== 'rx') abortRx();
+  if (page === 'cog' && !running) buildGrid(true);
+  if (page === 'an') renderAnalytics();
+  if (page === 'lib') renderLib();
+  if (page === 'rad') renderRadar();
+}
+var CUR_PAGE = 'home';
+function goBack(){ go(navStack.length ? navStack.pop() : 'home', true); }
+
+/* ---------- бегунки ---------- */
+function sliderHTML(key, title, lo, hi){
+  return '<div class="sl"><div class="slh"><span>' + title + '</span><b id="v-' + key + '">0</b></div>' +
+    '<input type="range" min="-3" max="3" step="1" value="0" id="r-' + key + '" data-v="' + key + '">' +
+    '<div class="sle"><span class="lo">−3 ' + (lo || '') + '</span>' +
+    '<span class="mid">0 — как обычно</span>' +
+    '<span class="hi">' + (hi || '') + ' +3</span></div></div>';
+}
+function buildForms(){
+  document.getElementById('wb-sliders').innerHTML = WB_KEYS.map(function(k){ return sliderHTML(k[0], k[1], k[2], k[3]); }).join('');
+  document.getElementById('tr-sliders').innerHTML = TR_KEYS.map(function(k){ return sliderHTML(k[0], k[1], k[2], k[3]); }).join('');
+  document.getElementById('tr-type').innerHTML = TR_TYPES.map(function(t,i){
+    return '<button data-act="trtype:' + i + '"' + (trType === i ? ' class="on"' : '') + '>' + t + '</button>';
+  }).join('');
+  document.getElementById('wb-date').textContent = human(today);
+  document.getElementById('tr-date').textContent = human(today);
+  buildRxLvl();
+  if (!rxRun) rxIdle('Начать');
+}
+document.addEventListener('input', function(ev){
+  var el = ev.target;
+  if (el && (el.id === 'g-sh' || el.id === 'g-ga')) svPreview();
+  if (el && el.type === 'range'){
+    var out = document.getElementById('v-' + el.getAttribute('data-v'));
+    if (out) out.textContent = signed(el.value);
+  }
+});
+function signed(v){ v = Number(v); return v > 0 ? '+' + v : String(v); }
+function getSl(key){ var el = document.getElementById('r-' + key); return el ? Number(el.value) : 0; }
+function setSl(key, val){
+  var el = document.getElementById('r-' + key); if (!el) return;
+  el.value = (val === undefined || val === null) ? 0 : val;
+  var out = document.getElementById('v-' + key); if (out) out.textContent = signed(el.value);
+}
+
+/* ---------- единый обработчик нажатий ---------- */
+document.addEventListener('pointerdown', function(ev){
+  var el = ev.target;
+  while (el && el.getAttribute && !el.getAttribute('data-act') && el !== document.body) el = el.parentNode;
+  if (!el || !el.getAttribute) return;
+  var act = el.getAttribute('data-act') || '';
+  if (act.indexOf('rx:') === 0){
+    ev.preventDefault();
+    rxTap = Date.now();
+    rxPress(parseInt(act.split(':')[1], 10));
+    return;
+  }
+  if (act.indexOf('hit:') === 0){
+    ev.preventDefault();
+    rxTap = Date.now();
+    hit(parseInt(act.split(':')[1], 10));
+    return;
+  }
+  return;
+}, { passive: false });
+
+document.addEventListener('click', function(ev){
+  var el = ev.target;
+  while (el && el.getAttribute && !el.getAttribute('data-act') && el !== document.body) el = el.parentNode;
+  if (!el || !el.getAttribute) return;
+  var act = el.getAttribute('data-act');
+  if (!act) return;
+  var a = act.split(':');
+  try {
+    if (a[0] === 'back') goBack();
+    else if (a[0] === 'go') go(a[1]);
+    else if (a[0] === 'ck') ckToggle(parseInt(a[1],10));
+    else if (a[0] === 'lib') openLib(act.slice(4));
+    else if (a[0] === 'mat') openMat(a[1]);
+    else if (a[0] === 'matdone') matDone();
+    else if (a[0] === 'qnext') { qIdx++; renderQuote(); }
+    else if (a[0] === 'wbsave') saveWB();
+    else if (a[0] === 'trsave') saveTR();
+    else if (a[0] === 'trtype') { trType = parseInt(a[1],10); buildForms(); restoreTR(); }
+    else if (a[0] === 'trdel') delTR(parseInt(a[1],10));
+    else if (a[0] === 'rxlvl') { rxLvl = parseInt(a[1],10); buildRxLvl(); }
+    else if (a[0] === 'rxstart') startRx();
+    else if (a[0] === 'rx') { if (Date.now() - rxTap > 400) rxPress(parseInt(a[1],10)); }
+    else if (a[0] === 'noteadd') addNote();
+    else if (a[0] === 'notedel') delNote(a[1]);
+    else if (a[0] === 'roster') { go('coach'); loadRoster(); }
+    else if (a[0] === 'gk') openGoalie(a[1]);
+    else if (a[0] === 'cnote') coachNote();
+    else if (a[0] === 'crate') coachRate();
+    else if (a[0] === 'hit') { if (Date.now() - rxTap > 400) hit(parseInt(a[1],10)); }
+    else if (a[0] === 'schstart') startSchulte();
+    else if (a[0] === 'season') saveSeason();
+    else if (a[0] === 'month') saveMonth();
+    else if (a[0] === 'dayadd') addDay();
+    else if (a[0] === 'daytog') toggleDay(parseInt(a[1],10));
+    else if (a[0] === 'daydel') delDay(parseInt(a[1],10));
+    else if (a[0] === 'netz') pickNet(parseInt(a[1],10));
+    else if (a[0] === 'newgame') newGame();
+    else if (a[0] === 'opengame') openGame(act.slice(9));
+    else if (a[0] === 'gres') { GF.res = (GF.res === parseInt(a[1],10)) ? -1 : parseInt(a[1],10); haptic(); renderRes(); }
+    else if (a[0] === 'rt') setRating(a[1], a[2], parseInt(a[3],10));
+    else if (a[0] === 'gadd') addGoalPoint();
+    else if (a[0] === 'ggdel') delGoalPoint(parseInt(a[1],10));
+    else if (a[0] === 'gsave') saveGame();
+    else if (a[0] === 'gdelgame') delGame();
+    else if (a[0] === 'radsave') saveRating();
+    else if (a[0] === 'radk') { RADSEL = a[1]; renderRadar(); }
+    else if (a[0] === 'sit') pickSit(parseInt(a[1],10));
+    else if (a[0] === 'mesave') saveMe();
+    else if (a[0] === 'export') exportAll();
+    else if (a[0] === 'import') doImport();
+  } catch(e){ alertMsg('Ошибка: ' + e.message); }
+});
+
+/* ---------- самочувствие ---------- */
+function saveWB(){
+  var v = {};
+  WB_KEYS.forEach(function(k){ v[k[0]] = getSl(k[0]); });
+  var rec = { d: today, sl: num(val('i-sleep')), p: num(val('i-pulse')), w: num(val('i-weight')),
+              v: v, c: (val('i-note') || '').slice(0,120) };
+  DB.wb = DB.wb.filter(function(x){ return x.d !== today; });
+  DB.wb.unshift(rec);
+  DB.wb = DB.wb.slice(0,60);
+  ckAuto(0);
+  save('wb', DB.wb, function(){ haptic('medium'); alertMsg('Сохранено.'); render(); });
+}
+function val(id){ var e = document.getElementById(id); return e ? e.value : ''; }
+function num(v){ var n = parseFloat(String(v).replace(',','.')); return isNaN(n) ? null : n; }
+
+/* ---------- дневник тренировок ---------- */
+function saveTR(){
+  var v = {};
+  TR_KEYS.forEach(function(k){ v[k[0]] = getSl(k[0]); });
+  var rec = { d: today, ty: trType, t1: val('t-task').slice(0,300), t2: val('t-done').slice(0,300),
+              t3: val('t-next').slice(0,300), v: v };
+  if (!rec.t1 && !rec.t2 && !rec.t3){ alertMsg('Впиши хотя бы задачу на занятие.'); return; }
+  DB.tr = DB.tr.filter(function(x){ return !(x.d === today && x.ty === trType); });
+  DB.tr.unshift(rec);
+  DB.tr = DB.tr.slice(0,40);
+  ckAuto(5);
+  save('tr', DB.tr, function(){ haptic('medium'); alertMsg('Запись сохранена.'); render(); });
+}
+function delTR(i){ DB.tr.splice(i,1); save('tr', DB.tr, function(){ render(); }); }
+function restoreTR(){
+  var r = DB.tr.filter(function(x){ return x.d === today && x.ty === trType; })[0];
+  document.getElementById('t-task').value = r ? r.t1 : '';
+  document.getElementById('t-done').value = r ? r.t2 : '';
+  document.getElementById('t-next').value = r ? r.t3 : '';
+  TR_KEYS.forEach(function(k){ setSl(k[0], r && r.v ? r.v[k[0]] : 0); });
+}
+
+
+/* ---------- линейный график ---------- */
+function lineSVG(pts, opt){
+  opt = opt || {};
+  var W = 300, H = 104, L = 8, R = 8, T = 12, B = 18;
+  if (!pts.length) return '<div class="sub" style="margin:0">Пока нет данных.</div>';
+  var vals = pts.map(function(p){ return p.v; });
+  var mn = (opt.min !== undefined) ? opt.min : Math.min.apply(null, vals);
+  var mx = (opt.max !== undefined) ? opt.max : Math.max.apply(null, vals);
+  if (mx === mn){ mx = mn + 1; mn = mn - 1; }
+  var pad = (mx - mn) * 0.12; mn -= pad; mx += pad;
+  var x = function(i){ return L + (pts.length === 1 ? (W-L-R)/2 : i * (W - L - R) / (pts.length - 1)); };
+  var y = function(v){ return T + (1 - (v - mn) / (mx - mn)) * (H - T - B); };
+
+  var g = '';
+  for (var k = 0; k <= 3; k++){
+    var gy = T + k * (H - T - B) / 3;
+    g += '<line x1="' + L + '" y1="' + gy.toFixed(1) + '" x2="' + (W-R) + '" y2="' + gy.toFixed(1) +
+         '" stroke="#2C313B" stroke-width="0.7"/>';
+  }
+  var d = pts.map(function(p, i){ return (i ? 'L' : 'M') + x(i).toFixed(1) + ' ' + y(p.v).toFixed(1); }).join(' ');
+  var area = d + ' L' + x(pts.length-1).toFixed(1) + ' ' + (H-B) + ' L' + x(0).toFixed(1) + ' ' + (H-B) + ' Z';
+  var dots = pts.map(function(p, i){
+    return '<circle cx="' + x(i).toFixed(1) + '" cy="' + y(p.v).toFixed(1) + '" r="' +
+           (i === pts.length-1 ? 3.6 : 2.2) + '" fill="' + (i === pts.length-1 ? '#fff' : '#D6112E') +
+           '" stroke="#D6112E" stroke-width="1.6"/>';
+  }).join('');
+  var lab = '<text x="' + L + '" y="' + (H-5) + '" fill="#687079" font-size="9">' + pts[0].d + '</text>' +
+            '<text x="' + (W-R) + '" y="' + (H-5) + '" fill="#687079" font-size="9" text-anchor="end">' +
+            pts[pts.length-1].d + '</text>' +
+            '<text x="' + (W-R) + '" y="' + (T-3) + '" fill="#fff" font-size="10" text-anchor="end">' +
+            (opt.last !== undefined ? opt.last : pts[pts.length-1].v) + '</text>';
+  return '<div class="chart"><svg viewBox="0 0 ' + W + ' ' + H + '" xmlns="http://www.w3.org/2000/svg">' +
+         g + '<path d="' + area + '" fill="rgba(214,17,46,.14)"/>' +
+         '<path d="' + d + '" fill="none" stroke="#D6112E" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>' +
+         dots + lab + '</svg></div>';
+}
+
+/* ---------- радар ---------- */
+var RADK = [['tech','Техника'], ['tac','Тактика'], ['mind','Игровое мышление'],
+            ['psy','Психология'], ['phys','Физическая подготовка']];
+
+function radarSVG(sets){
+  var S = 260, c = S/2, r = 88, n = RADK.length, MAXV = 10;
+  var ang = function(i){ return -Math.PI/2 + i * 2*Math.PI/n; };
+  var pt = function(i, v){
+    var rr = r * Math.max(0, Math.min(1, v / MAXV));
+    return [(c + rr*Math.cos(ang(i))).toFixed(1), (c + rr*Math.sin(ang(i))).toFixed(1)];
+  };
+  var g = '';
+  for (var ring = 1; ring <= 5; ring++){
+    var p = [];
+    for (var i = 0; i < n; i++) p.push(pt(i, MAXV*ring/5).join(','));
+    g += '<polygon points="' + p.join(' ') + '" fill="none" stroke="#2C313B" stroke-width="0.8"/>';
+  }
+  for (var i2 = 0; i2 < n; i2++){
+    var e = pt(i2, MAXV);
+    g += '<line x1="' + c + '" y1="' + c + '" x2="' + e[0] + '" y2="' + e[1] + '" stroke="#2C313B" stroke-width="0.8"/>';
+  }
+  var body = '';
+  sets.forEach(function(st){
+    var p = [];
+    for (var i = 0; i < n; i++) p.push(pt(i, st.v[RADK[i][0]] || 0).join(','));
+    body += '<polygon points="' + p.join(' ') + '" fill="' + st.fill + '" stroke="' + st.line +
+            '" stroke-width="2" stroke-linejoin="round"/>';
+    for (var k = 0; k < n; k++){
+      var q = pt(k, st.v[RADK[k][0]] || 0);
+      body += '<circle cx="' + q[0] + '" cy="' + q[1] + '" r="2.6" fill="' + st.line + '"/>';
+    }
+  });
+  var labs = '';
+  var short = ['Техника','Тактика','Мышление','Психология','Физика'];
+  for (var j = 0; j < n; j++){
+    var lp = pt(j, MAXV * 1.24);
+    var anc = (j === 0) ? 'middle' : (Number(lp[0]) > c + 4 ? 'start' : (Number(lp[0]) < c - 4 ? 'end' : 'middle'));
+    labs += '<text x="' + lp[0] + '" y="' + (Number(lp[1]) + 3).toFixed(1) + '" fill="#98A0AA" font-size="10" text-anchor="' + anc + '">' +
+            short[j] + '</text>';
+  }
+  return '<div class="chart"><svg viewBox="0 0 ' + S + ' ' + S + '" xmlns="http://www.w3.org/2000/svg">' +
+         g + body + labs + '</svg></div>';
+}
+
+/* ---------- оценка вратаря ---------- */
+var RADSEL = 'tech';
+
+function radList(){
+  if (!DB.goals) DB.goals = { season:null, months:{}, days:[] };
+  if (!DB.goals.rad) DB.goals.rad = [];
+  return DB.goals.rad;
+}
+function lastRate(by){
+  var l = radList().filter(function(x){ return x.by === by; });
+  return l.length ? l[0] : null;
+}
+function coachRates(){ return (DB.rates || []).slice(); }
+function lastCoachRate(){ return coachRates().length ? coachRates()[0] : null; }
+
+function renderRadar(){
+  var box = document.getElementById('rad-chart');
+  if (!box) return;
+  document.getElementById('rad-date').textContent = human(today);
+
+  var self = lastRate('self'), coach = lastCoachRate();
+  var sets = [];
+  if (self)  sets.push({ v: self.v,  fill:'rgba(214,17,46,.22)',  line:'#D6112E' });
+  if (coach) sets.push({ v: coach.v, fill:'rgba(47,168,79,.18)',  line:'#2FA84F' });
+  box.innerHTML = sets.length ? radarSVG(sets)
+    : '<div class="sub" style="margin:0">Оценок пока нет — поставь первую ниже.</div>';
+
+  document.getElementById('rad-nums').innerHTML = RADK.map(function(k){
+    var a = self ? (self.v[k[0]] || 0) : null, b = coach ? (coach.v[k[0]] || 0) : null;
+    return '<div><span>' + k[1] + '</span><b>' + (a !== null ? a : '—') +
+           (b !== null ? ' <span style="color:#4FA765">· ' + b + '</span>' : '') + '</b></div>';
+  }).join('');
+
+  document.getElementById('rad-sliders').innerHTML = RADK.map(function(k){
+    return '<div class="sl"><div class="slh"><span>' + k[1] + '</span><b id="v-r' + k[0] + '">' +
+      (self ? (self.v[k[0]] || 5) : 5) + '</b></div>' +
+      '<input type="range" min="1" max="10" step="1" value="' + (self ? (self.v[k[0]] || 5) : 5) +
+      '" id="r-r' + k[0] + '" data-v="r' + k[0] + '">' +
+      '<div class="sle"><span>1</span><span>5</span><span>10</span></div></div>';
+  }).join('');
+
+  document.getElementById('rad-pick').innerHTML = RADK.map(function(k){
+    return '<button data-act="radk:' + k[0] + '"' + (RADSEL === k[0] ? ' class="on"' : '') + '>' + k[1] + '</button>';
+  }).join('');
+  var ser = radList().filter(function(x){ return x.by === 'self'; }).slice(0,14).reverse();
+  document.getElementById('rad-line').innerHTML = lineSVG(ser.map(function(x){
+    return { d: dm(x.d), v: x.v[RADSEL] || 0 };
+  }), { min:1, max:10 });
+
+  var all = radList().map(function(x){ return { d:x.d, by:'моя', v:x.v }; })
+    .concat(coachRates().map(function(x){ return { d:x.d, by:'тренер', v:x.v }; }));
+  all.sort(function(a,b){ return a.d < b.d ? 1 : (a.d > b.d ? -1 : 0); });
+  document.getElementById('rad-list').innerHTML = all.length ? all.slice(0,12).map(function(x){
+    var mean = RADK.reduce(function(p,k){ return p + (x.v[k[0]] || 0); }, 0) / RADK.length;
+    return '<div><span>' + dm(x.d) + ' · ' + x.by + '</span><b>' + mean.toFixed(1).replace('.', ',') + '</b></div>';
+  }).join('') : '<div>Записей пока нет.</div>';
+}
+
+function saveRating(){
+  var v = {};
+  RADK.forEach(function(k){ v[k[0]] = getSl('r' + k[0]) || 5; });
+  var l = radList();
+  l = l.filter(function(x){ return !(x.by === 'self' && x.d === today); });
+  l.unshift({ d: today, by: 'self', v: v });
+  l.sort(function(a,b){ return a.d < b.d ? 1 : (a.d > b.d ? -1 : 0); });
+  DB.goals.rad = l.slice(0, 60);
+  haptic('medium');
+  save('goals', DB.goals, function(){ alertMsg('Оценка сохранена.'); renderRadar(); render(); });
+}
+
+/* ---------- фраза дня ---------- */
+var qIdx = -1;
+function renderQuote(){
+  var card = document.getElementById('q-card');
+  if (!card) return;
+  var q = LIB.q || [];
+  if (!q.length){ card.className = 'card quote hide'; return; }
+  if (qIdx < 0){
+    var seed = parseInt(today.replace(/-/g, ''), 10) + (parseInt(UID, 10) || 0);
+    qIdx = Math.abs(seed) % q.length;
+  }
+  var x = q[qIdx % q.length];
+  card.className = 'card quote';
+  setTxt('q-text', x.t);
+  setTxt('q-auth', x.a ? '— ' + x.a : '');
+}
+
+/* ---------- психология и теория ---------- */
+var LIB_SEC = '', CUR_MAT = null;
+
+function libDone(){
+  if (!DB.goals) DB.goals = { season:null, months:{}, days:[] };
+  if (!DB.goals.done) DB.goals.done = {};
+  return DB.goals.done;
+}
+function libItems(sec){
+  return (LIB.m || []).filter(function(x){ return x.s === sec; });
+}
+function openLib(sec){
+  LIB_SEC = sec;
+  TITLES.lib = sec;
+  go('lib');
+  setTxt('lib-h', sec);
+  renderLib();
+}
+function renderLib(){
+  var box = document.getElementById('lib-list');
+  if (!box) return;
+  var items = libItems(LIB_SEC), done = libDone();
+  setTxt('lib-sub', items.length
+    ? 'Изучено ' + items.filter(function(x){ return done[x.id]; }).length + ' из ' + items.length
+    : 'Материалы пока не добавлены.');
+  box.innerHTML = items.map(function(x){
+    var d = !!done[x.id];
+    var prev = String(x.x || '').replace(/\s+/g, ' ').slice(0, 90);
+    return '<button class="lib' + (d ? ' on' : '') + '" data-act="mat:' + x.id + '">' +
+      '<span class="lc">✓</span><span><b>' + esc(x.t) + '</b>' +
+      '<i>' + esc(prev) + (prev.length >= 90 ? '…' : '') +
+      (x.u ? ' · видео' : '') + '</i></span></button>';
+  }).join('');
+}
+function openMat(id){
+  var x = (LIB.m || []).filter(function(m){ return m.id === id; })[0];
+  if (!x) return;
+  CUR_MAT = x;
+  TITLES.mat = x.s;
+  go('mat');
+  setTxt('mat-h', x.t);
+  setTxt('mat-sub', x.s);
+  document.getElementById('mat-text').textContent = x.x || '';
+  var img = document.getElementById('mat-img');
+  if (x.img){ img.src = x.img; img.className = 'matimg'; } else { img.className = 'matimg hide'; img.removeAttribute('src'); }
+  var lnk = document.getElementById('mat-link');
+  if (x.u){ lnk.href = x.u; lnk.className = 'btn'; } else { lnk.className = 'btn hide'; }
+  matBtn();
+}
+function matBtn(){
+  var d = CUR_MAT && libDone()[CUR_MAT.id];
+  setTxt('mat-done', d ? 'Изучено ✓ — снять отметку' : 'Отметить «изучил»');
+  var b = document.getElementById('mat-done');
+  if (b) b.className = d ? 'btn' : 'btn sec';
+}
+function matDone(){
+  if (!CUR_MAT) return;
+  var d = libDone();
+  if (d[CUR_MAT.id]) delete d[CUR_MAT.id]; else d[CUR_MAT.id] = today;
+  haptic('medium');
+  matBtn();
+  save('goals', DB.goals, function(){});
+}
+
+/* ---------- чек-лист дня ---------- */
+var CHECKS = [
+  'Заполнил дневник самочувствия',
+  'Сделал упражнения на когнитивку (внимание и реакция)',
+  'Выполнил упражнения на самоподготовку (мобильность, реакция)',
+  'Визуализирую успешные моменты, когда надеваю форму (вход в ОБС)',
+  'Контролирую дыхание (саморегуляция)',
+  'Заполнил дневник занятия',
+  'Посмотрел видео с тренировки и заметки тренера',
+  'Проверил цели, что выполнил, поставил фокус на следующее занятие'
+];
+
+function ckDay(){
+  if (!DB.goals) DB.goals = { season:null, months:{}, days:[] };
+  if (!DB.goals.chk) DB.goals.chk = {};
+  if (!DB.goals.chk[today]) DB.goals.chk[today] = [];
+  return DB.goals.chk[today];
+}
+function ckTrim(){
+  var k = Object.keys(DB.goals.chk).sort().reverse();
+  k.slice(60).forEach(function(d){ delete DB.goals.chk[d]; });
+}
+function ckToggle(i){
+  var l = ckDay(), p = l.indexOf(i);
+  if (p >= 0) l.splice(p, 1); else l.push(i);
+  ckTrim();
+  haptic();
+  renderCk();
+  save('goals', DB.goals, function(){});
+}
+function ckAuto(i){
+  var l = ckDay();
+  if (l.indexOf(i) >= 0) return;
+  l.push(i); ckTrim();
+  renderCk();
+  save('goals', DB.goals, function(){});
+}
+function renderCk(){
+  var box = document.getElementById('ck-list');
+  if (!box) return;
+  var l = ckDay();
+  box.innerHTML = CHECKS.map(function(t, i){
+    var on = l.indexOf(i) >= 0;
+    return '<button class="ck' + (on ? ' on' : '') + '" data-act="ck:' + i + '">' +
+           '<span class="ckc">✓</span><span class="ckt">' + t + '</span></button>';
+  }).join('');
+  var n = l.length, pct = Math.round(n / CHECKS.length * 100);
+  setTxt('ck-sum', n === CHECKS.length ? 'Всё выполнено — красавчик' : 'Выполнено ' + n + ' из ' + CHECKS.length);
+  var bar = document.getElementById('ck-bar');
+  if (bar) bar.style.width = pct + '%';
+}
+
+/* ---------- реакция выбора ---------- */
+var RX_LVL  = [['Лёгкий', 1000], ['Средний', 800], ['Высокий', 600]];
+var RX_LET  = ['В', 'Н', 'П', 'Л'];            // 0 вверх · 1 вниз · 2 вправо · 3 влево
+var RX_SEC  = 60;
+var RX_GAP  = 200;                               // пауза между сигналом и следующим
+var rxLvl = 1, rxRun = false, rxT = null, rxTick = null;
+var rxCur = -1, rxPrev = -1, rxAnswered = true, rxShownAt = 0, rxTap = 0;
+var rxOk = 0, rxErr = 0, rxSkip = 0, rxRT = [], rxEnd = 0;
+
+function buildRxLvl(){
+  var el = document.getElementById('rx-lvl');
+  if (!el) return;
+  el.innerHTML = RX_LVL.map(function(l, i){
+    return '<button data-act="rxlvl:' + i + '"' + (rxLvl === i ? ' class="on"' : '') + '>' +
+           l[0] + ' · ' + l[1] + ' мс</button>';
+  }).join('');
+}
+
+function rxClear(){
+  for (var i = 0; i < 4; i++){
+    var b = document.querySelector('[data-act="rx:' + i + '"]');
+    if (b) b.className = 'rxb';
+  }
+}
+var rxLockY = 0;
+function lockScreen(on){
+  try {
+    var b = document.body;
+    if (on){
+      rxLockY = window.scrollY || window.pageYOffset || 0;
+      b.style.position = 'fixed';
+      b.style.top = (-rxLockY) + 'px';
+      b.style.left = '0'; b.style.right = '0'; b.style.width = '100%';
+      if (TG && TG.expand) TG.expand();
+      if (TG && TG.disableVerticalSwipes) TG.disableVerticalSwipes();
+    } else {
+      b.style.position = ''; b.style.top = '';
+      b.style.left = ''; b.style.right = ''; b.style.width = '';
+      window.scrollTo(0, rxLockY);
+      if (TG && TG.enableVerticalSwipes) TG.enableVerticalSwipes();
+    }
+  } catch (e) {}
+}
+
+function rxStats(){ setTxt('rx-ok', rxOk); setTxt('rx-err', rxErr); setTxt('rx-skip', rxSkip); }
+
+function rxIdle(label){
+  clearTimeout(rxT); clearInterval(rxTick);
+  rxRun = false;
+  lockScreen(false);
+  var cue = document.getElementById('rx-cue');
+  if (cue){ cue.textContent = '—'; cue.className = 'rxc'; }
+  var pad = document.getElementById('rx-pad'); if (pad) pad.className = 'off';
+  setTxt('rx-btn', label); setTxt('rx-time', RX_SEC);
+  rxClear();
+}
+
+function startRx(){
+  if (rxRun) return;
+  rxRun = true;
+  rxOk = rxErr = rxSkip = 0; rxRT = []; rxPrev = -1;
+  rxEnd = Date.now() + RX_SEC * 1000;
+  setTxt('rx-btn', 'Идёт тест…');
+  document.getElementById('rx-res').textContent = '';
+  document.getElementById('rx-pad').className = '';
+  lockScreen(true);
+  rxStats();
+  rxTick = setInterval(function(){
+    var left = Math.max(0, Math.ceil((rxEnd - Date.now()) / 1000));
+    setTxt('rx-time', left);
+    if (left <= 0) stopRx();
+  }, 200);
+  rxNext();
+}
+
+function rxNext(){
+  if (!rxRun) return;
+  if (Date.now() >= rxEnd){ stopRx(); return; }
+  rxCur = (rxPrev < 0) ? Math.floor(Math.random() * 4)
+                       : (rxPrev + 1 + Math.floor(Math.random() * 3)) % 4;   // никогда не повторяется
+  rxPrev = rxCur;
+  rxAnswered = false;
+  rxShownAt = Date.now();
+  rxClear();
+  var cue = document.getElementById('rx-cue');
+  cue.textContent = RX_LET[rxCur];
+  cue.className = 'rxc go';
+  rxT = setTimeout(function(){
+    if (!rxAnswered){ rxSkip++; rxStats(); }
+    rxNext();
+  }, RX_LVL[rxLvl][1]);
+}
+
+function rxPress(dir){
+  if (!rxRun || rxAnswered) return;
+  rxAnswered = true;
+  if (dir === rxCur){ rxOk++; rxRT.push(Date.now() - rxShownAt); }
+  else { rxErr++; }
+  haptic();                                      // одинаковый отклик, без подсказки цветом
+  rxStats();
+  var cue = document.getElementById('rx-cue');
+  if (cue) cue.className = 'rxc';
+  clearTimeout(rxT);
+  rxT = setTimeout(rxNext, RX_GAP);              // не ждём конца интервала
+}
+
+function stopRx(){
+  if (!rxRun) return;
+  var total = rxOk + rxErr + rxSkip;
+  var rt = rxRT.length ? Math.round(rxRT.reduce(function(a, b){ return a + b; }, 0) / rxRT.length) : null;
+  var acc = total ? Math.round(rxOk / total * 100) : 0;
+  rxIdle('Пройти ещё раз');
+
+  document.getElementById('rx-res').innerHTML =
+    'Сигналов: <b style="color:#fff">' + total + '</b> · точность <b style="color:#fff">' + acc + '%</b>' +
+    (rt ? ' · среднее время <b style="color:#fff">' + rt + ' мс</b>' : '');
+
+  DB.svet.unshift({ d: today, e: rxErr, sk: rxSkip, ok: rxOk, n: total,
+                    ms: RX_LVL[rxLvl][1], rt: rt, src: 'app' });
+  DB.svet = DB.svet.slice(0, 60);
+  ckAuto(1);
+  save('svet', DB.svet, function(){ haptic('medium'); render(); });
+}
+
+function abortRx(){ if (rxRun) rxIdle('Начать'); }
+
+/* ---------- заметки ---------- */
+function addNote(){
+  var t = val('n-text').trim();
+  if (!t){ alertMsg('Впиши текст заметки.'); return; }
+  document.getElementById('n-text').value = '';
+  haptic();
+  if (!apiReady()){
+    DB.notes.unshift({ id:'l'+Date.now(), d: today, a:'self', t: t.slice(0,400) });
+    lset('notes', DB.notes); render(); return;
+  }
+  api({ a:'note', text: t }, function(res){
+    if (res && res.ok){ DB.notes = res.notes || DB.notes; lset('notes', DB.notes); }
+    else alertMsg('Не удалось сохранить — нет связи.');
+    render();
+  });
+}
+function delNote(id){
+  var keep = [];
+  for (var i=0;i<DB.notes.length;i++) if (String(DB.notes[i].id) !== String(id)) keep.push(DB.notes[i]);
+  DB.notes = keep; lset('notes', DB.notes); render();
+  if (apiReady()) api({ a:'delnote', id: id }, function(){});
+}
+
+/* ---------- цели ---------- */
+function saveSeason(){
+  var t = val('g-season').trim();
+  if(!t){ alertMsg('Впиши цель.'); return; }
+  DB.goals.season = { t: t, c: val('g-season-c').trim() };
+  save('goals', DB.goals, function(){ alertMsg('Цель на сезон сохранена.'); render(); });
+}
+function saveMonth(){
+  var t = val('g-month').trim();
+  if(!t){ alertMsg('Впиши цель на месяц.'); return; }
+  DB.goals.months[curMonth] = { t: t, c: val('g-month-c').trim() };
+  save('goals', DB.goals, function(){ alertMsg('Цель на месяц сохранена.'); render(); });
+}
+function addDay(){
+  var t = val('g-day').trim();
+  if(!t){ alertMsg('Впиши цель на занятие.'); return; }
+  DB.goals.days.unshift({ d: today, t: t, ok: false });
+  DB.goals.days = DB.goals.days.slice(0,40);
+  document.getElementById('g-day').value = '';
+  save('goals', DB.goals, function(){ haptic(); render(); });
+}
+function toggleDay(i){ DB.goals.days[i].ok = !DB.goals.days[i].ok; save('goals', DB.goals, function(){ haptic(); render(); }); }
+function delDay(i){ DB.goals.days.splice(i,1); save('goals', DB.goals, function(){ render(); }); }
+
+/* ---------- Шульте ---------- */
+var order = [], next = 1, errs = 0, t0 = 0, tick = null, running = false;
+function buildGrid(preview){
+  var nums = [];
+  for (var i=1;i<=36;i++) nums.push(i);
+  for (var j=nums.length-1;j>0;j--){ var k = Math.floor(Math.random()*(j+1)); var t=nums[j]; nums[j]=nums[k]; nums[k]=t; }
+  order = nums;
+  var html = '';
+  for (var q=0;q<36;q++) html += '<button id="c' + q + '" data-act="hit:' + q + '">' + nums[q] + '</button>';
+  document.getElementById('grid').innerHTML = html;
+  next = 1; errs = 0; running = !preview;
+  document.getElementById('next-num').textContent = '1';
+  document.getElementById('errs').textContent = '0';
+  document.getElementById('timer').textContent = '0.0';
+}
+function startSchulte(){
+  buildGrid(false);
+  t0 = Date.now(); running = true;
+  if (tick) clearInterval(tick);
+  tick = setInterval(function(){ document.getElementById('timer').textContent = ((Date.now()-t0)/1000).toFixed(1); }, 100);
+}
+function hit(idx){
+  if (!running) { startSchulte(); return; }
+  var btn = document.getElementById('c' + idx);
+  if (order[idx] === next){
+    haptic();                                  /* найденное число не подсвечиваем */
+    next++;
+    document.getElementById('next-num').textContent = String(Math.min(next,36));
+    if (next > 36) finishSchulte();
+  } else {
+    errs++; document.getElementById('errs').textContent = String(errs);
+    btn.className = 'bad'; haptic('heavy');
+    setTimeout(function(){ if (btn.className === 'bad') btn.className = ''; }, 200);
+  }
+}
+function finishSchulte(){
+  running = false; clearInterval(tick);
+  var sec = Math.round((Date.now()-t0)/100)/10;
+  DB.schulte.unshift({ d: today, t: sec, e: errs });
+  DB.schulte = DB.schulte.slice(0,60);
+  ckAuto(1);
+  save('schulte', DB.schulte, function(){
+    haptic('medium');
+    var best = bestSchulte();
+    alertMsg('Готово: ' + sec + ' с, ошибок ' + errs + (sec <= best ? '. Лучший результат!' : ''));
+    render();
+  });
+}
+function bestSchulte(){ return DB.schulte.length ? DB.schulte.reduce(function(a,x){ return Math.min(a,x.t); }, 999) : 999; }
+
+/* ---------- аналитика голов ---------- */
+var anPick = { x:null, y:null, z:null, s:null };
+
+function rinkHTML(dots){
+  var d = '';
+  if (dots && dots.length){
+    for (var i = 0; i < dots.length; i++){
+      d += '<i class="rdot" style="left:' + dots[i][0] + '%;top:' + dots[i][1] + '%"></i>';
+    }
+  }
+  if (anPick.x !== null && !dots){
+    d += '<i class="rdot pick" style="left:' + anPick.x + '%;top:' + anPick.y + '%"></i>';
+  }
+  return '<div class="rink"><img src="rink.png" alt="Площадка">' + d + '</div>';
+}
+function netHTML(){
+  var b = '';
+  for (var i=0;i<9;i++){
+    b += '<button data-act="netz:' + i + '"' + (anPick.z === i ? ' class="on"' : '') + '><span>' + NZ[i] + '</span></button>';
+  }
+  return '<div class="netpic"><img src="goalie.jpg" alt="Вратарь"><div class="zgrid">' + b + '</div></div>';
+}
+function netStat(list){
+  var cnt = [0,0,0,0,0,0,0,0,0], mx = 0;
+  list.forEach(function(g){ if (g[2] >= 0 && g[2] < 9) cnt[g[2]]++; });
+  cnt.forEach(function(v){ if (v > mx) mx = v; });
+  var b = '';
+  for (var i=0;i<9;i++){
+    var op = mx ? (0.10 + 0.70*cnt[i]/mx) : 0;
+    b += '<div class="zc" style="background:rgba(214,17,46,' + (cnt[i] ? op.toFixed(2) : 0) + ')">' +
+         '<b>' + (cnt[i] || '') + '</b><span>' + NZ[i] + '</span></div>';
+  }
+  return '<div class="netpic"><img src="goalie.jpg" alt="Вратарь"><div class="zgrid stat">' + b + '</div></div>';
+}
+
+/* ---------- разбор игр ---------- */
+var RES  = ['Победа', 'Поражение', 'ОТ / буллиты'];
+var QRAT = [['mood','Настрой на игру'], ['state','Состояние во время игры'],
+            ['wg','Разминка на земле'], ['wi','Разминка на льду']];
+var ERAT = [['scan','Сканировал и подсказывал', false], ['move','Активно двигался', false],
+            ['stick','Играл клюшкой', true], ['key','Ключевые спасения', true],
+            ['grade','Оценка игры', false]];
+var GF = null;
+
+function allGoals(){
+  var out = [];
+  (DB.games || []).forEach(function(g){ (g.gls || []).forEach(function(x){ out.push(x); }); });
+  (DB.gls || []).forEach(function(x){ out.push([x[1], x[2], x[3], x[4]]); });
+  return out;
+}
+function ratingHTML(scope, key, title, none){
+  var v = (scope === 'q' ? GF.q : GF.e)[key], b = '';
+  for (var i=1;i<=5;i++){
+    b += '<button data-act="rt:' + scope + ':' + key + ':' + i + '"' + (v === i ? ' class="on"' : '') + '>' + i + '</button>';
+  }
+  if (none) b += '<button data-act="rt:' + scope + ':' + key + ':0"' + (v === 0 ? ' class="on"' : '') + '>не было</button>';
+  return '<div class="rt"><div class="rth">' + title + '</div><div class="chips">' + b + '</div></div>';
+}
+function setRating(scope, key, v){
+  var o = (scope === 'q' ? GF.q : GF.e);
+  if (o[key] === v) delete o[key]; else o[key] = v;
+  haptic(); renderRates();
+}
+function renderRates(){
+  if (!GF) return;
+  document.getElementById('q-rates').innerHTML = QRAT.map(function(r){ return ratingHTML('q', r[0], r[1], false); }).join('');
+  document.getElementById('q-cust').innerHTML  = ratingHTML('q', 'cust', 'Оценка своего пункта', false);
+  document.getElementById('e-rates').innerHTML = ERAT.map(function(r){ return ratingHTML('e', r[0], r[1], r[2]); }).join('');
+}
+function newGame(){
+  GF = { id: 'g' + Date.now(), d: today, opp:'', sc:'', res:-1, min:null, sh:null, ga:null,
+         note:'', q:{}, e:{}, cn:'', gls:[] };
+  anPick = { x:null, y:null, z:null, s:null };
+  openGameForm('Новая игра', false);
+}
+function openGame(id){
+  var g = (DB.games || []).filter(function(x){ return x.id === id; })[0];
+  if (!g) return;
+  GF = JSON.parse(JSON.stringify(g));
+  GF.q = GF.q || {}; GF.e = GF.e || {}; GF.gls = GF.gls || [];
+  anPick = { x:null, y:null, z:null, s:null };
+  openGameForm(dm(GF.d) + (GF.opp ? ' · ' + GF.opp : ''), true);
+}
+function openGameForm(title, edit){
+  go('game');
+  setTxt('game-h', title);
+  document.getElementById('g-del').className = edit ? 'btn sec' : 'btn sec hide';
+  document.getElementById('g-date').value = GF.d || today;
+  document.getElementById('g-opp').value  = GF.opp || '';
+  document.getElementById('g-sc').value   = GF.sc || '';
+  document.getElementById('g-min').value  = ok(GF.min) ? GF.min : '';
+  document.getElementById('g-sh').value   = ok(GF.sh) ? GF.sh : '';
+  document.getElementById('g-ga').value   = ok(GF.ga) ? GF.ga : '';
+  document.getElementById('g-note').value = GF.note || '';
+  document.getElementById('q-goal').value = GF.q.goal || '';
+  document.getElementById('q-got').value  = GF.q.got || '';
+  document.getElementById('q-custname').value = GF.cn || '';
+  renderRes(); renderRates(); renderGoalsForm(); svPreview();
+}
+function renderRes(){
+  document.getElementById('g-res').innerHTML = RES.map(function(t,i){
+    return '<button data-act="gres:' + i + '"' + (GF.res === i ? ' class="on"' : '') + '>' + t + '</button>';
+  }).join('');
+}
+function svPreview(){
+  var sh = num(val('g-sh')), ga = num(val('g-ga'));
+  setTxt('g-svp', (ok(sh) && sh > 0 && ok(ga)) ? String(Math.round((sh - ga) / sh * 1000) / 10).replace('.', ',') + '%' : '—');
+}
+function rinkPick(ev, rw){
+  var img = rw.querySelector('img');
+  var r = (img || rw).getBoundingClientRect();
+  anPick.x = Math.max(0, Math.min(100, Math.round((ev.clientX - r.left) / r.width * 100)));
+  anPick.y = Math.max(0, Math.min(100, Math.round((ev.clientY - r.top) / r.height * 100)));
+  haptic();
+  rw.innerHTML = rinkHTML(null);
+}
+function renderGoalsForm(){
+  var rw = document.getElementById('rink-wrap');
+  rw.innerHTML = rinkHTML(null);
+  rw.onclick = function(ev){ rinkPick(ev, rw); };
+  document.getElementById('net-wrap').innerHTML = netHTML();
+  document.getElementById('sit-chips').innerHTML = SITS.map(function(t,i){
+    return '<button data-act="sit:' + i + '"' + (anPick.s === i ? ' class="on"' : '') + '>' + t + '</button>';
+  }).join('');
+  document.getElementById('gg-list').innerHTML = GF.gls.length
+    ? GF.gls.map(function(x,i){
+        return '<div class="goal"><span class="x" data-act="ggdel:' + i + '">×</span>' +
+               '<div class="tag">гол ' + (i+1) + '</div><div class="t">' +
+               SITS[x[3]] + ' → ' + NZ[x[2]] + '</div></div>';
+      }).join('')
+    : '<div class="sub" style="margin:0">Голов пока не отмечено.</div>';
+}
+function pickNet(i){ anPick.z = i; haptic(); document.getElementById('net-wrap').innerHTML = netHTML(); }
+function pickSit(i){ anPick.s = i; haptic(); renderGoalsForm(); }
+function addGoalPoint(){
+  if (anPick.x === null){ alertMsg('Отметь на площадке, откуда забили.'); return; }
+  if (anPick.z === null){ alertMsg('Отметь зону, куда забили.'); return; }
+  if (anPick.s === null){ alertMsg('Выбери ситуацию.'); return; }
+  GF.gls.push([anPick.x, anPick.y, anPick.z, anPick.s]);
+  anPick = { x:null, y:null, z:null, s:null };
+  haptic('medium'); renderGoalsForm();
+}
+function delGoalPoint(i){ GF.gls.splice(i,1); renderGoalsForm(); }
+function saveGame(){
+  GF.d    = val('g-date') || today;
+  GF.opp  = val('g-opp').slice(0,30);
+  GF.sc   = val('g-sc').slice(0,12);
+  GF.min  = num(val('g-min'));
+  GF.sh   = num(val('g-sh'));
+  GF.ga   = num(val('g-ga'));
+  GF.note = val('g-note').slice(0,900);
+  GF.q.goal = val('q-goal').slice(0,600);
+  GF.q.got  = val('q-got').slice(0,600);
+  GF.cn     = val('q-custname').slice(0,60);
+  if (!DB.games) DB.games = [];
+  var i = -1;
+  for (var k = 0; k < DB.games.length; k++) if (DB.games[k].id === GF.id) i = k;
+  if (i >= 0) DB.games[i] = GF; else DB.games.unshift(GF);
+  DB.games.sort(function(a,b){ return a.d < b.d ? 1 : (a.d > b.d ? -1 : 0); });
+  DB.games = DB.games.slice(0, 80);
+  save('games', DB.games, function(){ haptic('medium'); alertMsg('Игра сохранена.'); render(); go('an'); });
+}
+function delGame(){
+  if (!GF) return;
+  DB.games = (DB.games || []).filter(function(x){ return x.id !== GF.id; });
+  save('games', DB.games, function(){ haptic('medium'); render(); go('an'); });
+}
+
+/* ---------- профиль, импорт, отчёт ---------- */
+function saveMe(){
+  DB.me = { n: val('m-name').trim(), tm: val('m-team').trim(), y: val('m-year').trim() };
+  save('me', DB.me, function(){ alertMsg('Сохранено.'); render(); });
+}
+function exportAll(){ copy(JSON.stringify(DB), 'Все данные скопированы.'); }
+function b64ToStr(b64){
+  var bin = atob(String(b64).replace(/\s+/g,''));
+  var bytes = new Uint8Array(bin.length);
+  for (var i=0;i<bin.length;i++) bytes[i] = bin.charCodeAt(i);
+  if (window.TextDecoder) return new TextDecoder('utf-8').decode(bytes);
+  return decodeURIComponent(escape(bin));
+}
+function doImport(){
+  var raw = (val('imp') || '').trim();
+  if (!raw){ alertMsg('Вставь код от тренера.'); return; }
+
+  /* короткий код привязки — забираем данные из общей базы */
+  if (raw.length <= 14 && raw.indexOf('{') < 0){
+    if (!apiReady()){ alertMsg('Нет связи с базой — код примем позже.'); return; }
+    api({ a: 'claim', code: raw }, function(res){
+      if (!res || !res.ok){ alertMsg((res && res.err) || 'Код не подошёл.'); return; }
+      document.getElementById('imp').value = '';
+      haptic('medium');
+      alertMsg(res.wrote && res.wrote.length
+        ? 'Готово! Данные от тренера загружены.'
+        : 'Аккаунт привязан. Всё, что было, осталось на месте.');
+      boot();
+    });
+    return;
+  }
+
+  var data;
+  try { data = JSON.parse(b64ToStr(raw)); }
+  catch(e){ alertMsg('Код не распознан. Скопируй его целиком.'); return; }
+  if (data.me){ for (var k in data.me) if (data.me[k]) DB.me[k] = data.me[k]; }
+  if (data.goals){
+    if (data.goals.season) DB.goals.season = data.goals.season;
+    if (data.goals.months) for (var m in data.goals.months) DB.goals.months[m] = data.goals.months[m];
+    if (data.goals.days && data.goals.days.length) DB.goals.days = data.goals.days.concat(DB.goals.days).slice(0,40);
+  }
+  if (data.notes && data.notes.length) DB.notes = data.notes.concat(DB.notes).slice(0,40);
+  lset('notes', DB.notes);
+  save('me', DB.me, function(){ save('goals', DB.goals, function(){
+    document.getElementById('imp').value = '';
+    haptic('medium'); alertMsg('Готово! Данные загружены.'); render(); go('goals');
+  }); });
+}
+function avg(arr){ if(!arr.length) return null; var s=0; for(var i=0;i<arr.length;i++) s+=arr[i]; return s/arr.length; }
+function ok(v){ return v !== null && v !== undefined && !isNaN(v); }
+function fmt(v){ return !ok(v) ? '—' : (Math.round(v*10)/10).toString().replace('.', ','); }
+function last7(){
+  var lim = new Date(Date.now() - 7*864e5).toISOString().slice(0,10);
+  return DB.wb.filter(function(x){ return x.d >= lim; });
+}
+
+/* ================= ОТЧЁТ ================= */
+var PER = 7;
+function limDate(days){ return days ? new Date(Date.now() - days*864e5).toISOString().slice(0,10) : '0000-00-00'; }
+function avgKey(arr, key){
+  var vv = arr.map(function(x){ return x.v ? x.v[key] : null; }).filter(ok);
+  return vv.length ? Math.round(avg(vv)*10)/10 : null;
+}
+function repData(){
+  var lim = limDate(PER);
+  return {
+    wb: DB.wb.filter(function(x){ return x.d >= lim; }),
+    tr: DB.tr.filter(function(x){ return x.d >= lim; }),
+    sch: DB.schulte.filter(function(x){ return x.d >= lim; }),
+    sv: DB.svet.filter(function(x){ return x.d >= lim; }),
+    gl: DB.gls.filter(function(x){ return x[0] >= lim; })
+  };
+}
+
+function copy(text, msg){
+  var ta = document.createElement('textarea');
+  ta.value = text; ta.style.position='fixed'; ta.style.opacity='0';
+  document.body.appendChild(ta); ta.select();
+  try { document.execCommand('copy'); alertMsg(msg); } catch(e){ alertMsg(text); }
+  document.body.removeChild(ta);
+}
+function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function setTxt(id, t){ var e = document.getElementById(id); if (e) e.textContent = t; }
+function cut(s2, n){ s2 = String(s2); return s2.length > n ? s2.slice(0, n - 1) + '…' : s2; }
+function human(d){ return d.slice(8,10) + '.' + d.slice(5,7) + '.' + d.slice(0,4); }
+function dm(d){ return d.slice(8,10) + '.' + d.slice(5,7); }
+
+/* ---------- отрисовка ---------- */
+function render(){
+  var name = DB.me.n ? DB.me.n.split(' ')[0] :
+    (TG && TG.initDataUnsafe && TG.initDataUnsafe.user ? TG.initDataUnsafe.user.first_name : '');
+  document.getElementById('hello').textContent = name ? ('Привет, ' + name + '!') : 'Привет!';
+  var dd = new Date();
+  var mn = ['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
+  document.getElementById('today').textContent = dd.getDate() + ' ' + mn[dd.getMonth()] + ', ' +
+    ['воскресенье','понедельник','вторник','среда','четверг','пятница','суббота'][dd.getDay()];
+
+  var wbToday = DB.wb.filter(function(x){ return x.d === today; })[0];
+  document.getElementById('h-sleep').textContent = wbToday && ok(wbToday.sl) ? String(wbToday.sl) : '—';
+  document.getElementById('h-ready').textContent = wbToday && wbToday.v ? signed(wbToday.v.rd) : '—';
+  var schToday = DB.schulte.filter(function(x){ return x.d === today; });
+  document.getElementById('h-sch').textContent = schToday.length ? String(Math.min.apply(null, schToday.map(function(x){return x.t;}))) : '—';
+  document.getElementById('h-status').innerHTML = wbToday
+    ? '<span class="ok">Самочувствие на сегодня заполнено.</span>' : 'Самочувствие сегодня ещё не заполнено.';
+
+  /* подписи плиток на главной */
+  setTxt('t-wb', wbToday ? 'сегодня заполнено' : 'сегодня не заполнено');
+  setTxt('t-tr', DB.tr.length ? 'записей: ' + DB.tr.length + (DB.tr[0] ? ' · ' + dm(DB.tr[0].d) : '') : 'пока пусто');
+  setTxt('t-cog', DB.schulte.length ? 'лучший ' + bestSchulte() + ' с' : 'найди 1–36 по порядку');
+  setTxt('t-rx', DB.svet.length ? 'последний: ' + DB.svet[0].ok + ' верно, ' +
+    ((DB.svet[0].e || 0) + (DB.svet[0].sk || 0)) + ' промах.' : 'стрелки по букве');
+  setTxt('t-goals', DB.goals.season ? cut(DB.goals.season.t, 30) : 'цель сезона не задана');
+  setTxt('t-an', DB.gls.length ? 'голов: ' + DB.gls.length : 'карта и зоны');
+  setTxt('t-notes', DB.notes.length ? 'заметок: ' + DB.notes.length : 'пока пусто');
+  setTxt('t-me', DB.me.n ? cut(DB.me.n, 22) : 'заполнить данные');
+
+  /* самочувствие */
+  if (wbToday){
+    if (ok(wbToday.sl)) document.getElementById('i-sleep').value = wbToday.sl;
+    if (ok(wbToday.p)) document.getElementById('i-pulse').value = wbToday.p;
+    if (ok(wbToday.w)) document.getElementById('i-weight').value = wbToday.w;
+    if (wbToday.c) document.getElementById('i-note').value = wbToday.c;
+    WB_KEYS.forEach(function(k){ setSl(k[0], wbToday.v ? wbToday.v[k[0]] : 0); });
+  }
+  var ser = DB.wb.slice(0,14).reverse();
+  document.getElementById('wb-bars').innerHTML = lineSVG(ser.map(function(x){
+    return { d: dm(x.d), v: (x.v && ok(x.v.rd)) ? x.v.rd : 0 };
+  }), { min:-3, max:3, last: ser.length ? signed(ser[ser.length-1].v ? ser[ser.length-1].v.rd : 0) : '' });
+  var a7 = last7();
+  document.getElementById('wb-avg').innerHTML = a7.length ? (
+    '<div><span>Сон</span><b>' + fmt(avg(a7.map(function(x){return x.sl;}).filter(ok))) + ' ч</b></div>' +
+    '<div><span>Пульс в покое</span><b>' + fmt(avg(a7.map(function(x){return x.p;}).filter(ok))) + '</b></div>' +
+    WB_KEYS.map(function(k){
+      var vv = a7.map(function(x){ return x.v ? x.v[k[0]] : null; }).filter(ok);
+      return '<div><span>' + k[1] + '</span><b>' + (vv.length ? signed(Math.round(avg(vv)*10)/10) : '—') + '</b></div>';
+    }).join('')
+  ) : '<div>Нет записей за неделю.</div>';
+  document.getElementById('wb-list').innerHTML = DB.wb.slice(0,10).map(function(x){
+    return '<div><span>' + dm(x.d) + '</span><b>сон ' + (ok(x.sl)?x.sl:'—') + ' ч · готовность ' +
+      (x.v ? signed(x.v.rd) : '—') + '</b></div>';
+  }).join('') || '<div>Записей пока нет.</div>';
+
+  /* дневник тренировок */
+  var tser = DB.tr.slice(0,14).reverse();
+  document.getElementById('tr-bars').innerHTML = tser.map(function(x){
+    var v = x.v ? x.v.inv : 0;
+    return '<i style="height:' + Math.max(6, (v + 3) / 6 * 100) + '%"></i>';
+  }).join('') || '';
+  var t7 = DB.tr.slice(0,7);
+  document.getElementById('tr-avg').innerHTML = t7.length ? TR_KEYS.map(function(k){
+    var vv = t7.map(function(x){ return x.v ? x.v[k[0]] : null; }).filter(ok);
+    return '<div><span>' + k[1] + '</span><b>' + (vv.length ? signed(Math.round(avg(vv)*10)/10) : '—') + '</b></div>';
+  }).join('') : '<div>Записей пока нет.</div>';
+  document.getElementById('tr-list').innerHTML = DB.tr.slice(0,10).map(function(x,i){
+    return '<div class="goal"><span class="x" data-act="trdel:' + i + '">×</span>' +
+      '<div class="tag">' + dm(x.d) + ' · ' + TR_TYPES[x.ty || 0] + '</div>' +
+      (x.t1 ? '<div class="t">Задача: ' + esc(x.t1) + '</div>' : '') +
+      (x.t2 ? '<div class="c">Результат: ' + esc(x.t2) + '</div>' : '') +
+      (x.t3 ? '<div class="c">Внимание: ' + esc(x.t3) + '</div>' : '') + '</div>';
+  }).join('') || '<div class="sub" style="margin:0">Записей пока нет.</div>';
+
+  /* цели */
+  if (DB.goals.season){
+    document.getElementById('g-season').value = DB.goals.season.t;
+    document.getElementById('g-season-c').value = DB.goals.season.c || '';
+  }
+  var gm = DB.goals.months[curMonth];
+  if (gm){ document.getElementById('g-month').value = gm.t; document.getElementById('g-month-c').value = gm.c || ''; }
+  document.getElementById('g-month-list').innerHTML = Object.keys(DB.goals.months).sort().reverse().slice(0,6).map(function(k){
+    return '<div class="goal"><div class="tag">' + k + '</div><div class="t">' + esc(DB.goals.months[k].t) + '</div>' +
+      (DB.goals.months[k].c ? '<div class="c">' + esc(DB.goals.months[k].c) + '</div>' : '') + '</div>';
+  }).join('');
+  document.getElementById('g-day-list').innerHTML = DB.goals.days.slice(0,12).map(function(x,i){
+    return '<div class="goal"><span class="x" data-act="daydel:' + i + '">×</span>' +
+      '<div class="tag ' + (x.ok?'done-tag':'') + '" data-act="daytog:' + i + '">' +
+      (x.ok ? 'выполнено' : 'отметить') + ' · ' + dm(x.d) + '</div><div class="t">' + esc(x.t) + '</div></div>';
+  }).join('') || '<div class="sub" style="margin:0">Целей пока нет.</div>';
+
+  /* когнитивка */
+  document.getElementById('sch-cnt').textContent = String(DB.schulte.length);
+  document.getElementById('sch-best').textContent = DB.schulte.length ? String(bestSchulte()) : '—';
+  var s7 = DB.schulte.slice(0,7).map(function(x){ return x.t; });
+  document.getElementById('sch-avg').textContent = s7.length ? fmt(avg(s7)) : '—';
+  var sser = DB.schulte.slice(0,14).reverse();
+  document.getElementById('sch-bars').innerHTML = lineSVG(sser.map(function(x){
+    return { d: dm(x.d), v: x.t };
+  }), { last: sser.length ? sser[sser.length-1].t + ' с' : '' });
+  document.getElementById('sch-list').innerHTML = DB.schulte.slice(0,8).map(function(x){
+    return '<div><span>' + dm(x.d) + '</span><b>' + x.t + ' с · ошибок ' + x.e + '</b></div>';
+  }).join('') || '<div>Попыток пока нет.</div>';
+
+  document.getElementById('sv-cnt').textContent = String(DB.svet.length);
+  var miss = function(x){ return (x.e || 0) + (x.sk || 0); };
+  document.getElementById('sv-best').textContent = DB.svet.length ? String(Math.min.apply(null, DB.svet.map(miss))) : '—';
+  var v7 = DB.svet.slice(0,7).map(miss);
+  document.getElementById('sv-avg').textContent = v7.length ? fmt(avg(v7)) : '—';
+  var vser = DB.svet.slice(0,14).reverse();
+  document.getElementById('sv-bars').innerHTML = lineSVG(vser.map(function(x){
+    return { d: dm(x.d), v: miss(x) };
+  }), { last: vser.length ? miss(vser[vser.length-1]) + ' промах.' : '' });
+  document.getElementById('sv-list').innerHTML = DB.svet.slice(0,8).map(function(x){
+    return '<div><span>' + dm(x.d) + (x.src === 'app' ? ' · в приложении' : '') + '</span><b>' +
+      x.e + ' ошиб.' + (ok(x.sk) ? ' · ' + x.sk + ' проп.' : '') +
+      (ok(x.ms) ? ' · ' + x.ms + ' мс' : '') + (ok(x.rt) ? ' · ' + x.rt + ' мс реакция' : '') + '</b></div>';
+  }).join('') || '<div>Записей пока нет.</div>';
+
+  /* заметки */
+  document.getElementById('n-list').innerHTML = DB.notes.map(function(x){
+    var mine = x.a !== 'coach';
+    return '<div class="goal">' +
+      (mine ? '<span class="x" data-act="notedel:' + x.id + '">×</span>' : '') +
+      '<div class="tag' + (mine ? ' done-tag' : '') + '">' +
+        (mine ? 'моя запись' : 'тренер') + ' · ' + dm(x.d) + '</div>' +
+      '<div class="t">' + esc(x.t) + '</div></div>';
+  }).join('') || '<div class="sub" style="margin:0">Заметок пока нет.</div>';
+
+  renderCk();
+  renderQuote();
+  var lr = lastRate('self');
+  setTxt('t-rad', lr
+    ? 'средняя ' + (RADK.reduce(function(p,k){ return p + (lr.v[k[0]] || 0); }, 0) / RADK.length).toFixed(1).replace('.', ',')
+    : 'пять сторон игры');
+  var dn = libDone();
+  ['Психология','Теория'].forEach(function(sec, k){
+    var it = libItems(sec), d = it.filter(function(x){ return dn[x.id]; }).length;
+    setTxt(k ? 't-th' : 't-psy', it.length ? d + ' из ' + it.length + ' изучено' : 'скоро');
+  });
+  renderAnalytics();
+
+  /* профиль */
+  var dg = document.getElementById('diag');
+  if (dg) dg.innerHTML = 'Версия 3.0 · Telegram: ' + (TG ? 'подключён' : 'нет') +
+    ' · база: ' + (apiReady() ? 'общая' : 'не подключена') +
+    ' · состояние: <span id="sync">' + esc(SYNC) + '</span>';
+  if (DB.me.n) document.getElementById('m-name').value = DB.me.n;
+  if (DB.me.tm) document.getElementById('m-team').value = DB.me.tm;
+  if (DB.me.y) document.getElementById('m-year').value = DB.me.y;
+}
+
+function renderAnalytics(){
+  if (!document.getElementById('map-wrap')) return;
+  var gs = DB.games || [], g = allGoals();
+  var sh = 0, ga = 0, mins = 0, n = 0, acc = { grade:[], mood:[], state:[] };
+  gs.forEach(function(x){
+    if (ok(x.sh)) sh += x.sh;
+    if (ok(x.ga)) ga += x.ga;
+    if (ok(x.min)) mins += x.min;
+    n++;
+    if (x.e && x.e.grade) acc.grade.push(x.e.grade);
+    if (x.q && x.q.mood)  acc.mood.push(x.q.mood);
+    if (x.q && x.q.state) acc.state.push(x.q.state);
+  });
+  var mean = function(a){ return a.length ? (a.reduce(function(p,c){return p+c;},0)/a.length).toFixed(1).replace('.', ',') : '—'; };
+  setTxt('s-games', n); setTxt('s-sh', sh); setTxt('s-ga', ga); setTxt('s-min', mins);
+  setTxt('s-sv', sh ? String(Math.round((sh-ga)/sh*1000)/10).replace('.', ',') + '%' : '—');
+  setTxt('s-grade', mean(acc.grade)); setTxt('s-mood', mean(acc.mood)); setTxt('s-state', mean(acc.state));
+
+  document.getElementById('net-all').innerHTML = netStat(g);
+  document.getElementById('net-dir').innerHTML = netStat(g.filter(function(x){ return x[3] === 0; }));
+  document.getElementById('map-wrap').innerHTML = rinkHTML(g.map(function(x){ return [x[0], x[1]]; }));
+  setTxt('an-total', g.length ? 'Всего голов записано: ' + g.length : 'Пока нет записей.');
+
+  var sc = {};
+  g.forEach(function(x){ sc[x[3]] = (sc[x[3]] || 0) + 1; });
+  var keys = Object.keys(sc).sort(function(a,b){ return sc[b] - sc[a]; });
+  document.getElementById('sit-stat').innerHTML = keys.length ? keys.map(function(k){
+    return '<div><span>' + SITS[k] + '</span><b>' + sc[k] + ' · ' + Math.round(sc[k]/g.length*100) + '%</b></div>';
+  }).join('') : '<div>Нет данных.</div>';
+
+  document.getElementById('games-list').innerHTML = gs.length ? gs.slice(0,20).map(function(x){
+    var svp = (ok(x.sh) && x.sh > 0) ? String(Math.round((x.sh - (x.ga||0)) / x.sh * 1000)/10).replace('.', ',') + '%' : '—';
+    return '<button class="lib" data-act="opengame:' + x.id + '">' +
+      '<span class="lc num">' + ((x.e && x.e.grade) ? x.e.grade : '·') + '</span>' +
+      '<span><b>' + dm(x.d) + (x.opp ? ' · ' + esc(x.opp) : '') + (x.sc ? ' · ' + esc(x.sc) : '') + '</b>' +
+      '<i>' + (ok(x.sh) ? x.sh + ' бросков · ' + (x.ga||0) + ' пропущено · ' + svp : 'без цифр') +
+      ((x.gls && x.gls.length) ? ' · голов разобрано: ' + x.gls.length : '') + '</i></span></button>';
+  }).join('') : '<div class="sub" style="margin:0">Игр пока нет.</div>';
+}
+
+/* ══════════════════ КАБИНЕТ ТРЕНЕРА ══════════════════ */
+
+var ROSTER = [], CUR = null;
+
+function loadRoster(){
+  var box = document.getElementById('c-list');
+  if (box) box.innerHTML = '<div class="sub" style="margin:0">Загружаю…</div>';
+  api({ a: 'roster' }, function(res){
+    if (!res || !res.ok){
+      if (box) box.innerHTML = '<div class="sub" style="margin:0">Не удалось загрузить список.</div>';
+      return;
+    }
+    ROSTER = res.list || [];
+    renderRoster();
+  });
+}
+
+function renderRoster(){
+  var box = document.getElementById('c-list');
+  if (!box) return;
+  if (!ROSTER.length){
+    box.innerHTML = '<div class="sub" style="margin:0">Пока никто не заходил. ' +
+      'Отправь вратарям ссылку на приложение — они появятся здесь после первого входа.</div>';
+    return;
+  }
+  box.innerHTML = ROSTER.map(function(g){
+    var bits = [];
+    if (g.lastWbDate) bits.push('самочувствие ' + dm(g.lastWbDate));
+    if (g.schulteBest) bits.push('Шульте ' + g.schulteBest + ' с');
+    if (g.svetLast !== null && g.svetLast !== undefined) bits.push('светофон ' + g.svetLast);
+    bits.push('записей: ' + (g.wbN + g.trN));
+    var warn = g.ready !== null && g.ready !== undefined && g.ready <= -2;
+    return '<button class="tile wide" data-act="gk:' + g.uid + '" style="margin-bottom:8px">' +
+      '<b>' + esc(g.name) + (g.year ? ' · ' + esc(String(g.year)) : '') + '</b>' +
+      '<i>' + esc(bits.join(' · ')) + '</i>' +
+      (warn ? '<i style="color:#E2606F">низкая готовность в последней записи</i>' : '') +
+      '</button>';
+  }).join('');
+}
+
+function openGoalie(uid){
+  CUR = uid;
+  go('gk');
+  var head = ROSTER.filter(function(x){ return String(x.uid) === String(uid); })[0] || {};
+  document.getElementById('gk-name').textContent = head.name || 'Вратарь';
+  document.getElementById('gk-sub').textContent =
+    [head.team, head.year, head.seen ? 'был(а): ' + head.seen : ''].filter(Boolean).join(' · ');
+  document.getElementById('gk-body').innerHTML = '<div class="card"><div class="sub" style="margin:0">Загружаю…</div></div>';
+  document.getElementById('gk-notes').innerHTML = '';
+
+  api({ a: 'goalie', uid: uid }, function(res){
+    if (!res || !res.ok){
+      document.getElementById('gk-body').innerHTML =
+        '<div class="card"><div class="sub" style="margin:0">Не удалось загрузить данные.</div></div>';
+      return;
+    }
+    renderGoalie(res);
+  });
+}
+
+function goalsOf(d){
+  var out = [];
+  (d.games || []).forEach(function(g){ (g.gls || []).forEach(function(x){ out.push(x); }); });
+  (d.gls || []).forEach(function(x){ out.push([x[1], x[2], x[3], x[4]]); });
+  return out;
+}
+function renderGoalie(res){
+  var d  = res.data || {};
+  var wb = d.wb || [], tr = d.tr || [], sc = d.schulte || [], sv = d.svet || [];
+  var gl = d.gls || [], go_ = d.goals || {};
+  var H = [];
+
+  /* цели */
+  var gm = go_.months ? go_.months[curMonth] : null;
+  var days = go_.days || [];
+  H.push(card('Цели', [
+    row('Сезон', go_.season ? esc(go_.season.t) : '—'),
+    row('Месяц', gm ? esc(gm.t) : '—'),
+    days.length
+      ? '<div class="sub" style="margin:10px 0 4px">Задачи на занятие · ' + days.length + '</div>' +
+        '<div class="list">' + days.slice(0,5).map(function(x){
+          return '<div><span' + (x.ok ? '' : ' style="opacity:.6"') + '>' + dm(x.d) + ' · ' + esc(cut(x.t, 70)) +
+                 '</span><b style="color:' + (x.ok ? '#2FA84F' : 'var(--tx2)') + '">' +
+                 (x.ok ? '✓' : '—') + '</b></div>';
+        }).join('') + '</div>'
+      : row('На занятия', '—')
+  ].join('')));
+
+  /* самочувствие */
+  if (wb.length){
+    var last = wb[0];
+    var avg = function(k){
+      var n = 0, s = 0;
+      wb.slice(0,7).forEach(function(x){ if (x.v && ok(x.v[k])){ s += x.v[k]; n++; } });
+      return n ? fmt(s/n) : '—';
+    };
+    H.push(card('Самочувствие · ' + dm(last.d), [
+      stat3(ok(last.sl) ? last.sl : '—', 'сон, ч',
+            (last.v && ok(last.v.rd)) ? signed(last.v.rd) : '—', 'готовность',
+            ok(last.p) ? last.p : '—', 'пульс'),
+      '<div class="list" style="margin-top:8px">' +
+        WB_KEYS.map(function(k){
+          var v = (last.v && ok(last.v[k[0]])) ? signed(last.v[k[0]]) : '—';
+          return '<div><span>' + k[1] + '</span><b>' + v + dim(' · ср. ' + avg(k[0])) + '</b></div>';
+        }).join('') +
+      '</div>',
+      '<div class="sub" style="margin:8px 0 0">Слева — оценка за ' + dm(last.d) +
+        ', справа среднее за последние 7 записей. Всего записей: ' + wb.length + '.</div>',
+      last.c ? '<div class="sub" style="margin:8px 0 0">Самонаблюдение: ' + esc(last.c) + '</div>' : ''
+    ].join('')));
+  }
+
+  /* когнитивка */
+  if (sc.length || sv.length){
+    H.push(card('Когнитивка', [
+      stat3(sc.length ? Math.min.apply(null, sc.map(function(x){ return x.t; })) : '—', 'Шульте лучш., с',
+            sc.length ? sc[0].t : '—', 'последний, с',
+            sv.length ? sv[0].e : '—', 'светофон, ошиб.'),
+      '<div class="list" style="margin-top:8px">' +
+        sc.slice(0,5).map(function(x){
+          return '<div><span>Шульте · ' + dm(x.d) + '</span><b>' + x.t + ' с · ' + x.e + ' ошиб.</b></div>';
+        }).join('') +
+        sv.slice(0,5).map(function(x){
+          return '<div><span>Реакция выбора · ' + dm(x.d) + '</span><b>' + x.e + ' ошиб.' +
+                 (ok(x.sk) ? ' · ' + x.sk + ' проп.' : '') +
+                 (ok(x.ms) ? ' · ' + x.ms + ' мс' : '') + '</b></div>';
+        }).join('') +
+      '</div>'
+    ].join('')));
+  }
+
+  /* дневник занятий — последняя запись целиком, дальше списком */
+  if (tr.length){
+    var lt = tr[0];
+    var tavg = function(k){
+      var n = 0, s = 0;
+      tr.slice(0,7).forEach(function(x){ if (x.v && ok(x.v[k])){ s += x.v[k]; n++; } });
+      return n ? fmt(s/n) : '—';
+    };
+    H.push(card('Последнее занятие · ' + dm(lt.d) + ' · ' + (TR_TYPES[lt.ty] || ''), [
+      lt.t1 ? '<div class="sub" style="margin:0 0 6px"><b style="color:#fff">Задача:</b> ' + esc(lt.t1) + '</div>' : '',
+      lt.t2 ? '<div class="sub" style="margin:0 0 6px"><b style="color:#fff">Что получилось:</b> ' + esc(lt.t2) + '</div>' : '',
+      lt.t3 ? '<div class="sub" style="margin:0 0 6px"><b style="color:#fff">Фокус дальше:</b> ' + esc(lt.t3) + '</div>' : '',
+      '<div class="list" style="margin-top:8px">' +
+        TR_KEYS.map(function(k){
+          var v = (lt.v && ok(lt.v[k[0]])) ? signed(lt.v[k[0]]) : '—';
+          return '<div><span>' + k[1] + '</span><b>' + v + dim(' · ср. ' + tavg(k[0])) + '</b></div>';
+        }).join('') +
+      '</div>',
+      '<div class="sub" style="margin:8px 0 0">Справа среднее за последние 7 занятий.</div>'
+    ].join('')));
+
+    if (tr.length > 1){
+      H.push(card('Дневник занятий · ' + tr.length, '<div class="list">' + tr.slice(1,7).map(function(x){
+        return '<div><span>' + dm(x.d) + ' · ' + (TR_TYPES[x.ty] || '') + '</span><b>' +
+          esc(cut(x.t1 || x.t2 || '—', 60)) + '</b></div>';
+      }).join('') + '</div>'));
+    }
+  }
+
+  /* чек-лист дня */
+  var chk = go_.chk || {};
+  var cdays = Object.keys(chk).sort().reverse();
+  if (cdays.length){
+    var cl = chk[cdays[0]] || [];
+    var week = cdays.slice(0,7);
+    var wsum = week.reduce(function(p,k){ return p + (chk[k] || []).length; }, 0);
+    H.push(card('Чек-лист · ' + dm(cdays[0]), [
+      stat3(cl.length + ' из ' + CHECKS.length, 'в этот день',
+            fmt(wsum / week.length), 'в среднем за ' + week.length + ' дн.',
+            cdays.length, 'дней с отметками'),
+      '<div class="list" style="margin-top:8px">' + CHECKS.map(function(t, i){
+        var on = cl.indexOf(i) > -1;
+        return '<div><span' + (on ? '' : ' style="opacity:.5"') + '>' + t + '</span><b style="color:' +
+               (on ? '#2FA84F' : 'var(--tx2)') + '">' + (on ? '✓' : '—') + '</b></div>';
+      }).join('') + '</div>',
+      week.length > 1
+        ? '<div class="list" style="margin-top:8px">' + week.map(function(k){
+            return '<div><span>' + dm(k) + '</span><b>' + (chk[k] || []).length + ' из ' + CHECKS.length + '</b></div>';
+          }).join('') + '</div>'
+        : ''
+    ].join('')));
+  }
+
+  /* голы: карта, зоны и ситуации */
+  var gg = goalsOf(d);
+  if (gg.length){
+    var bysit = {};
+    gg.forEach(function(x){ bysit[x[3]] = (bysit[x[3]] || 0) + 1; });
+    var keys = Object.keys(bysit).sort(function(a,b){ return bysit[b] - bysit[a]; });
+    var dir = gg.filter(function(x){ return x[3] === 0; });
+
+    H.push(card('Откуда забивают · ' + gg.length,
+      '<div class="svgbox">' + rinkHTML(gg.map(function(x){ return [x[0], x[1]]; })) + '</div>'));
+
+    H.push(card('Куда забивают',
+      '<div class="sub" style="margin:0 0 6px">Все голы</div>' + netStat(gg) +
+      (dir.length
+        ? '<div class="sub" style="margin:12px 0 6px">С прямого броска — реагирование · ' + dir.length + '</div>' + netStat(dir)
+        : '<div class="sub" style="margin:12px 0 0">Голов с реагирования пока нет.</div>')));
+
+    H.push(card('Ситуации', '<div class="list">' + keys.map(function(k){
+      return '<div><span>' + SITS[k] + '</span><b>' + bysit[k] + ' · ' +
+             Math.round(bysit[k] / gg.length * 100) + '%</b></div>';
+    }).join('') + '</div>'));
+  }
+
+  /* игры */
+  var gm = d.games || [];
+  if (gm.length){
+    var tsh = 0, tga = 0, gr = [];
+    gm.forEach(function(x){
+      if (ok(x.sh)) tsh += x.sh;
+      if (ok(x.ga)) tga += x.ga;
+      if (x.e && x.e.grade) gr.push(x.e.grade);
+    });
+    H.push(card('Игры · ' + gm.length, [
+      stat3(tsh, 'бросков', tga, 'пропущено',
+            tsh ? String(Math.round((tsh-tga)/tsh*1000)/10).replace('.', ',') + '%' : '—', 'отражено'),
+      '<div class="list" style="margin-top:8px">' + gm.slice(0,6).map(function(x){
+        var sv = (ok(x.sh) && x.sh > 0) ? String(Math.round((x.sh-(x.ga||0))/x.sh*1000)/10).replace('.', ',') + '%' : '—';
+        return '<div><span>' + dm(x.d) + (x.opp ? ' · ' + esc(x.opp) : '') + '</span><b>' + sv +
+               ((x.e && x.e.grade) ? ' · оценка ' + x.e.grade : '') + '</b></div>';
+      }).join('') + '</div>',
+      gr.length ? '<div class="sub" style="margin:8px 0 0">Средняя самооценка игры: ' +
+                  (gr.reduce(function(p,c){return p+c;},0)/gr.length).toFixed(1).replace('.', ',') + '</div>' : ''
+    ].join('')));
+  }
+
+  /* материалы */
+  var dn = (go_ && go_.done) ? go_.done : {};
+  var ids = Object.keys(dn);
+  if (ids.length || (LIB.m || []).length){
+    var bySec = {};
+    (LIB.m || []).forEach(function(m){
+      bySec[m.s] = bySec[m.s] || { all:0, done:0 };
+      bySec[m.s].all++;
+      if (dn[m.id]) bySec[m.s].done++;
+    });
+    var rows = Object.keys(bySec).map(function(k){
+      return '<div><span>' + k + '</span><b>' + bySec[k].done + ' из ' + bySec[k].all + '</b></div>';
+    }).join('');
+    if (rows) H.push(card('Материалы изучено', '<div class="list">' + rows + '</div>'));
+  }
+
+  if (H.length === 1) H.push(card('Данные', '<div class="sub" style="margin:0">Вратарь пока ничего не заполнил.</div>'));
+  document.getElementById('gk-body').innerHTML = H.join('');
+  renderGkRadar(res);
+
+  document.getElementById('gk-notes').innerHTML = (res.notes || []).map(function(x){
+    var coach = x.a === 'coach';
+    return '<div class="goal"><div class="tag' + (coach ? '' : ' done-tag') + '">' +
+      (coach ? 'моя заметка' : 'запись вратаря') + ' · ' + dm(x.d) + '</div>' +
+      '<div class="t">' + esc(x.t) + '</div></div>';
+  }).join('') || '<div class="sub" style="margin:0">Заметок пока нет.</div>';
+}
+
+function renderGkRadar(res){
+  var d = res.data || {};
+  var self = ((d.goals && d.goals.rad) || []).filter(function(x){ return x.by === 'self'; })[0] || null;
+  var coach = (res.rates || [])[0] || null;
+  var sets = [];
+  if (self)  sets.push({ v: self.v,  fill:'rgba(214,17,46,.22)', line:'#D6112E' });
+  if (coach) sets.push({ v: coach.v, fill:'rgba(47,168,79,.18)', line:'#2FA84F' });
+  document.getElementById('gk-radar').innerHTML = sets.length ? radarSVG(sets)
+    : '<div class="sub" style="margin:0">Оценок пока нет.</div>';
+  document.getElementById('gk-rsl').innerHTML = RADK.map(function(k){
+    var v = coach ? (coach.v[k[0]] || 5) : (self ? (self.v[k[0]] || 5) : 5);
+    return '<div class="sl"><div class="slh"><span>' + k[1] + '</span><b id="v-c' + k[0] + '">' + v + '</b></div>' +
+      '<input type="range" min="1" max="10" step="1" value="' + v + '" id="r-c' + k[0] + '" data-v="c' + k[0] + '">' +
+      '<div class="sle"><span>1</span><span>5</span><span>10</span></div></div>';
+  }).join('');
+}
+function coachRate(){
+  if (!CUR) return;
+  var v = {};
+  RADK.forEach(function(k){ v[k[0]] = getSl('c' + k[0]) || 5; });
+  haptic('medium');
+  api({ a:'rate', uid: CUR, v: v }, function(res){
+    if (!res || !res.ok){ alertMsg('Не удалось сохранить — нет связи.'); return; }
+    alertMsg('Оценка сохранена.');
+    openGoalie(CUR);
+  });
+}
+function coachNote(){
+  var t = val('gk-note').trim();
+  if (!t){ alertMsg('Впиши текст заметки.'); return; }
+  if (!CUR){ return; }
+  document.getElementById('gk-note').value = '';
+  haptic('medium');
+  api({ a: 'note', uid: CUR, text: t }, function(res){
+    if (!res || !res.ok){ alertMsg('Не удалось отправить — нет связи.'); return; }
+    alertMsg('Заметка отправлена вратарю.');
+    document.getElementById('gk-notes').innerHTML = (res.notes || []).map(function(x){
+      var coach = x.a === 'coach';
+      return '<div class="goal"><div class="tag' + (coach ? '' : ' done-tag') + '">' +
+        (coach ? 'моя заметка' : 'запись вратаря') + ' · ' + dm(x.d) + '</div>' +
+        '<div class="t">' + esc(x.t) + '</div></div>';
+    }).join('');
+  });
+}
+
+function card(title, inner){
+  return '<div class="card"><h2>' + title + '</h2>' + inner + '</div>';
+}
+function row(a, b){ return '<div class="list"><div><span>' + a + '</span><b>' + b + '</b></div></div>'; }
+/* приглушённая приписка справа от основного числа */
+function dim(t){ return '<span style="color:var(--tx2);font-weight:300">' + t + '</span>'; }
+function stat3(a, ta, b, tb, c2, tc){
+  return '<div class="stat"><div><b>' + a + '</b><span>' + ta + '</span></div>' +
+         '<div><b>' + b + '</b><span>' + tb + '</span></div>' +
+         '<div><b>' + c2 + '</b><span>' + tc + '</span></div></div>';
+}
+
+/* ---------- старт ---------- */
+buildGrid(true);
 boot();
 </script>
 </body>
