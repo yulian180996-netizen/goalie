@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Планировщик</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --red:#D6112E; --ink:#15181D; --card:#1C2027; --line:#2C313B;
+    --tx:#E6E9ED; --tx2:#8A929B; --green:#2FA84F; --yellow:#E9A400;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  body{margin:0;background:var(--ink);color:var(--tx);
+       font-family:'Unbounded',system-ui,sans-serif;font-size:13.5px;font-weight:300;
+       padding:0 0 30px}
+  .wrap{padding:0 14px}
+  h1{font-size:21px;font-weight:700;margin:2px 0 2px}
+  h2{font-size:15px;font-weight:700;margin:0 0 10px}
+  .sub{color:var(--tx2);font-size:12px;margin:0 0 14px;line-height:1.35}
+  .hide{display:none!important}
+
+  .top{display:flex;align-items:center;gap:10px;padding:12px 14px 8px;position:sticky;top:0;
+       background:var(--ink);z-index:20}
+  .back{flex:none;width:32px;height:32px;border-radius:9px;border:1px solid var(--line);
+        background:var(--card);color:var(--tx);font-size:16px;line-height:1;cursor:pointer}
+  .kick{color:var(--red);font-size:10.5px;font-weight:700;letter-spacing:1.4px}
+
+  .tiles{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:6px}
+  .tile{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 12px;
+        text-align:left;color:var(--tx);font-family:inherit;font-size:13px;font-weight:400;cursor:pointer}
+  .tile b{display:block;font-size:14px;font-weight:700;margin-bottom:3px}
+  .tile span{color:var(--tx2);font-size:11.5px;font-weight:300;line-height:1.3;display:block}
+  .tile.wide{grid-column:1/-1}
+  .tile.red{background:var(--red);border-color:var(--red)}
+  .tile.red span{color:#F7C9D0}
+
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:13px;margin-bottom:11px}
+  label{display:block;font-size:11.5px;color:var(--tx2);margin:9px 0 4px}
+  input,select,textarea{width:100%;background:#12161C;border:1px solid var(--line);border-radius:10px;
+    color:var(--tx);padding:9px 10px;font-family:inherit;font-size:13.5px;font-weight:300}
+  textarea{min-height:70px;resize:vertical;line-height:1.4}
+  .btn{display:block;width:100%;background:var(--red);border:0;border-radius:11px;color:#fff;
+       padding:12px;font-family:inherit;font-size:14px;font-weight:700;margin-top:12px;cursor:pointer}
+  .btn.sec{background:transparent;border:1px solid var(--line);color:var(--tx);font-weight:400}
+  .btn.sm{padding:9px;font-size:12.5px;font-weight:400;margin-top:8px}
+  .row2{display:flex;gap:9px}
+  .row2>*{flex:1}
+
+  .seg{display:flex;gap:6px;margin:2px 0 4px;flex-wrap:wrap}
+  .seg button{flex:1;min-width:74px;background:#12161C;border:1px solid var(--line);border-radius:9px;
+    color:var(--tx2);padding:8px 6px;font-family:inherit;font-size:12px;font-weight:400;cursor:pointer}
+  .seg button.on{background:var(--red);border-color:var(--red);color:#fff;font-weight:700}
+
+  .list>div{display:flex;justify-content:space-between;gap:10px;align-items:baseline;
+            padding:7px 0;border-bottom:1px solid var(--line)}
+  .list>div:last-child{border-bottom:0}
+  .list span{color:var(--tx2);font-size:12px}
+
+  /* разделы льда */
+  .sec{background:var(--card);border:1px solid var(--line);border-radius:14px;margin-bottom:10px;overflow:hidden}
+  .sech{display:flex;align-items:center;gap:9px;padding:12px 13px;cursor:pointer}
+  .sech b{font-size:13px;font-weight:700;flex:1}
+  .tag{flex:none;font-size:10.5px;font-weight:400;color:var(--tx2);
+       border:1px solid var(--line);border-radius:20px;padding:2px 8px}
+  .tag.g{color:var(--green);border-color:#2b4a35}
+  .secb{padding:0 13px 12px;border-top:1px solid var(--line)}
+
+  .sk{display:flex;align-items:flex-start;gap:10px;padding:9px 0;border-bottom:1px solid var(--line)}
+  .sk:last-child{border-bottom:0}
+  .sk .nm{flex:1;line-height:1.35;font-size:12.5px}
+  .sk .nm small{display:block;color:var(--tx2);font-size:10.5px;margin-top:2px;font-weight:300}
+  .chk{flex:none;width:26px;height:26px;border-radius:8px;border:1px solid var(--line);
+       background:#12161C;color:var(--tx2);font-size:13px;line-height:1;cursor:pointer;
+       font-family:inherit;padding:0}
+  .chk.on{background:var(--green);border-color:var(--green);color:#fff}
+  .x{flex:none;background:none;border:0;color:var(--tx2);font-size:16px;cursor:pointer;
+     font-family:inherit;padding:0 2px;line-height:1}
+  .empty{color:var(--tx2);font-size:11.5px;padding:8px 0;line-height:1.4;margin:0}
+
+  /* выбор навыков */
+  .ov{position:fixed;inset:0;background:var(--ink);z-index:50;display:flex;flex-direction:column}
+  .ovh{display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid var(--line)}
+  .ovh b{flex:1;font-size:13.5px;font-weight:700}
+  .ovb{flex:1;overflow-y:auto;padding:4px 14px 20px}
+  .grp{color:var(--red);font-size:10.5px;font-weight:700;letter-spacing:1px;margin:14px 0 2px}
+
+  /* матрица */
+  .mx{overflow-x:auto;-webkit-overflow-scrolling:touch;margin:0 -14px;padding:0 14px}
+  table.m{border-collapse:collapse;font-size:11px;font-weight:300}
+  table.m th,table.m td{border:1px solid var(--line);padding:5px 6px;white-space:nowrap}
+  table.m th{font-weight:700;font-size:10px;color:var(--tx2);background:#12161C}
+  table.m td.n{white-space:normal;min-width:180px;max-width:230px;line-height:1.3;
+               position:sticky;left:0;background:var(--card);z-index:2}
+  table.m th.n{position:sticky;left:0;z-index:3}
+  table.m tr.h td{background:#12161C;color:var(--red);font-weight:700;font-size:10px;letter-spacing:.8px}
+  table.m td.c{text-align:center;width:34px}
+  .dot{color:var(--yellow)}
+  .ok{color:var(--green)}
+
+  .note{color:var(--tx2);font-size:11px;line-height:1.4;margin:10px 0 0}
+  .saving{position:fixed;left:0;right:0;bottom:0;background:var(--red);color:#fff;
+          text-align:center;padding:7px;font-size:11.5px;z-index:60}
+</style>
+</head>
+<body>
+
+<div class="top">
+  <button class="back hide" id="back" onclick="go(hist.pop()||'home')">‹</button>
+  <div>
+    <div class="kick" id="kick">СПАРТАК-МАХ</div>
+    <h1 id="ttl">Планировщик</h1>
+  </div>
+</div>
+
+<div class="wrap">
+
+<!-- ГЛАВНАЯ -->
+<div id="p-home">
+  <div class="card" id="curcard"></div>
+  <div class="tiles">
+    <button class="tile red" onclick="go('ice')"><b>Лёд</b><span id="t-ice">—</span></button>
+    <button class="tile" onclick="go('ofp')"><b>ОФП</b><span id="t-ofp">когнитивка, зал, заминка</span></button>
+    <button class="tile" onclick="go('theory')"><b>Теория</b><span id="t-th">—</span></button>
+    <button class="tile" onclick="go('psy')"><b>Психология</b><span id="t-psy">—</span></button>
+    <button class="tile wide" onclick="go('matrix')"><b>Матрица навыков</b><span>что отработано по микроциклам</span></button>
+    <button class="tile wide" onclick="go('cycles')"><b>Микроциклы</b><span id="t-cy">—</span></button>
+  </div>
+  <p class="note" id="synced"></p>
+</div>
+
+<!-- МИКРОЦИКЛЫ -->
+<div id="p-cycles" class="hide">
+  <p class="sub">Микроцикл — рамка планирования. Один микроцикл — один столбец в матрице.</p>
+  <div id="cylist"></div>
+  <button class="btn" onclick="newCycle()">+ Новый микроцикл</button>
+</div>
+
+<div id="p-cycle" class="hide">
+  <div class="card">
+    <label>Название</label>
+    <input id="cy-n" placeholder="Микроцикл 1">
+    <div class="row2">
+      <div><label>Начало</label><input id="cy-d1" type="date"></div>
+      <div><label>Конец</label><input id="cy-d2" type="date"></div>
+    </div>
+    <label>Акцент микроцикла</label>
+    <textarea id="cy-note" placeholder="Главная задача недели"></textarea>
+  </div>
+  <button class="btn" onclick="saveCycle()">Сохранить</button>
+  <button class="btn sec" onclick="makeCurrent()">Сделать текущим</button>
+  <button class="btn sec" onclick="delCycle()">Удалить микроцикл</button>
+</div>
+
+<!-- ЛЁД -->
+<div id="p-ice" class="hide">
+  <p class="sub" id="ice-sub"></p>
+  <div id="ice-secs"></div>
+  <p class="note">Галочка — навык отработан, дата ставится сегодняшняя. Нажать ещё раз — снять.</p>
+</div>
+
+<!-- ОФП -->
+<div id="p-ofp" class="hide">
+  <p class="sub" id="ofp-sub"></p>
+  <div class="card">
+    <h2>Когнитивка</h2>
+    <label>Над чем работаем</label>
+    <textarea id="o-cw" placeholder="Например: периферия, переключение внимания"></textarea>
+    <label>Описание упражнения</label>
+    <textarea id="o-ce" placeholder="Упражнения, дозировка, оборудование"></textarea>
+  </div>
+  <div class="card">
+    <h2>Тренажёрный зал</h2>
+    <label>План на микроцикл</label>
+    <textarea id="o-gym" style="min-height:130px" placeholder="Пн — …&#10;Ср — …&#10;Пт — …"></textarea>
+  </div>
+  <div class="card">
+    <h2>Заминка</h2>
+    <label>Глаза</label><textarea id="o-eye"></textarea>
+    <label>Когнитивка</label><textarea id="o-cog"></textarea>
+    <label>Дыхание</label><textarea id="o-br"></textarea>
+    <label>Мобильность</label><textarea id="o-mb"></textarea>
+  </div>
+  <button class="btn" onclick="saveOfp()">Сохранить</button>
+</div>
+
+<!-- ТЕОРИЯ -->
+<div id="p-theory" class="hide">
+  <p class="sub">15 минут перед сбором — общее или персональное занятие.</p>
+  <div class="card">
+    <div class="row2">
+      <div><label>Дата</label><input id="th-d" type="date"></div>
+      <div><label>Формат</label>
+        <select id="th-k"><option value="общее">общее</option><option value="персональное">персональное</option></select>
+      </div>
+    </div>
+    <label>С кем</label>
+    <input id="th-who" placeholder="вся группа / фамилия">
+    <label>Занятие</label>
+    <textarea id="th-t" style="min-height:110px" placeholder="Тема, что разбирали, материалы"></textarea>
+    <button class="btn sm" onclick="addTheory()">Добавить запись</button>
+  </div>
+  <div id="th-list"></div>
+</div>
+
+<!-- ПСИХОЛОГИЯ -->
+<div id="p-psy" class="hide">
+  <p class="sub" id="psy-sub"></p>
+  <div class="card">
+    <h2>План — над чем работаем</h2>
+    <textarea id="ps-plan" style="min-height:110px" placeholder="Направление работы на микроцикл"></textarea>
+    <button class="btn sm" onclick="savePsy()">Сохранить план</button>
+  </div>
+  <div class="card">
+    <h2>Журнал</h2>
+    <div class="row2">
+      <div><label>Дата</label><input id="ps-d" type="date"></div>
+      <div><label>Статус</label>
+        <select id="ps-s"><option value="было">работали</option><option value="план">будем</option></select>
+      </div>
+    </div>
+    <label>Над чем</label>
+    <textarea id="ps-t"></textarea>
+    <button class="btn sm" onclick="addPsy()">Добавить</button>
+  </div>
+  <div id="ps-list"></div>
+</div>
+
+<!-- МАТРИЦА -->
+<div id="p-matrix" class="hide">
+  <p class="sub">Строка — навык, столбец — микроцикл. <span class="dot">•</span> в плане, <span class="ok">✓</span> отработано.</p>
+  <div class="seg" style="margin-bottom:10px">
+    <button id="mx-a" class="on" onclick="mxMode(0)">Только задействованные</button>
+    <button id="mx-b" onclick="mxMode(1)">Все навыки</button>
+  </div>
+  <div class="mx" id="mxbox"></div>
+  <button class="btn sec sm" onclick="reimport()">Перечитать навыки из таблицы</button>
+</div>
+
+</div><!-- /wrap -->
+
+<!-- ВЫБОР НАВЫКОВ -->
+<div class="ov hide" id="ov">
+  <div class="ovh">
+    <button class="back" onclick="closeOv()">‹</button>
+    <b id="ov-t"></b>
+  </div>
+  <div class="ovb" id="ov-b"></div>
+</div>
+
+<div class="saving hide" id="sv">сохраняю…</div>
+
+<script>
+/* ═══ НАСТРОЙКА ═══ */
+var API_URL = 'https://script.google.com/macros/s/AKfycbz4guqY5rnkKiYqfXwvY6vGQv-03MFN4wfhxf4MWvWQt-Z3dY5grZv7BMj_QogDOe5P/exec';
+
+/* короткие имена разделов */
+var SHORT = {
+  'ТЕХНИКА КАТАНИЯ':'ТХК',
+  'СПЕЦИАЛЬНАЯ ТЕХНИКА':'СТК',
+  'ТЕХНИКА ВЛАДЕНИЯ КЛЮШКОЙ':'Клюшка',
+  'ТЕХНИКА ЛОВЛИ И ОТБИВАНИЯ БРОСКОВ':'Техника ловли',
+  'ИНДИВИДУАЛЬНАЯ ТАКТИКА':'Тактика',
+  'ПОДВИЖНЫЕ ИГРЫ':'Игры'
+};
+
+var tg = window.Telegram && Telegram.WebApp;
+if (tg) { tg.ready(); tg.expand(); if (tg.disableVerticalSwipes) tg.disableVerticalSwipes(); }
+function buzz(s){ try{ tg.HapticFeedback.impactOccurred(s||'light'); }catch(e){} }
+
+var SK = [], SECS = [];
+var D = { cycles:[], ice:{}, ofp:{}, theory:{}, psy:{}, settings:{} };
+var KEYS = ['cycles','ice','ofp','theory','psy','settings'];
+var hist = [], page = 'home', edit = null, mxAll = 0, openSec = {};
+
+function $(id){ return document.getElementById(id); }
+function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){
+  return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
+function today(){ var d=new Date(); return d.getFullYear()+'-'+p2(d.getMonth()+1)+'-'+p2(d.getDate()); }
+function p2(n){ return n<10?'0'+n:''+n; }
+function ru(s){ if(!s) return ''; var a=String(s).split('-'); return a.length>2 ? a[2]+'.'+a[1] : s; }
+function uid(){ return 'x'+Date.now().toString(36)+Math.floor(Math.random()*1e4).toString(36); }
+function short(s){ return SHORT[s] || s; }
+function wordN(n,a,b,c){ var d=n%100; if(d>10&&d<20) return c; d=n%10;
+  if(d===1) return a; if(d>=2&&d<=4) return b; return c; }
+
+/* ═══ ОБМЕН С БЭКЕНДОМ ═══ */
+function api(body, cb){
+  body.initData = (tg && tg.initData) || '';
+  fetch(API_URL, { method:'POST', body: JSON.stringify(body) })
+    .then(function(r){ return r.json(); })
+    .then(cb)
+    .catch(function(){ cb({ ok:false, err:'нет связи' }); });
+}
+
+var qKeys = {}, qTimer = null;
+function save(key){
+  if(!D[key]) D[key] = (key === 'cycles') ? [] : {};
+  try { localStorage.setItem('pl_'+key, JSON.stringify(D[key])); } catch(e){}
+  qKeys[key] = 1;
+  clearTimeout(qTimer);
+  qTimer = setTimeout(flush, 800);
+}
+function flush(){
+  var keys = Object.keys(qKeys); if(!keys.length) return;
+  qKeys = {}; $('sv').classList.remove('hide');
+  var left = keys.length, bad = '';
+  keys.forEach(function(k){
+    api({ a:'push', key:k, json: JSON.stringify(D[k]) }, function(j){
+      if(!j || !j.ok) bad = (j && j.err) || 'не сохранилось';
+      if(--left <= 0){
+        $('sv').classList.add('hide');
+        $('synced').textContent = bad || stampTxt();
+      }
+    });
+  });
+}
+function stampTxt(){ var d=new Date(); return 'сохранено в '+p2(d.getHours())+':'+p2(d.getMinutes()); }
+
+function boot(){
+  KEYS.forEach(function(k){
+    try{ var v = localStorage.getItem('pl_'+k); if(v) D[k] = JSON.parse(v); }catch(e){}
+  });
+  try{ var s = localStorage.getItem('pl_skills'); if(s){ s = JSON.parse(s); SK = s.sk||[]; SECS = s.se||[]; } }catch(e){}
+  go('home');
+  api({ a:'pull' }, function(j){
+    if(!j.ok){ $('synced').textContent = j.err || 'нет связи'; return; }
+    SK = j.skills || []; SECS = j.sections || [];
+    try{ localStorage.setItem('pl_skills', JSON.stringify({ sk:SK, se:SECS })); }catch(e){}
+    Object.keys(j.data || {}).forEach(function(k){ if(KEYS.indexOf(k)>-1) D[k] = j.data[k]; });
+    if(!D.cycles || !D.cycles.length) D.cycles = D.cycles || [];
+    $('synced').textContent = stampTxt();
+    render();
+  });
+}
+function reimport(){
+  $('sv').classList.remove('hide');
+  api({ a:'reimport' }, function(j){
+    $('sv').classList.add('hide');
+    if(!j.ok){ alert(j.err); return; }
+    SK = j.skills || []; SECS = j.sections || [];
+    try{ localStorage.setItem('pl_skills', JSON.stringify({ sk:SK, se:SECS })); }catch(e){}
+    alert('Навыков загружено: ' + j.n);
+    render();
+  });
+}
+
+/* ═══ НАВИГАЦИЯ ═══ */
+var TITLES = { home:'Планировщик', cycles:'Микроциклы', cycle:'Микроцикл',
+  ice:'Лёд', ofp:'ОФП', theory:'Теория', psy:'Психология', matrix:'Матрица навыков' };
+
+function go(p){
+  if(p !== page && p !== 'home') hist.push(page);
+  if(p === 'home') hist = [];
+  page = p;
+  ['home','cycles','cycle','ice','ofp','theory','psy','matrix'].forEach(function(x){
+    $('p-'+x).classList.toggle('hide', x !== p);
+  });
+  $('back').classList.toggle('hide', p === 'home');
+  $('ttl').textContent = TITLES[p] || 'Планировщик';
+  var c = cur();
+  $('kick').textContent = (p === 'home' || !c) ? 'СПАРТАК-МАХ' : String(c.n || 'МИКРОЦИКЛ').toUpperCase();
+  window.scrollTo(0,0); buzz();
+  render();
+}
+
+/* ═══ МИКРОЦИКЛЫ ═══ */
+function cur(){
+  var id = D.settings && D.settings.cur, c = null;
+  (D.cycles||[]).forEach(function(x){ if(x.id === id) c = x; });
+  if(!c && (D.cycles||[]).length) c = D.cycles[D.cycles.length-1];
+  return c;
+}
+function curId(){ var c = cur(); return c ? c.id : null; }
+
+function newCycle(){
+  D.cycles = D.cycles || [];
+  edit = { id: uid(), n: 'Микроцикл ' + (D.cycles.length + 1), d1: today(), d2: '', note: '' };
+  D.cycles.push(edit);
+  D.settings.cur = edit.id;
+  save('cycles'); save('settings');
+  go('cycle');
+}
+function openCycle(id){
+  (D.cycles||[]).forEach(function(x){ if(x.id === id) edit = x; });
+  go('cycle');
+}
+function saveCycle(){
+  if(!edit) return;
+  edit.n = $('cy-n').value.trim() || edit.n;
+  edit.d1 = $('cy-d1').value; edit.d2 = $('cy-d2').value; edit.note = $('cy-note').value;
+  save('cycles'); buzz('medium'); go('cycles');
+}
+function makeCurrent(){
+  if(!edit) return;
+  D.settings.cur = edit.id; save('settings'); buzz('medium'); go('home');
+}
+function delCycle(){
+  if(!edit) return;
+  if(!confirm('Удалить микроцикл и всё, что в нём?')) return;
+  var id = edit.id;
+  D.cycles = (D.cycles||[]).filter(function(x){ return x.id !== id; });
+  delete D.ice[id]; delete D.ofp[id]; delete D.theory[id]; delete D.psy[id];
+  if(D.settings.cur === id) D.settings.cur = (D.cycles[D.cycles.length-1]||{}).id || '';
+  KEYS.forEach(save);
+  edit = null; go('cycles');
+}
+
+/* ═══ ЛЁД ═══ */
+function ice(){ var id = curId(); if(!id) return {}; D.ice[id] = D.ice[id] || {}; return D.ice[id]; }
+
+function secList(){ return SECS.length ? SECS : Object.keys(SHORT); }
+
+function pick(si){
+  var sec = secList()[si];
+  if(!curId() || !sec) return;
+  $('ov-t').textContent = short(sec);
+  var list = SK.filter(function(s){ return s.sec === sec; });
+  var h = '', grp = null, I = ice();
+  if(!list.length) h = '<p class="empty">В справочнике нет навыков этого раздела. ' +
+    'Добавь их руками в лист <b>skills_custom</b> базы — переимпорт их не трогает.</p>';
+  list.forEach(function(s){
+    if(s.grp !== grp){ grp = s.grp; if(grp) h += '<div class="grp">' + esc(grp) + '</div>'; }
+    var on = I[s.id] ? ' on' : '';
+    h += '<div class="sk"><div class="nm">' + esc(s.num ? s.num + '. ' : '') + esc(s.n) + '</div>' +
+         '<button class="chk' + on + '" onclick="togPlan(\'' + s.id + '\',this)">' + (on ? '✓' : '+') + '</button></div>';
+  });
+  $('ov-b').innerHTML = h;
+  $('ov').classList.remove('hide');
+}
+function togPlan(sid, el){
+  var I = ice();
+  if(I[sid]){ delete I[sid]; el.classList.remove('on'); el.textContent = '+'; }
+  else { I[sid] = { p:1, d:'' }; el.classList.add('on'); el.textContent = '✓'; }
+  save('ice'); buzz();
+}
+function closeOv(){ $('ov').classList.add('hide'); render(); }
+
+function togDone(sid){
+  var I = ice(); if(!I[sid]) return;
+  I[sid].d = I[sid].d ? '' : today();
+  save('ice'); buzz('medium'); render();
+}
+function unplan(sid){ delete ice()[sid]; save('ice'); buzz(); render(); }
+function togSec(si){ var s = secList()[si]; openSec[s] = !openSec[s]; render(); }
+
+/* ═══ ОФП ═══ */
+var OF = [['o-cw','cog_what'],['o-ce','cog_ex'],['o-gym','gym'],
+          ['o-eye','cool_eyes'],['o-cog','cool_cog'],['o-br','cool_breath'],['o-mb','cool_mob']];
+function ofp(){ var id = curId(); if(!id) return {}; D.ofp[id] = D.ofp[id] || {}; return D.ofp[id]; }
+function saveOfp(){
+  if(!curId()) return;
+  var o = ofp();
+  OF.forEach(function(p){ o[p[1]] = $(p[0]).value; });
+  save('ofp'); buzz('medium'); render();
+}
+
+/* ═══ ТЕОРИЯ ═══ */
+function th(){ var id = curId(); if(!id) return []; D.theory[id] = D.theory[id] || []; return D.theory[id]; }
+function addTheory(){
+  if(!curId()){ alert('Сначала создай микроцикл'); return; }
+  var t = $('th-t').value.trim(); if(!t) return;
+  th().unshift({ id: uid(), d: $('th-d').value || today(), kind: $('th-k').value,
+                 who: $('th-who').value.trim(), text: t });
+  $('th-t').value = ''; $('th-who').value = '';
+  save('theory'); buzz('medium'); render();
+}
+function delTheory(i){ th().splice(i,1); save('theory'); render(); }
+
+/* ═══ ПСИХОЛОГИЯ ═══ */
+function psy(){ var id = curId(); if(!id) return { plan:'', log:[] };
+  D.psy[id] = D.psy[id] || { plan:'', log:[] }; return D.psy[id]; }
+function savePsy(){ if(!curId()) return; psy().plan = $('ps-plan').value; save('psy'); buzz('medium'); }
+function addPsy(){
+  if(!curId()){ alert('Сначала создай микроцикл'); return; }
+  var t = $('ps-t').value.trim(); if(!t) return;
+  var p = psy(); p.log = p.log || [];
+  p.log.unshift({ id: uid(), d: $('ps-d').value || today(), s: $('ps-s').value, text: t });
+  $('ps-t').value = ''; save('psy'); buzz('medium'); render();
+}
+function delPsy(i){ psy().log.splice(i,1); save('psy'); render(); }
+
+/* ═══ МАТРИЦА ═══ */
+function mxMode(v){ mxAll = v; $('mx-a').classList.toggle('on', !v); $('mx-b').classList.toggle('on', !!v); render(); }
+
+/* ═══ ОТРИСОВКА ═══ */
+function render(){
+  ({ home:rHome, cycles:rCycles, cycle:rCycle, ice:rIce,
+     ofp:rOfp, theory:rTheory, psy:rPsy, matrix:rMatrix }[page] || function(){})();
+}
+
+function rHome(){
+  var c = cur();
+  if(!c){
+    $('curcard').innerHTML = '<h2>Микроцикл не задан</h2>' +
+      '<p class="empty">Создай микроцикл — всё планирование крепится к нему.</p>' +
+      '<button class="btn" onclick="newCycle()">+ Новый микроцикл</button>';
+    $('t-ice').textContent = '—'; $('t-th').textContent = '—';
+    $('t-psy').textContent = '—'; $('t-ofp').textContent = 'когнитивка, зал, заминка';
+  } else {
+    var I = D.ice[c.id] || {}, ids = Object.keys(I);
+    var done = ids.filter(function(k){ return I[k].d; }).length;
+    $('curcard').innerHTML =
+      '<h2>' + esc(c.n) + '</h2>' +
+      '<p class="empty" style="padding:0 0 8px">' +
+        (c.d1 ? ru(c.d1) + (c.d2 ? ' — ' + ru(c.d2) : '') : 'даты не заданы') +
+        (c.note ? '<br>' + esc(c.note) : '') + '</p>' +
+      '<div class="list"><div><span>Навыков в плане</span><b>' + ids.length + '</b></div>' +
+      '<div><span>Отработано</span><b>' + done + '</b></div></div>' +
+      '<button class="btn sec sm" onclick="openCycle(\'' + c.id + '\')">Изменить микроцикл</button>';
+    $('t-ice').textContent = ids.length ? (done + ' из ' + ids.length + ' отработано') : 'навыки не выбраны';
+    var T = D.theory[c.id] || [];
+    $('t-th').textContent = T.length ? T.length + ' ' + wordN(T.length,'запись','записи','записей') : 'нет записей';
+    var P = D.psy[c.id] || {};
+    $('t-psy').textContent = P.plan ? 'план задан' : 'план не задан';
+    var o = D.ofp[c.id] || {};
+    var f = OF.filter(function(p){ return String(o[p[1]]||'').trim(); }).length;
+    $('t-ofp').textContent = f ? 'заполнено ' + f + ' из 7' : 'когнитивка, зал, заминка';
+  }
+  var n = (D.cycles||[]).length;
+  $('t-cy').textContent = n ? (n + ' ' + wordN(n,'микроцикл','микроцикла','микроциклов')) : 'ни одного';
+}
+
+function rCycles(){
+  var h = '', id = curId();
+  (D.cycles||[]).slice().reverse().forEach(function(c){
+    var I = D.ice[c.id] || {}, ids = Object.keys(I);
+    var done = ids.filter(function(k){ return I[k].d; }).length;
+    h += '<div class="card" style="cursor:pointer" onclick="openCycle(\'' + c.id + '\')">' +
+      '<div style="display:flex;align-items:center;gap:8px">' +
+        '<b style="flex:1;font-size:13.5px">' + esc(c.n) + '</b>' +
+        (c.id === id ? '<span class="tag g">текущий</span>' : '') + '</div>' +
+      '<p class="empty" style="padding:5px 0 0">' +
+        (c.d1 ? ru(c.d1) + (c.d2 ? ' — ' + ru(c.d2) : '') : 'даты не заданы') +
+        ' · ' + done + '/' + ids.length + ' навыков' +
+        (c.note ? '<br>' + esc(c.note) : '') + '</p></div>';
+  });
+  $('cylist').innerHTML = h || '<p class="empty">Пока пусто.</p>';
+}
+
+function rCycle(){
+  if(!edit) return;
+  $('cy-n').value = edit.n || ''; $('cy-d1').value = edit.d1 || '';
+  $('cy-d2').value = edit.d2 || ''; $('cy-note').value = edit.note || '';
+}
+
+function rIce(){
+  var c = cur();
+  if(!c){ $('ice-sub').textContent = 'Сначала создай микроцикл.'; $('ice-secs').innerHTML = ''; return; }
+  $('ice-sub').textContent = 'План на «' + c.n + '». В каждом разделе выбери навыки и отмечай отработанные.';
+  var I = ice(), h = '';
+  var list = secList();
+  list.forEach(function(sec, si){
+    var plan = SK.filter(function(s){ return s.sec === sec && I[s.id]; });
+    var done = plan.filter(function(s){ return I[s.id].d; }).length;
+    var op = openSec[sec];
+    h += '<div class="sec"><div class="sech" onclick="togSec(' + si + ')">' +
+         '<b>' + esc(short(sec)) + '</b>' +
+         '<span class="tag' + (plan.length && done === plan.length ? ' g' : '') + '">' +
+            (plan.length ? done + '/' + plan.length : 'не задан') + '</span>' +
+         '<span style="color:var(--tx2);font-size:13px">' + (op ? '▲' : '▼') + '</span></div>';
+    if(op){
+      h += '<div class="secb">';
+      if(!plan.length) h += '<p class="empty">Навыки не выбраны.</p>';
+      plan.forEach(function(s){
+        var e = I[s.id];
+        h += '<div class="sk">' +
+          '<button class="chk' + (e.d ? ' on' : '') + '" onclick="togDone(\'' + s.id + '\')">' + (e.d ? '✓' : '') + '</button>' +
+          '<div class="nm">' + esc(s.n) +
+            '<small>' + esc(s.grp || '') +
+            (e.d ? (s.grp ? ' · ' : '') + 'отработано ' + ru(e.d) : '') + '</small></div>' +
+          '<button class="x" onclick="unplan(\'' + s.id + '\')">×</button></div>';
+      });
+      h += '<button class="btn sec sm" onclick="pick(' + si + ')">Выбрать навыки</button></div>';
+    }
+    h += '</div>';
+  });
+  $('ice-secs').innerHTML = h;
+}
+
+function rOfp(){
+  var c = cur();
+  $('ofp-sub').textContent = c ? 'План на «' + c.n + '».' : 'Сначала создай микроцикл.';
+  var o = ofp();
+  OF.forEach(function(p){ $(p[0]).value = o[p[1]] || ''; });
+}
+
+function rTheory(){
+  if(!$('th-d').value) $('th-d').value = today();
+  var h = '';
+  th().forEach(function(r, i){
+    h += '<div class="card"><div style="display:flex;gap:8px;align-items:baseline">' +
+      '<b style="flex:1;font-size:12.5px">' + ru(r.d) + ' · ' + esc(r.kind) +
+        (r.who ? ' · ' + esc(r.who) : '') + '</b>' +
+      '<button class="x" onclick="delTheory(' + i + ')">×</button></div>' +
+      '<p class="empty" style="color:var(--tx);padding:6px 0 0;white-space:pre-wrap">' + esc(r.text) + '</p></div>';
+  });
+  $('th-list').innerHTML = h || '<p class="empty">Записей пока нет.</p>';
+}
+
+function rPsy(){
+  var c = cur();
+  $('psy-sub').textContent = c ? 'План на «' + c.n + '».' : 'Сначала создай микроцикл.';
+  if(!$('ps-d').value) $('ps-d').value = today();
+  var p = psy();
+  $('ps-plan').value = p.plan || '';
+  var h = '';
+  (p.log||[]).forEach(function(r, i){
+    h += '<div class="card"><div style="display:flex;gap:8px;align-items:baseline">' +
+      '<b style="flex:1;font-size:12.5px">' + ru(r.d) + '</b>' +
+      '<span class="tag' + (r.s === 'было' ? ' g' : '') + '">' + (r.s === 'было' ? 'работали' : 'будем') + '</span>' +
+      '<button class="x" onclick="delPsy(' + i + ')">×</button></div>' +
+      '<p class="empty" style="color:var(--tx);padding:6px 0 0;white-space:pre-wrap">' + esc(r.text) + '</p></div>';
+  });
+  $('ps-list').innerHTML = h || '<p class="empty">Журнал пуст.</p>';
+}
+
+function rMatrix(){
+  var cy = (D.cycles||[]);
+  if(!cy.length){ $('mxbox').innerHTML = '<p class="empty">Нет микроциклов.</p>'; return; }
+  var used = {};
+  cy.forEach(function(c){ Object.keys(D.ice[c.id]||{}).forEach(function(k){ used[k] = 1; }); });
+
+  var h = '<table class="m"><tr><th class="n">Навык</th>';
+  cy.forEach(function(c){ h += '<th>' + esc(shortCy(c)) + '</th>'; });
+  h += '</tr>';
+
+  var list = secList();
+  var any = false;
+  list.forEach(function(sec){
+    var rows = SK.filter(function(s){ return s.sec === sec && (mxAll || used[s.id]); });
+    if(!rows.length) return;
+    any = true;
+    h += '<tr class="h"><td colspan="' + (cy.length+1) + '">' + esc(short(sec)) + '</td></tr>';
+    rows.forEach(function(s){
+      h += '<tr><td class="n">' + esc(s.n) + '</td>';
+      cy.forEach(function(c){
+        var e = (D.ice[c.id]||{})[s.id];
+        h += '<td class="c">' + (!e ? '' : (e.d ? '<span class="ok">✓</span>' : '<span class="dot">•</span>')) + '</td>';
+      });
+      h += '</tr>';
+    });
+  });
+  h += '</table>';
+  $('mxbox').innerHTML = any ? h : '<p class="empty">Ни один навык ещё не попал в план.</p>';
+}
+function shortCy(c){
+  var n = String(c.n || ''), m = n.match(/(\d+)/);
+  return m ? 'МЦ' + m[1] : (c.d1 ? ru(c.d1) : n.slice(0,6));
+}
+
+boot();
+</script>
+</body>
+</html>
