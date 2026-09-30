@@ -93,13 +93,16 @@
   /* расширенная оценка */
   .rsec{margin:16px 0 2px;color:var(--red);font-size:10.5px;font-weight:700;letter-spacing:1.1px}
   .rsec:first-child{margin-top:4px}
-  .rg{border-bottom:1px solid var(--line);padding:9px 0;display:flex;align-items:center;gap:10px}
+  .rg{border-bottom:1px solid var(--line);padding:11px 0}
   .rg:last-child{border-bottom:0}
+  .rg .rh{display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin-bottom:4px}
   .rg .nm{flex:1;font-size:12.5px;line-height:1.3;font-weight:300}
-  .rg .bt{flex:none;display:flex;gap:4px}
-  .rg .bt button{width:29px;height:29px;border-radius:8px;border:1px solid var(--line);
-    background:#12161C;color:var(--tx2);font-family:inherit;font-size:12.5px;padding:0;cursor:pointer}
-  .rg .bt button.on{background:var(--red);border-color:var(--red);color:#fff;font-weight:700}
+  .rg .rv{flex:none;font-size:17px;font-weight:700;color:#fff;min-width:22px;text-align:right}
+  .rg .rv.z{color:#8A929B}
+  .rg .rl{font-size:10.5px;color:var(--tx2);margin-top:2px;line-height:1.3;min-height:13px}
+  .rg input[type=range]{margin:0}
+  .scl{font-size:11px;line-height:1.5;color:var(--tx2)}
+  .scl b{color:#fff;display:inline-block;min-width:20px}
   .sw{display:flex;justify-content:space-between;align-items:baseline;gap:10px;padding:7px 0;
       border-bottom:1px solid var(--line);font-size:12.5px;font-weight:300}
   .sw:last-child{border-bottom:0}
@@ -529,7 +532,7 @@
   <!-- ОЦЕНКА ВРАТАРЯ -->
   <section id="p-rad" class="hide">
     <h1>Оценка вратаря</h1>
-    <div class="sub">Пять разделов, 33 пункта, шкала 1–5. Твоя самооценка и взгляд тренера — на одной фигуре.</div>
+    <div class="sub">Пять разделов, 33 пункта, шкала 0–10. Твоя самооценка и взгляд тренера — на одной фигуре.</div>
     <div class="card">
       <h2>Профиль</h2>
       <div id="rad-chart"></div>
@@ -546,7 +549,8 @@
     </div>
     <div class="card">
       <h2>Поставить самооценку</h2>
-      <div class="sub" style="margin:0 0 4px">Дата: <b id="rad-date" style="color:#fff"></b>. Шкала: 1 — низко, 3 — средне, 5 — высоко.</div>
+      <div class="sub" style="margin:0 0 10px">Дата: <b id="rad-date" style="color:#fff"></b></div>
+      <div id="rad-scale" style="margin:0 0 14px"></div>
       <div id="rad-edit"></div>
       <label style="margin-top:12px">Комментарий</label>
       <textarea id="rad-cm" placeholder="Что отметил за месяц"></textarea>
@@ -640,7 +644,8 @@
     </div>
     <div class="card">
       <h2>Поставить оценку</h2>
-      <div class="sub" style="margin:0 0 4px">33 пункта, шкала 1–5.</div>
+      <div class="sub" style="margin:0 0 10px">33 пункта, шкала 0–10.</div>
+      <div id="gk-scale" style="margin:0 0 14px"></div>
       <div id="gk-rsl"></div>
       <label style="margin-top:12px">Комментарий</label>
       <textarea id="gk-cm" placeholder="Что отметил за месяц"></textarea>
@@ -949,8 +954,7 @@ document.addEventListener('click', function(ev){
     else if (a[0] === 'gdelgame') delGame();
     else if (a[0] === 'radsave') saveRating();
     else if (a[0] === 'radk') { RADSEL = a[1]; renderRadar(); }
-    else if (a[0] === 'rs') { RDRAFT = RDRAFT || {}; RDRAFT[a[1]] = parseInt(a[2], 10); haptic(); renderRadar(); }
-    else if (a[0] === 'cs') { CDRAFT[a[1]] = parseInt(a[2], 10); haptic(); paintCS(a[1], parseInt(a[2], 10)); }
+    else if (a[0] === 'scale') { alertMsg(SCALE.map(function(x, i){ return i + ' — ' + x[1]; }).reverse().join('\n')); }
     else if (a[0] === 'sit') pickSit(parseInt(a[1],10));
     else if (a[0] === 'mesave') saveMe();
     else if (a[0] === 'export') exportAll();
@@ -1055,6 +1059,27 @@ var RAT = [
     ['agil','ловкость'], ['spd','быстрота'], ['str','сила'], ['flex','гибкость'], ['end','выносливость']]]
 ];
 var RSEC = RAT.map(function(x){ return [x[0], x[2]]; });
+
+/* шкала 0–10: короткая подпись · расшифровка */
+var SCALE = [
+  ['полное отсутствие работы', 'Полное отсутствие работы'],
+  ['очень плохо',              'Очень плохо — глубокое незнание'],
+  ['плохо',                    'Плохо — неудовлетворительно'],
+  ['посредственно',            'Посредственно — слабый уровень, ближе к неудовлетворительному'],
+  ['удовлетворительно',        'Удовлетворительно — минимальный проходной уровень'],
+  ['выше среднего',            'Удовлетворительно, выше среднего — базовое понимание'],
+  ['хорошо',                   'Хорошо — понимание большей части'],
+  ['очень хорошо',             'Очень хорошо — крепкая «хорошо»'],
+  ['почти отлично',            'Почти отлично — твёрдая «отлично»'],
+  ['отлично',                  'Отлично — превосходное знание материала'],
+  ['превосходно',              'Превосходно — высший балл с творческим подходом']
+];
+var RMAX = 10;
+function scaleHTML(){
+  return '<div class="scl">' + SCALE.map(function(x, i){
+    return '<b>' + i + '</b> — ' + x[1];
+  }).reverse().join('<br>') + '</div>';
+}
 var RKEYS = [];
 RAT.forEach(function(sc){ sc[3].forEach(function(it){ RKEYS.push([sc[0] + '_' + it[0], it[1], sc[0]]); }); });
 
@@ -1064,15 +1089,17 @@ function ratCm(rec){ return (rec && rec.v && rec.v.cm) ? rec.v.cm : ''; }
 function secAvg(r, sec){
   var sum = 0, n = 0;
   RKEYS.forEach(function(k){
-    if (k[2] !== sec) return;
-    var v = Number(r[k[0]]) || 0;
-    if (v) { sum += v; n++; }
+    if (k[2] !== sec || r[k[0]] === undefined || r[k[0]] === null) return;
+    sum += Number(r[k[0]]); n++;
   });
   return n ? Math.round(sum / n * 10) / 10 : 0;
 }
 function ratMean(r){
   var sum = 0, n = 0;
-  RKEYS.forEach(function(k){ var v = Number(r[k[0]]) || 0; if (v) { sum += v; n++; } });
+  RKEYS.forEach(function(k){
+    if (r[k[0]] === undefined || r[k[0]] === null) return;
+    sum += Number(r[k[0]]); n++;
+  });
   return n ? sum / n : 0;
 }
 function radSet(rec, fill, line){
@@ -1084,26 +1111,53 @@ function radSet(rec, fill, line){
 }
 function strongWeak(r){
   var arr = [];
-  RKEYS.forEach(function(k){ var v = Number(r[k[0]]) || 0; if (v) arr.push({ n: k[1], v: v }); });
+  RKEYS.forEach(function(k){
+    if (r[k[0]] === undefined || r[k[0]] === null) return;
+    arr.push({ n: k[1], v: Number(r[k[0]]) });
+  });
   arr.sort(function(a, b){ return b.v - a.v; });
   return { s: arr.slice(0, 4), w: arr.slice(-4).reverse() };
 }
-/* редактор оценок: prefix — 'rs' для себя, 'cs' для тренера */
+/* редактор оценок: prefix — 'rs' для себя, 'cs' для тренера.
+   Оценка 0–10 ползунком; -1 в черновике значит «ещё не трогали». */
 function ratEditor(prefix, draft){
   return RAT.map(function(sc){
     return '<div class="rsec">' + sc[1] + '</div>' + sc[3].map(function(it){
-      var k = sc[0] + '_' + it[0], v = Number(draft[k]) || 0, b = '';
-      for (var i = 1; i <= 5; i++){
-        b += '<button data-act="' + prefix + ':' + k + ':' + i + '"' + (v === i ? ' class="on"' : '') + '>' + i + '</button>';
-      }
-      return '<div class="rg"><div class="nm">' + it[1] + '</div><div class="bt">' + b + '</div></div>';
+      var k = sc[0] + '_' + it[0];
+      var has = draft[k] !== undefined && draft[k] !== null;
+      var v = has ? Number(draft[k]) : 5;
+      var id = prefix + k;
+      return '<div class="rg">' +
+        '<div class="rh"><div class="nm">' + it[1] + '</div>' +
+        '<div class="rv' + (has ? '' : ' z') + '" id="v-' + id + '">' + (has ? v : '—') + '</div></div>' +
+        '<input type="range" min="0" max="10" step="1" value="' + v + '" id="r-' + id + '" data-rat="' + id + '">' +
+        '<div class="rl" id="l-' + id + '">' + (has ? SCALE[v][0] : 'не оценено') + '</div></div>';
     }).join('');
   }).join('');
 }
+/* обновление подписи и черновика при движении ползунка */
+document.addEventListener('input', function(ev){
+  var el = ev.target;
+  if (!el || el.type !== 'range') return;
+  var id = el.getAttribute('data-rat');
+  if (!id) return;
+  var v = Number(el.value);
+  var out = document.getElementById('v-' + id);
+  if (out){ out.textContent = v; out.className = 'rv'; }
+  var lab = document.getElementById('l-' + id);
+  if (lab) lab.textContent = SCALE[v][0];
+  var key = id.slice(2);
+  if (id.indexOf('rs') === 0){ RDRAFT = RDRAFT || {}; RDRAFT[key] = v; }
+  else { CDRAFT[key] = v; }
+});
 function swHTML(r){
   var sw = strongWeak(r);
   if (!sw.s.length) return '<div class="sub" style="margin:0">Оценок пока нет.</div>';
-  var row = function(x, cls){ return '<div class="sw"><span>' + x.n + '</span><b class="' + cls + '">' + x.v + '</b></div>'; };
+  var row = function(x, cls){
+    return '<div class="sw"><span>' + x.n +
+      '<br><span style="font-size:10.5px;color:#8A929B">' + SCALE[x.v][0] + '</span></span>' +
+      '<b class="' + cls + '">' + x.v + '</b></div>';
+  };
   return '<div class="sub" style="margin:0 0 4px">Сильные стороны</div>' +
          sw.s.map(function(x){ return row(x, 'gr'); }).join('') +
          '<div class="sub" style="margin:12px 0 4px">Слабые стороны</div>' +
@@ -1111,7 +1165,7 @@ function swHTML(r){
 }
 
 function radarSVG(sets, keys, maxv, shorts){
-  keys = keys || RSEC; maxv = maxv || 5;
+  keys = keys || RSEC; maxv = maxv || RMAX;
   shorts = shorts || keys.map(function(k){ return k[1]; });
   var S = 260, c = S/2, r = 88, n = keys.length, MAXV = maxv;
   var ang = function(i){ return -Math.PI/2 + i * 2*Math.PI/n; };
@@ -1196,8 +1250,10 @@ function renderRadar(){
 
   if (!RDRAFT) {
     RDRAFT = {};
-    if (rs) RKEYS.forEach(function(k){ if (rs[k[0]]) RDRAFT[k[0]] = rs[k[0]]; });
+    if (rs) RKEYS.forEach(function(k){ if (rs[k[0]] !== undefined) RDRAFT[k[0]] = rs[k[0]]; });
   }
+  var sb = document.getElementById('rad-scale');
+  if (sb) sb.innerHTML = scaleHTML();
   document.getElementById('rad-edit').innerHTML = ratEditor('rs', RDRAFT);
   var cm = document.getElementById('rad-cm');
   if (cm && !cm.value && self) cm.value = ratCm(self);
@@ -1208,7 +1264,7 @@ function renderRadar(){
   var ser = radList().filter(function(x){ return x.by === 'self' && ratR(x); }).slice(0, 14).reverse();
   document.getElementById('rad-line').innerHTML = lineSVG(ser.map(function(x){
     return { d: dm(x.d), v: secAvg(ratR(x), RADSEL) };
-  }), { min: 1, max: 5 });
+  }), { min: 0, max: 10 });
 
   var all = radList().map(function(x){ return { d: x.d, by: 'моя', v: x.v }; })
     .concat(coachRates().map(function(x){ return { d: x.d, by: 'тренер', v: x.v }; }));
@@ -1217,24 +1273,24 @@ function renderRadar(){
     var r = (x.v && x.v.r) ? x.v.r : null;
     if (r) {
       return '<div><span>' + dm(x.d) + ' · ' + x.by + '</span><b>' +
-             ratMean(r).toFixed(1).replace('.', ',') + ' <span style="color:#8A929B;font-size:11px">из 5</span></b></div>';
+             ratMean(r).toFixed(1).replace('.', ',') + ' <span style="color:#8A929B;font-size:11px">из 10</span></b></div>';
     }
     var old = 0, n = 0;
     ['tech','tac','mind','psy','phys'].forEach(function(k){ if (x.v && x.v[k]) { old += x.v[k]; n++; } });
     if (!n) return '';
-    return '<div><span>' + dm(x.d) + ' · ' + x.by + ' <span style="color:#8A929B;font-size:11px">архив</span></span><b>' +
+    return '<div><span>' + dm(x.d) + ' · ' + x.by + ' <span style="color:#8A929B;font-size:11px">архив, 5 осей</span></span><b>' +
            (old / n).toFixed(1).replace('.', ',') + ' <span style="color:#8A929B;font-size:11px">из 10</span></b></div>';
   }).join('') : '<div>Записей пока нет.</div>';
 }
 
 function saveRating(){
   var done = 0;
-  RKEYS.forEach(function(k){ if (RDRAFT && RDRAFT[k[0]]) done++; });
+  RKEYS.forEach(function(k){ if (RDRAFT && RDRAFT[k[0]] !== undefined && RDRAFT[k[0]] !== null) done++; });
   if (done < RKEYS.length) {
     alertMsg('Оценено ' + done + ' из ' + RKEYS.length + '. Заполни все пункты.');
     return;
   }
-  var v = { sc: 5, r: {}, cm: val('rad-cm').trim() };
+  var v = { sc: 10, r: {}, cm: val('rad-cm').trim() };
   RKEYS.forEach(function(k){ v.r[k[0]] = RDRAFT[k[0]]; });
   var l = radList();
   l = l.filter(function(x){ return !(x.by === 'self' && x.d === today); });
@@ -1989,7 +2045,7 @@ function render(){
   renderQuote();
   var lr = lastRate('self'), lrr = ratR(lr);
   setTxt('t-rad', lrr
-    ? 'средняя ' + ratMean(lrr).toFixed(1).replace('.', ',') + ' из 5'
+    ? 'средняя ' + ratMean(lrr).toFixed(1).replace('.', ',') + ' из 10'
     : 'пять разделов, 33 пункта');
   var dn = libDone();
   ['Психология','Теория'].forEach(function(sec, k){
@@ -2326,28 +2382,23 @@ function renderGkRadar(res){
     : '<div class="sub" style="margin:0">Появятся после первой оценки.</div>';
 
   CDRAFT = {};
-  if (rc) RKEYS.forEach(function(k){ if (rc[k[0]]) CDRAFT[k[0]] = rc[k[0]]; });
+  if (rc) RKEYS.forEach(function(k){ if (rc[k[0]] !== undefined) CDRAFT[k[0]] = rc[k[0]]; });
+  var gsb = document.getElementById('gk-scale');
+  if (gsb) gsb.innerHTML = scaleHTML();
   document.getElementById('gk-rsl').innerHTML = ratEditor('cs', CDRAFT);
   var gcm = document.getElementById('gk-cm');
   if (gcm) gcm.value = ratCm(coach);
 }
 var CDRAFT = {};
-/* у тренера не перерисовываем весь список — только нажатую строку */
-function paintCS(key, v){
-  for (var i = 1; i <= 5; i++){
-    var b = document.querySelector('[data-act="cs:' + key + ':' + i + '"]');
-    if (b) b.className = (i === v) ? 'on' : '';
-  }
-}
 function coachRate(){
   if (!CUR) return;
   var done = 0;
-  RKEYS.forEach(function(k){ if (CDRAFT[k[0]]) done++; });
+  RKEYS.forEach(function(k){ if (CDRAFT[k[0]] !== undefined && CDRAFT[k[0]] !== null) done++; });
   if (done < RKEYS.length) {
     alertMsg('Оценено ' + done + ' из ' + RKEYS.length + '. Заполни все пункты.');
     return;
   }
-  var v = { sc: 5, r: {}, cm: val('gk-cm').trim() };
+  var v = { sc: 10, r: {}, cm: val('gk-cm').trim() };
   RKEYS.forEach(function(k){ v.r[k[0]] = CDRAFT[k[0]]; });
   haptic('medium');
   api({ a:'rate', uid: CUR, v: v }, function(res){
