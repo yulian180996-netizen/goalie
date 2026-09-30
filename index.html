@@ -90,6 +90,21 @@
        border-radius:11px;padding:14px;font-size:15px;margin-bottom:8px;cursor:pointer;display:flex;justify-content:space-between}
   .menu button i{font-style:normal;color:var(--tx2)}
   /* аналитика голов */
+  /* расширенная оценка */
+  .rsec{margin:16px 0 2px;color:var(--red);font-size:10.5px;font-weight:700;letter-spacing:1.1px}
+  .rsec:first-child{margin-top:4px}
+  .rg{border-bottom:1px solid var(--line);padding:9px 0;display:flex;align-items:center;gap:10px}
+  .rg:last-child{border-bottom:0}
+  .rg .nm{flex:1;font-size:12.5px;line-height:1.3;font-weight:300}
+  .rg .bt{flex:none;display:flex;gap:4px}
+  .rg .bt button{width:29px;height:29px;border-radius:8px;border:1px solid var(--line);
+    background:#12161C;color:var(--tx2);font-family:inherit;font-size:12.5px;padding:0;cursor:pointer}
+  .rg .bt button.on{background:var(--red);border-color:var(--red);color:#fff;font-weight:700}
+  .sw{display:flex;justify-content:space-between;align-items:baseline;gap:10px;padding:7px 0;
+      border-bottom:1px solid var(--line);font-size:12.5px;font-weight:300}
+  .sw:last-child{border-bottom:0}
+  .sw b{font-size:14px;color:#fff;flex:none}
+  .sw .gr{color:#4FA765}
   .chips{display:flex;flex-wrap:wrap;gap:6px}
   .chips button{background:#12161C;border:1px solid var(--line);color:var(--tx2);border-radius:9px;
        padding:8px 10px;font-size:12.5px;cursor:pointer}
@@ -514,7 +529,7 @@
   <!-- ОЦЕНКА ВРАТАРЯ -->
   <section id="p-rad" class="hide">
     <h1>Оценка вратаря</h1>
-    <div class="sub">Пять сторон игры по десятибалльной. Твоя самооценка и взгляд тренера — на одной фигуре.</div>
+    <div class="sub">Пять разделов, 33 пункта, шкала 1–5. Твоя самооценка и взгляд тренера — на одной фигуре.</div>
     <div class="card">
       <h2>Профиль</h2>
       <div id="rad-chart"></div>
@@ -525,9 +540,16 @@
       <div class="list" id="rad-nums" style="margin-top:10px"></div>
     </div>
     <div class="card">
+      <h2>Сильные и слабые стороны</h2>
+      <div class="sub" style="margin:0 0 8px">Считается автоматически по последней оценке.</div>
+      <div id="rad-sw"></div>
+    </div>
+    <div class="card">
       <h2>Поставить самооценку</h2>
-      <div class="sub" style="margin:0 0 4px">Дата: <b id="rad-date" style="color:#fff"></b></div>
-      <div id="rad-sliders"></div>
+      <div class="sub" style="margin:0 0 4px">Дата: <b id="rad-date" style="color:#fff"></b>. Шкала: 1 — низко, 3 — средне, 5 — высоко.</div>
+      <div id="rad-edit"></div>
+      <label style="margin-top:12px">Комментарий</label>
+      <textarea id="rad-cm" placeholder="Что отметил за месяц"></textarea>
       <button class="btn" data-act="radsave">Сохранить оценку</button>
     </div>
     <div class="card">
@@ -610,8 +632,19 @@
         <span><i style="background:#D6112E"></i>самооценка</span>
         <span><i style="background:#2FA84F"></i>моя оценка</span>
       </div>
-      <div id="gk-rsl" style="margin-top:12px"></div>
-      <button class="btn sec" data-act="crate">Поставить оценку</button>
+      <div class="list" id="gk-rnums" style="margin-top:10px"></div>
+    </div>
+    <div class="card">
+      <h2>Сильные и слабые стороны</h2>
+      <div id="gk-sw"></div>
+    </div>
+    <div class="card">
+      <h2>Поставить оценку</h2>
+      <div class="sub" style="margin:0 0 4px">33 пункта, шкала 1–5.</div>
+      <div id="gk-rsl"></div>
+      <label style="margin-top:12px">Комментарий</label>
+      <textarea id="gk-cm" placeholder="Что отметил за месяц"></textarea>
+      <button class="btn" data-act="crate">Сохранить оценку</button>
     </div>
     <div class="card">
       <h2>Заметка вратарю</h2>
@@ -916,6 +949,8 @@ document.addEventListener('click', function(ev){
     else if (a[0] === 'gdelgame') delGame();
     else if (a[0] === 'radsave') saveRating();
     else if (a[0] === 'radk') { RADSEL = a[1]; renderRadar(); }
+    else if (a[0] === 'rs') { RDRAFT = RDRAFT || {}; RDRAFT[a[1]] = parseInt(a[2], 10); haptic(); renderRadar(); }
+    else if (a[0] === 'cs') { CDRAFT[a[1]] = parseInt(a[2], 10); haptic(); paintCS(a[1], parseInt(a[2], 10)); }
     else if (a[0] === 'sit') pickSit(parseInt(a[1],10));
     else if (a[0] === 'mesave') saveMe();
     else if (a[0] === 'export') exportAll();
@@ -999,11 +1034,86 @@ function lineSVG(pts, opt){
 }
 
 /* ---------- радар ---------- */
-var RADK = [['tech','Техника'], ['tac','Тактика'], ['mind','Игровое мышление'],
-            ['psy','Психология'], ['phys','Физическая подготовка']];
+/* ключ раздела · заголовок · короткая подпись · пункты */
+var RAT = [
+  ['skat','ТЕХНИКА КАТАНИЯ','Катание', [
+    ['stance','стойка'], ['skate','катание'], ['mleg','перемещение на ногах'],
+    ['mpad','перемещение на щитках'], ['mspd','скорость перемещения'], ['back','возврат в стойку']]],
+  ['catch','ТЕХНИКА ЛОВЛИ БРОСКОВ','Ловля', [
+    ['glove','контроль ловушкой'], ['blok','контроль блином'], ['stc','контроль клюшкой'],
+    ['fix','фиксация на себя'], ['react','реагирование']]],
+  ['tac','ТАКТИКА','Тактика', [
+    ['read','чтение игры (просмотр игроков)'], ['line','линия броска и глубина'],
+    ['reb','сопровождение отскоков'], ['traf','трафик'], ['tip','подправления'],
+    ['behind','атака из-за ворот'], ['stick','игра клюшкой'], ['angle','атака с угла'],
+    ['one','выходы 1 на 1']]],
+  ['psy','ПСИХОЛОГИЯ И ХАРАКТЕР','Психология', [
+    ['aim','нацеленность на игру'], ['work','трудовая этика'], ['tough','неуступчивость'],
+    ['conf','уверенность'], ['sreg','саморегуляция'], ['press','игра под давлением'],
+    ['stab','стабильность'], ['att','внимание (управление, концентрация)']]],
+  ['phys','ФИЗИЧЕСКАЯ ПОДГОТОВКА','Физика', [
+    ['agil','ловкость'], ['spd','быстрота'], ['str','сила'], ['flex','гибкость'], ['end','выносливость']]]
+];
+var RSEC = RAT.map(function(x){ return [x[0], x[2]]; });
+var RKEYS = [];
+RAT.forEach(function(sc){ sc[3].forEach(function(it){ RKEYS.push([sc[0] + '_' + it[0], it[1], sc[0]]); }); });
 
-function radarSVG(sets){
-  var S = 260, c = S/2, r = 88, n = RADK.length, MAXV = 10;
+/* r — объект из 33 оценок; у старых записей его нет */
+function ratR(rec){ return (rec && rec.v && rec.v.r) ? rec.v.r : null; }
+function ratCm(rec){ return (rec && rec.v && rec.v.cm) ? rec.v.cm : ''; }
+function secAvg(r, sec){
+  var sum = 0, n = 0;
+  RKEYS.forEach(function(k){
+    if (k[2] !== sec) return;
+    var v = Number(r[k[0]]) || 0;
+    if (v) { sum += v; n++; }
+  });
+  return n ? Math.round(sum / n * 10) / 10 : 0;
+}
+function ratMean(r){
+  var sum = 0, n = 0;
+  RKEYS.forEach(function(k){ var v = Number(r[k[0]]) || 0; if (v) { sum += v; n++; } });
+  return n ? sum / n : 0;
+}
+function radSet(rec, fill, line){
+  var r = ratR(rec);
+  if (!r) return null;
+  var v = {};
+  RAT.forEach(function(sc){ v[sc[0]] = secAvg(r, sc[0]); });
+  return { v: v, fill: fill, line: line };
+}
+function strongWeak(r){
+  var arr = [];
+  RKEYS.forEach(function(k){ var v = Number(r[k[0]]) || 0; if (v) arr.push({ n: k[1], v: v }); });
+  arr.sort(function(a, b){ return b.v - a.v; });
+  return { s: arr.slice(0, 4), w: arr.slice(-4).reverse() };
+}
+/* редактор оценок: prefix — 'rs' для себя, 'cs' для тренера */
+function ratEditor(prefix, draft){
+  return RAT.map(function(sc){
+    return '<div class="rsec">' + sc[1] + '</div>' + sc[3].map(function(it){
+      var k = sc[0] + '_' + it[0], v = Number(draft[k]) || 0, b = '';
+      for (var i = 1; i <= 5; i++){
+        b += '<button data-act="' + prefix + ':' + k + ':' + i + '"' + (v === i ? ' class="on"' : '') + '>' + i + '</button>';
+      }
+      return '<div class="rg"><div class="nm">' + it[1] + '</div><div class="bt">' + b + '</div></div>';
+    }).join('');
+  }).join('');
+}
+function swHTML(r){
+  var sw = strongWeak(r);
+  if (!sw.s.length) return '<div class="sub" style="margin:0">Оценок пока нет.</div>';
+  var row = function(x, cls){ return '<div class="sw"><span>' + x.n + '</span><b class="' + cls + '">' + x.v + '</b></div>'; };
+  return '<div class="sub" style="margin:0 0 4px">Сильные стороны</div>' +
+         sw.s.map(function(x){ return row(x, 'gr'); }).join('') +
+         '<div class="sub" style="margin:12px 0 4px">Слабые стороны</div>' +
+         sw.w.map(function(x){ return row(x, ''); }).join('');
+}
+
+function radarSVG(sets, keys, maxv, shorts){
+  keys = keys || RSEC; maxv = maxv || 5;
+  shorts = shorts || keys.map(function(k){ return k[1]; });
+  var S = 260, c = S/2, r = 88, n = keys.length, MAXV = maxv;
   var ang = function(i){ return -Math.PI/2 + i * 2*Math.PI/n; };
   var pt = function(i, v){
     var rr = r * Math.max(0, Math.min(1, v / MAXV));
@@ -1022,16 +1132,16 @@ function radarSVG(sets){
   var body = '';
   sets.forEach(function(st){
     var p = [];
-    for (var i = 0; i < n; i++) p.push(pt(i, st.v[RADK[i][0]] || 0).join(','));
+    for (var i = 0; i < n; i++) p.push(pt(i, st.v[keys[i][0]] || 0).join(','));
     body += '<polygon points="' + p.join(' ') + '" fill="' + st.fill + '" stroke="' + st.line +
             '" stroke-width="2" stroke-linejoin="round"/>';
     for (var k = 0; k < n; k++){
-      var q = pt(k, st.v[RADK[k][0]] || 0);
+      var q = pt(k, st.v[keys[k][0]] || 0);
       body += '<circle cx="' + q[0] + '" cy="' + q[1] + '" r="2.6" fill="' + st.line + '"/>';
     }
   });
   var labs = '';
-  var short = ['Техника','Тактика','Мышление','Психология','Физика'];
+  var short = shorts;
   for (var j = 0; j < n; j++){
     var lp = pt(j, MAXV * 1.24);
     var anc = (j === 0) ? 'middle' : (Number(lp[0]) > c + 4 ? 'start' : (Number(lp[0]) < c - 4 ? 'end' : 'middle'));
@@ -1057,6 +1167,8 @@ function lastRate(by){
 function coachRates(){ return (DB.rates || []).slice(); }
 function lastCoachRate(){ return coachRates().length ? coachRates()[0] : null; }
 
+var RDRAFT = null;
+
 function renderRadar(){
   var box = document.getElementById('rad-chart');
   if (!box) return;
@@ -1064,45 +1176,66 @@ function renderRadar(){
 
   var self = lastRate('self'), coach = lastCoachRate();
   var sets = [];
-  if (self)  sets.push({ v: self.v,  fill:'rgba(214,17,46,.22)',  line:'#D6112E' });
-  if (coach) sets.push({ v: coach.v, fill:'rgba(47,168,79,.18)',  line:'#2FA84F' });
+  var a = radSet(self, 'rgba(214,17,46,.22)', '#D6112E');
+  var b = radSet(coach, 'rgba(47,168,79,.18)', '#2FA84F');
+  if (a) sets.push(a);
+  if (b) sets.push(b);
   box.innerHTML = sets.length ? radarSVG(sets)
     : '<div class="sub" style="margin:0">Оценок пока нет — поставь первую ниже.</div>';
 
-  document.getElementById('rad-nums').innerHTML = RADK.map(function(k){
-    var a = self ? (self.v[k[0]] || 0) : null, b = coach ? (coach.v[k[0]] || 0) : null;
-    return '<div><span>' + k[1] + '</span><b>' + (a !== null ? a : '—') +
-           (b !== null ? ' <span style="color:#4FA765">· ' + b + '</span>' : '') + '</b></div>';
+  var rs = ratR(self), rc = ratR(coach);
+  document.getElementById('rad-nums').innerHTML = RSEC.map(function(k){
+    var x = rs ? secAvg(rs, k[0]) : null, y = rc ? secAvg(rc, k[0]) : null;
+    return '<div><span>' + k[1] + '</span><b>' + (x !== null ? String(x).replace('.', ',') : '—') +
+           (y !== null ? ' <span style="color:#4FA765">· ' + String(y).replace('.', ',') + '</span>' : '') + '</b></div>';
   }).join('');
 
-  document.getElementById('rad-sliders').innerHTML = RADK.map(function(k){
-    return '<div class="sl"><div class="slh"><span>' + k[1] + '</span><b id="v-r' + k[0] + '">' +
-      (self ? (self.v[k[0]] || 5) : 5) + '</b></div>' +
-      '<input type="range" min="1" max="10" step="1" value="' + (self ? (self.v[k[0]] || 5) : 5) +
-      '" id="r-r' + k[0] + '" data-v="r' + k[0] + '">' +
-      '<div class="sle"><span>1</span><span>5</span><span>10</span></div></div>';
-  }).join('');
+  var swBox = document.getElementById('rad-sw');
+  if (swBox) swBox.innerHTML = (rc || rs) ? swHTML(rc || rs)
+    : '<div class="sub" style="margin:0">Появятся, когда будет первая оценка.</div>';
 
-  document.getElementById('rad-pick').innerHTML = RADK.map(function(k){
+  if (!RDRAFT) {
+    RDRAFT = {};
+    if (rs) RKEYS.forEach(function(k){ if (rs[k[0]]) RDRAFT[k[0]] = rs[k[0]]; });
+  }
+  document.getElementById('rad-edit').innerHTML = ratEditor('rs', RDRAFT);
+  var cm = document.getElementById('rad-cm');
+  if (cm && !cm.value && self) cm.value = ratCm(self);
+
+  document.getElementById('rad-pick').innerHTML = RSEC.map(function(k){
     return '<button data-act="radk:' + k[0] + '"' + (RADSEL === k[0] ? ' class="on"' : '') + '>' + k[1] + '</button>';
   }).join('');
-  var ser = radList().filter(function(x){ return x.by === 'self'; }).slice(0,14).reverse();
+  var ser = radList().filter(function(x){ return x.by === 'self' && ratR(x); }).slice(0, 14).reverse();
   document.getElementById('rad-line').innerHTML = lineSVG(ser.map(function(x){
-    return { d: dm(x.d), v: x.v[RADSEL] || 0 };
-  }), { min:1, max:10 });
+    return { d: dm(x.d), v: secAvg(ratR(x), RADSEL) };
+  }), { min: 1, max: 5 });
 
-  var all = radList().map(function(x){ return { d:x.d, by:'моя', v:x.v }; })
-    .concat(coachRates().map(function(x){ return { d:x.d, by:'тренер', v:x.v }; }));
-  all.sort(function(a,b){ return a.d < b.d ? 1 : (a.d > b.d ? -1 : 0); });
-  document.getElementById('rad-list').innerHTML = all.length ? all.slice(0,12).map(function(x){
-    var mean = RADK.reduce(function(p,k){ return p + (x.v[k[0]] || 0); }, 0) / RADK.length;
-    return '<div><span>' + dm(x.d) + ' · ' + x.by + '</span><b>' + mean.toFixed(1).replace('.', ',') + '</b></div>';
+  var all = radList().map(function(x){ return { d: x.d, by: 'моя', v: x.v }; })
+    .concat(coachRates().map(function(x){ return { d: x.d, by: 'тренер', v: x.v }; }));
+  all.sort(function(a2, b2){ return a2.d < b2.d ? 1 : (a2.d > b2.d ? -1 : 0); });
+  document.getElementById('rad-list').innerHTML = all.length ? all.slice(0, 14).map(function(x){
+    var r = (x.v && x.v.r) ? x.v.r : null;
+    if (r) {
+      return '<div><span>' + dm(x.d) + ' · ' + x.by + '</span><b>' +
+             ratMean(r).toFixed(1).replace('.', ',') + ' <span style="color:#8A929B;font-size:11px">из 5</span></b></div>';
+    }
+    var old = 0, n = 0;
+    ['tech','tac','mind','psy','phys'].forEach(function(k){ if (x.v && x.v[k]) { old += x.v[k]; n++; } });
+    if (!n) return '';
+    return '<div><span>' + dm(x.d) + ' · ' + x.by + ' <span style="color:#8A929B;font-size:11px">архив</span></span><b>' +
+           (old / n).toFixed(1).replace('.', ',') + ' <span style="color:#8A929B;font-size:11px">из 10</span></b></div>';
   }).join('') : '<div>Записей пока нет.</div>';
 }
 
 function saveRating(){
-  var v = {};
-  RADK.forEach(function(k){ v[k[0]] = getSl('r' + k[0]) || 5; });
+  var done = 0;
+  RKEYS.forEach(function(k){ if (RDRAFT && RDRAFT[k[0]]) done++; });
+  if (done < RKEYS.length) {
+    alertMsg('Оценено ' + done + ' из ' + RKEYS.length + '. Заполни все пункты.');
+    return;
+  }
+  var v = { sc: 5, r: {}, cm: val('rad-cm').trim() };
+  RKEYS.forEach(function(k){ v.r[k[0]] = RDRAFT[k[0]]; });
   var l = radList();
   l = l.filter(function(x){ return !(x.by === 'self' && x.d === today); });
   l.unshift({ d: today, by: 'self', v: v });
@@ -1854,10 +1987,10 @@ function render(){
 
   renderCk();
   renderQuote();
-  var lr = lastRate('self');
-  setTxt('t-rad', lr
-    ? 'средняя ' + (RADK.reduce(function(p,k){ return p + (lr.v[k[0]] || 0); }, 0) / RADK.length).toFixed(1).replace('.', ',')
-    : 'пять сторон игры');
+  var lr = lastRate('self'), lrr = ratR(lr);
+  setTxt('t-rad', lrr
+    ? 'средняя ' + ratMean(lrr).toFixed(1).replace('.', ',') + ' из 5'
+    : 'пять разделов, 33 пункта');
   var dn = libDone();
   ['Психология','Теория'].forEach(function(sec, k){
     var it = libItems(sec), d = it.filter(function(x){ return dn[x.id]; }).length;
@@ -2178,20 +2311,44 @@ function renderGkRadar(res){
   var coach = (res.rates || [])[0] || null;
   var sets = [];
   if (self)  sets.push({ v: self.v,  fill:'rgba(214,17,46,.22)', line:'#D6112E' });
-  if (coach) sets.push({ v: coach.v, fill:'rgba(47,168,79,.18)', line:'#2FA84F' });
   document.getElementById('gk-radar').innerHTML = sets.length ? radarSVG(sets)
     : '<div class="sub" style="margin:0">Оценок пока нет.</div>';
-  document.getElementById('gk-rsl').innerHTML = RADK.map(function(k){
-    var v = coach ? (coach.v[k[0]] || 5) : (self ? (self.v[k[0]] || 5) : 5);
-    return '<div class="sl"><div class="slh"><span>' + k[1] + '</span><b id="v-c' + k[0] + '">' + v + '</b></div>' +
-      '<input type="range" min="1" max="10" step="1" value="' + v + '" id="r-c' + k[0] + '" data-v="c' + k[0] + '">' +
-      '<div class="sle"><span>1</span><span>5</span><span>10</span></div></div>';
+  var gn = document.getElementById('gk-rnums');
+  if (gn) gn.innerHTML = RSEC.map(function(k){
+    var x = ratR(self) ? secAvg(ratR(self), k[0]) : null;
+    var y = ratR(coach) ? secAvg(ratR(coach), k[0]) : null;
+    return '<div><span>' + k[1] + '</span><b>' + (x !== null ? String(x).replace('.', ',') : '—') +
+           (y !== null ? ' <span style="color:#4FA765">· ' + String(y).replace('.', ',') + '</span>' : '') + '</b></div>';
   }).join('');
+  var rc = ratR(coach), rs2 = ratR(self);
+  var swb = document.getElementById('gk-sw');
+  if (swb) swb.innerHTML = (rc || rs2) ? swHTML(rc || rs2)
+    : '<div class="sub" style="margin:0">Появятся после первой оценки.</div>';
+
+  CDRAFT = {};
+  if (rc) RKEYS.forEach(function(k){ if (rc[k[0]]) CDRAFT[k[0]] = rc[k[0]]; });
+  document.getElementById('gk-rsl').innerHTML = ratEditor('cs', CDRAFT);
+  var gcm = document.getElementById('gk-cm');
+  if (gcm) gcm.value = ratCm(coach);
+}
+var CDRAFT = {};
+/* у тренера не перерисовываем весь список — только нажатую строку */
+function paintCS(key, v){
+  for (var i = 1; i <= 5; i++){
+    var b = document.querySelector('[data-act="cs:' + key + ':' + i + '"]');
+    if (b) b.className = (i === v) ? 'on' : '';
+  }
 }
 function coachRate(){
   if (!CUR) return;
-  var v = {};
-  RADK.forEach(function(k){ v[k[0]] = getSl('c' + k[0]) || 5; });
+  var done = 0;
+  RKEYS.forEach(function(k){ if (CDRAFT[k[0]]) done++; });
+  if (done < RKEYS.length) {
+    alertMsg('Оценено ' + done + ' из ' + RKEYS.length + '. Заполни все пункты.');
+    return;
+  }
+  var v = { sc: 5, r: {}, cm: val('gk-cm').trim() };
+  RKEYS.forEach(function(k){ v.r[k[0]] = CDRAFT[k[0]]; });
   haptic('medium');
   api({ a:'rate', uid: CUR, v: v }, function(res){
     if (!res || !res.ok){ alertMsg('Не удалось сохранить — нет связи.'); return; }
