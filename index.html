@@ -110,6 +110,31 @@
   .sw:last-child{border-bottom:0}
   .sw b{font-size:14px;color:#fff;flex:none}
   .sw .gr{color:#4FA765}
+  /* серия и награды */
+  .strk{display:flex;align-items:center;gap:14px;background:linear-gradient(135deg,#2A1116,#1C2027);
+        border:1px solid #5A2029;border-radius:14px;padding:14px 16px;margin-bottom:11px}
+  .strk .fire{font-size:30px;line-height:1}
+  .strk .n{font-size:30px;font-weight:800;color:#fff;line-height:1}
+  .strk .t{font-size:12.5px;color:var(--tx2);line-height:1.35;margin-top:3px}
+  .strk .t b{color:#E2606F}
+  .awd{display:flex;align-items:center;gap:11px;padding:10px 0;border-bottom:1px solid var(--line)}
+  .awd:last-child{border-bottom:0}
+  .awd .ic{flex:none;width:38px;height:38px;border-radius:11px;background:#12161C;border:1px solid var(--line);
+           display:flex;align-items:center;justify-content:center;font-size:17px;filter:grayscale(1);opacity:.45}
+  .awd.on .ic{background:#2A1116;border-color:#5A2029;filter:none;opacity:1}
+  .awd .tx{flex:1;font-size:12.5px;line-height:1.35;color:var(--tx2)}
+  .awd.on .tx{color:var(--tx)}
+  .awd .tx b{display:block;font-size:13.5px;color:#fff;margin-bottom:2px;font-weight:700}
+  .awd.on .tx b{color:#E2606F}
+  .awd .d{flex:none;font-size:11px;color:var(--tx2)}
+  /* струп */
+  .stw{font-size:40px;font-weight:800;text-align:center;letter-spacing:1px;
+       margin:18px 0;min-height:48px;line-height:48px;-webkit-user-select:none;user-select:none}
+  .stg{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:6px}
+  .stg button{height:54px;border-radius:12px;border:2px solid transparent;font-family:inherit;
+       font-size:0;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+  .stg button:active{transform:scale(.97)}
+  #st-pad.off{opacity:.35;pointer-events:none}
   .cal{display:grid;grid-template-columns:repeat(15,1fr);gap:4px;margin-top:12px}
   .cal i{display:block;aspect-ratio:1;border-radius:4px;background:#1C2027;border:1px solid var(--line)}
   .cal i.l1{background:#3A1A1F;border-color:#5A2029}
@@ -226,6 +251,13 @@
       <div class="qt" id="q-text"></div>
       <div class="qa" id="q-auth"></div>
     </div>
+    <div class="strk" id="h-streak" data-act="go:prog">
+      <div class="fire">🔥</div>
+      <div style="flex:1">
+        <div class="n" id="st-n">0</div>
+        <div class="t" id="st-t"></div>
+      </div>
+    </div>
     <div class="card">
       <h2>Чек-лист дня</h2>
       <div class="sub" style="margin:0 0 10px">Выполнил — отметь.</div>
@@ -242,6 +274,7 @@
       <button class="tile" data-act="go:tr"><e>🏒</e><b>Дневник занятий</b><i id="t-tr">—</i></button>
       <button class="tile" data-act="go:cog"><e>🔢</e><b>Таблица Шульте</b><i id="t-cog">—</i></button>
       <button class="tile" data-act="go:rx"><e>🧠</e><b>Реакция выбора</b><i id="t-rx">—</i></button>
+      <button class="tile" data-act="go:str"><e>🎨</e><b>Тест Струпа</b><i id="t-str">цвет букв, не слово</i></button>
       <button class="tile" data-act="go:goals"><e>🎯</e><b>Цели</b><i id="t-goals">—</i></button>
       <button class="tile" data-act="go:an"><e>🥅</e><b>Разбор игр</b><i id="t-an">—</i></button>
       <button class="tile" data-act="go:rad"><e>🕸</e><b>Оценка вратаря</b><i id="t-rad">—</i></button>
@@ -390,6 +423,43 @@
       </div>
       <div id="sv-bars"></div>
       <div class="list" id="sv-list" style="margin-top:10px"></div>
+    </div>
+  </section>
+
+  <!-- ТЕСТ СТРУПА -->
+  <section id="p-str" class="hide">
+    <h1>Тест Струпа</h1>
+    <div class="sub">Помехоустойчивость: называй цвет букв, а не слово.</div>
+    <div class="card">
+      <h2>Тренажёр</h2>
+      <div class="sub" style="margin:0">Появляется слово, написанное краской другого цвета.
+        Жми кнопку того цвета, <b style="color:#fff">которым написано</b>, а не того, что написано. Одна минута.</div>
+      <label>Уровень</label>
+      <div class="chips" id="st-lvl"></div>
+      <div id="st-pad" class="off">
+        <div class="stw" id="st-word">—</div>
+        <div class="stg" id="st-btns"></div>
+      </div>
+      <div class="stat" style="margin-top:12px">
+        <div><b id="st-time">60</b><span>секунд</span></div>
+        <div><b id="st-ok">0</b><span>верно</span></div>
+        <div><b id="st-err">0</b><span>ошибок</span></div>
+        <div><b id="st-skip">0</b><span>пропусков</span></div>
+      </div>
+      <button class="btn" id="st-btn" data-act="ststart">Начать</button>
+      <div class="sub" id="st-res" style="margin:10px 0 0"></div>
+    </div>
+    <div class="card">
+      <h2>Результаты</h2>
+      <div class="stat">
+        <div><b id="sr-best">—</b><span>лучшая точность</span></div>
+        <div><b id="sr-eff">—</b><span>помеха, мс</span></div>
+        <div><b id="sr-cnt">0</b><span>записей</span></div>
+      </div>
+      <div id="sr-bars"></div>
+      <div class="list" id="sr-list" style="margin-top:10px"></div>
+      <div class="sub" style="margin:12px 0 0">«Помеха» — насколько дольше отвечаешь, когда слово спорит с цветом.
+        Чем меньше, тем лучше держишь фокус на нужном признаке.</div>
     </div>
   </section>
 
@@ -598,6 +668,11 @@
       <h2>Что изменилось</h2>
       <div class="sub" style="margin:0 0 8px">Первые две недели → последние две.</div>
       <div class="list" id="pg-dyn"></div>
+    </div>
+    <div class="card">
+      <h2>Награды</h2>
+      <div class="sub" style="margin:0 0 8px" id="pg-awtop"></div>
+      <div id="pg-aw"></div>
     </div>
     <div class="card">
       <h2>Привычки за 30 дней</h2>
@@ -813,13 +888,13 @@ var SITS = ['Реагирование','Бросок с приёма','Брос�
             'Трафик','Подправление','Добивание','Выход 1 на 1','Блокирование','Клюшка','Буллит'];
 var NZ = ['Верх лев','Верх центр','Верх прав','Блин','Корпус','Ловушка','Низ лев','Домик','Низ прав'];
 
-var DB = { wb:[], tr:[], schulte:[], svet:[], goals:{season:null,months:{},days:[]}, gls:[], games:[], notes:[], me:{} };
+var DB = { wb:[], tr:[], schulte:[], svet:[], stroop:[], goals:{season:null,months:{},days:[]}, gls:[], games:[], notes:[], me:{} };
 var LIB = { m:[], q:[] };
 var today = new Date().toISOString().slice(0,10);
 var curMonth = today.slice(0,7);
 var trType = 0;
 
-var DATA_KEYS = ['wb','tr','schulte','svet','goals','gls','games','me'];
+var DATA_KEYS = ['wb','tr','schulte','svet','stroop','goals','gls','games','me'];
 
 function boot(){
   /* 1. поднимаем кэш — приложение открывается мгновенно и работает без сети */
@@ -867,10 +942,10 @@ function applyRole(){
 }
 
 /* ---------- навигация ---------- */
-var PAGES = ['home','wb','tr','cog','rx','goals','an','notes','me','coach','gk','lib','mat','game','rad','prog'];
+var PAGES = ['home','wb','tr','cog','rx','goals','an','notes','me','coach','gk','lib','mat','game','rad','prog','str'];
 var TITLES = { home:'', wb:'Самочувствие', tr:'Дневник занятий', cog:'Таблица Шульте',
   rx:'Реакция выбора', goals:'Цели', an:'Разбор игр', notes:'Заметки тренера',
-  me:'Профиль', coach:'Кабинет тренера', gk:'Карточка вратаря', lib:'Материалы', mat:'Материал', game:'Игра', rad:'Оценка вратаря', prog:'Мой прогресс' };
+  me:'Профиль', coach:'Кабинет тренера', gk:'Карточка вратаря', lib:'Материалы', mat:'Материал', game:'Игра', rad:'Оценка вратаря', prog:'Мой прогресс', str:'Тест Струпа' };
 var navStack = [];
 function go(page, back){
   if (!back && CUR_PAGE && CUR_PAGE !== page) navStack.push(CUR_PAGE);
@@ -998,6 +1073,9 @@ document.addEventListener('click', function(ev){
     else if (a[0] === 'radsave') saveRating();
     else if (a[0] === 'radk') { RADSEL = a[1]; renderRadar(); }
     else if (a[0] === 'schn') setSchN(a[1]);
+    else if (a[0] === 'ststart') startStroop();
+    else if (a[0] === 'stlvl') { if (!stRun){ stLvl = parseInt(a[1], 10); stLevels(); } }
+    else if (a[0] === 'st') stPress(a[1]);
     else if (a[0] === 'scale') { alertMsg(SCALE.map(function(x, i){ return i + ' — ' + x[1]; }).reverse().join('\n')); }
     else if (a[0] === 'sit') pickSit(parseInt(a[1],10));
     else if (a[0] === 'mesave') saveMe();
@@ -1454,6 +1532,7 @@ function ckToggle(i){
   ckTrim();
   haptic();
   renderCk();
+  renderStreak();
   save('goals', DB.goals, function(){});
 }
 function ckAuto(i){
@@ -1603,6 +1682,119 @@ function stopRx(){
 }
 
 function abortRx(){ if (rxRun) rxIdle('Начать'); }
+
+/* ---------- тест Струпа ---------- */
+var ST_COL = [
+  ['КРАСНЫЙ', '#E23B4A'],
+  ['СИНИЙ',   '#4C8DF6'],
+  ['ЗЕЛЁНЫЙ', '#3FB95C'],
+  ['ЖЁЛТЫЙ',  '#E9B021']
+];
+var ST_LVL = [['Лёгкий', 2500], ['Средний', 1800], ['Высокий', 1300]];
+var ST_SEC = 60, ST_GAP = 180;
+var stLvl = 1, stRun = false, stT = null, stTick = null;
+var stOk = 0, stErr = 0, stSkip = 0, stEnd = 0, stShown = 0, stAns = false;
+var stWord = 0, stInk = 0, stCong = false;
+var stRTc = [], stRTi = [];
+
+function stLevels(){
+  var box = document.getElementById('st-lvl');
+  if (!box) return;
+  box.innerHTML = ST_LVL.map(function(l, i){
+    return '<button data-act="stlvl:' + i + '"' + (stLvl === i ? ' class="on"' : '') + '>' + l[0] + '</button>';
+  }).join('');
+}
+function stButtons(){
+  var box = document.getElementById('st-btns');
+  if (!box) return;
+  var idx = [0, 1, 2, 3];
+  for (var i = idx.length - 1; i > 0; i--){ var j = Math.floor(Math.random() * (i + 1)); var t = idx[i]; idx[i] = idx[j]; idx[j] = t; }
+  box.innerHTML = idx.map(function(c){
+    return '<button data-act="st:' + c + '" style="background:' + ST_COL[c][1] + '"> </button>';
+  }).join('');
+}
+function stStats(){ setTxt('st-ok', stOk); setTxt('st-err', stErr); setTxt('st-skip', stSkip); }
+function stIdle(label){
+  clearTimeout(stT); clearInterval(stTick);
+  stRun = false;
+  lockScreen(false);
+  var w = document.getElementById('st-word');
+  if (w){ w.textContent = '—'; w.style.color = '#8A929B'; }
+  var pad = document.getElementById('st-pad'); if (pad) pad.className = 'off';
+  setTxt('st-btn', label); setTxt('st-time', ST_SEC);
+}
+function startStroop(){
+  if (stRun) return;
+  stRun = true;
+  stOk = stErr = stSkip = 0; stRTc = []; stRTi = [];
+  stEnd = Date.now() + ST_SEC * 1000;
+  setTxt('st-btn', 'Идёт тест…');
+  document.getElementById('st-res').textContent = '';
+  document.getElementById('st-pad').className = '';
+  stButtons();
+  lockScreen(true);
+  stStats();
+  stTick = setInterval(function(){
+    var left = Math.max(0, Math.ceil((stEnd - Date.now()) / 1000));
+    setTxt('st-time', left);
+    if (left <= 0) stopStroop();
+  }, 200);
+  stNext();
+}
+function stNext(){
+  if (!stRun) return;
+  if (Date.now() >= stEnd){ stopStroop(); return; }
+  /* каждая четвёртая проба — совпадающая, остальные конфликтные */
+  stCong = Math.random() < 0.25;
+  stWord = Math.floor(Math.random() * 4);
+  stInk = stCong ? stWord : (stWord + 1 + Math.floor(Math.random() * 3)) % 4;
+  stAns = false;
+  stShown = Date.now();
+  var w = document.getElementById('st-word');
+  w.textContent = ST_COL[stWord][0];
+  w.style.color = ST_COL[stInk][1];
+  stT = setTimeout(function(){
+    if (!stAns){ stSkip++; stStats(); }
+    stNext();
+  }, ST_LVL[stLvl][1]);
+}
+function stPress(c){
+  if (!stRun || stAns) return;
+  stAns = true;
+  var dt = Date.now() - stShown;
+  if (Number(c) === stInk){
+    stOk++;
+    (stCong ? stRTc : stRTi).push(dt);
+  } else stErr++;
+  haptic();
+  stStats();
+  var w = document.getElementById('st-word');
+  if (w){ w.textContent = '·'; w.style.color = '#8A929B'; }
+  clearTimeout(stT);
+  stT = setTimeout(function(){ stButtons(); stNext(); }, ST_GAP);
+}
+function stopStroop(){
+  if (!stRun) return;
+  var total = stOk + stErr + stSkip;
+  var mean = function(a){ return a.length ? Math.round(a.reduce(function(p, q){ return p + q; }, 0) / a.length) : null; };
+  var rc = mean(stRTc), ri = mean(stRTi);
+  var eff = (rc !== null && ri !== null) ? ri - rc : null;
+  var rt = mean(stRTc.concat(stRTi));
+  var acc = total ? Math.round(stOk / total * 100) : 0;
+  stIdle('Пройти ещё раз');
+
+  document.getElementById('st-res').innerHTML =
+    'Проб: <b style="color:#fff">' + total + '</b> · точность <b style="color:#fff">' + acc + '%</b>' +
+    (rt ? ' · среднее <b style="color:#fff">' + rt + ' мс</b>' : '') +
+    (eff !== null ? ' · помеха <b style="color:#fff">' + eff + ' мс</b>' : '');
+
+  DB.stroop.unshift({ d: today, ok: stOk, e: stErr, sk: stSkip, n: total,
+                      ms: ST_LVL[stLvl][1], rt: rt, rc: rc, ri: ri, eff: eff });
+  DB.stroop = DB.stroop.slice(0, 60);
+  ckAuto(1);
+  save('stroop', DB.stroop, function(){ haptic('medium'); render(); });
+}
+function abortStroop(){ if (stRun) stIdle('Начать'); }
 
 /* ---------- заметки ---------- */
 function addNote(){
@@ -1985,6 +2177,70 @@ function dayShift(iso, delta){
   dt.setUTCDate(dt.getUTCDate() + delta);
   return dt.toISOString().slice(0, 10);
 }
+var AWARDS = [
+  [5,  '🔥', 'Ты в игре',    'Пять дней подряд. Привычка началась.'],
+  [10, '⚙️', 'Система',      'Ежедневные простые вещи дают стабильный результат.'],
+  [20, '🧊', 'Стабильность', 'Стабильность — признак мастерства.'],
+  [30, '🏆', 'Лучший трудяга', 'Месяц без пропусков. Это уже характер.']
+];
+function awardFor(streak){
+  var cur = null;
+  AWARDS.forEach(function(a){ if (streak >= a[0]) cur = a; });
+  return cur;
+}
+function nextAward(streak){
+  for (var i = 0; i < AWARDS.length; i++) if (streak < AWARDS[i][0]) return AWARDS[i];
+  return null;
+}
+function awardsHTML(streak, best){
+  var top = Math.max(streak, best || 0);
+  return AWARDS.map(function(a){
+    var on = top >= a[0];
+    return '<div class="awd' + (on ? ' on' : '') + '"><div class="ic">' + a[1] + '</div>' +
+      '<div class="tx"><b>' + a[2] + '</b>' + a[3] + '</div>' +
+      '<div class="d">' + a[0] + ' ' + wordDay(a[0]) + '</div></div>';
+  }).join('');
+}
+/* серия подряд и лучшая серия за всё время */
+function streakInfo(){
+  var chk = (DB.goals && DB.goals.chk) || {};
+  var has = function(d){ return (chk[d] || []).length > 0; };
+  var cur = 0;
+  for (var i = 0; i < 400; i++){
+    var d = dayShift(today, -i);
+    if (has(d)) cur++;
+    else if (i === 0) continue;            /* сегодня ещё не поздно */
+    else break;
+  }
+  var days = Object.keys(chk).filter(function(d){ return (chk[d] || []).length > 0; }).sort();
+  var best = 0, run = 0, prev = null;
+  days.forEach(function(d){
+    run = (prev && dayShift(prev, 1) === d) ? run + 1 : 1;
+    if (run > best) best = run;
+    prev = d;
+  });
+  return { cur: cur, best: best, today: has(today) };
+}
+function renderStreak(){
+  var box = document.getElementById('h-streak');
+  if (!box) return;
+  var si = streakInfo();
+  setTxt('st-n', String(si.cur));
+  var t = document.getElementById('st-t');
+  var got = awardFor(si.cur), nx = nextAward(si.cur);
+  var line;
+  if (si.cur === 0) line = 'дней подряд. Отметь хотя бы один пункт — и серия пойдёт.';
+  else {
+    line = wordDay(si.cur) + ' подряд';
+    if (got) line += ' · <b>' + got[2] + '</b>';
+    if (nx) line += '. До «' + nx[2] + '» — ' + (nx[0] - si.cur) + ' ' + wordDay(nx[0] - si.cur);
+    else line += '. Выше уже некуда — держи.';
+    if (!si.today) line += '. Сегодня ещё не отмечался!';
+  }
+  t.innerHTML = line;
+  box.style.opacity = si.cur ? '1' : '.75';
+}
+
 function wordDay(n){
   var d = n % 100; if (d > 10 && d < 20) return 'дней';
   d = n % 10; if (d === 1) return 'день'; if (d >= 2 && d <= 4) return 'дня'; return 'дней';
@@ -2053,7 +2309,10 @@ function renderProg(){
     dynRow('Шульте ' + schSide() + '×' + schSide() + ', с', halfAvg(sch, 30, 't'), '', true),
     dynRow('«Светофон», % верных', halfAvg(sv, 30, function(x){
       return (x.n ? x.ok / x.n * 100 : null); }), '', false),
-    dynRow('«Светофон», реакция мс', halfAvg(sv, 30, 'rt'), '', true)
+    dynRow('«Светофон», реакция мс', halfAvg(sv, 30, 'rt'), '', true),
+    dynRow('Струп, % верных', halfAvg(DB.stroop || [], 30, function(x){
+      return (x.n ? x.ok / x.n * 100 : null); }), '', false),
+    dynRow('Струп, помеха мс', halfAvg(DB.stroop || [], 30, 'eff'), '', true)
   ].filter(function(x){ return x; });
   document.getElementById('pg-dyn').innerHTML = rows.join('') ||
     '<div>Пока мало записей — заполняй дневник и тесты.</div>';
@@ -2068,6 +2327,11 @@ function renderProg(){
     var c2 = cnt[ix], col = c2 >= 20 ? '#4FA765' : (c2 >= 10 ? '#E9A400' : '#E2606F');
     return '<div><span>' + t + '</span><b style="color:' + col + '">' + c2 + '</b></div>';
   }).join('');
+
+  var si = streakInfo();
+  var awb = document.getElementById('pg-aw');
+  if (awb) awb.innerHTML = awardsHTML(si.cur, si.best);
+  setTxt('pg-awtop', 'Сейчас подряд: ' + si.cur + ' · лучшая серия: ' + si.best);
 
   var l49 = (DB.schulte || []).filter(function(x){ return Number(x.n) === 49; });
   var best49 = l49.length ? l49.reduce(function(a, x){ return Math.min(a, x.t); }, 999) : null;
@@ -2187,6 +2451,24 @@ function render(){
     return '<div><span>' + dm(x.d) + '</span><b>' + x.t + ' с · ошибок ' + x.e + '</b></div>';
   }).join('') || '<div>На этом размере попыток пока нет.</div>';
 
+  stLevels();
+  var sp = DB.stroop || [];
+  document.getElementById('sr-cnt').textContent = String(sp.length);
+  var accs = sp.map(function(x){ return x.n ? Math.round(x.ok / x.n * 100) : 0; });
+  document.getElementById('sr-best').textContent = accs.length ? Math.max.apply(null, accs) + '%' : '—';
+  var effs = sp.filter(function(x){ return x.eff !== null && x.eff !== undefined; }).slice(0, 7).map(function(x){ return x.eff; });
+  document.getElementById('sr-eff').textContent = effs.length ? Math.round(avg(effs)) : '—';
+  var sser2 = sp.slice(0, 14).reverse();
+  document.getElementById('sr-bars').innerHTML = lineSVG(sser2.map(function(x){
+    return { d: dm(x.d), v: x.n ? Math.round(x.ok / x.n * 100) : 0 };
+  }), { min: 0, max: 100, last: sser2.length ? (sser2[sser2.length-1].n ? Math.round(sser2[sser2.length-1].ok / sser2[sser2.length-1].n * 100) + '%' : '') : '' });
+  document.getElementById('sr-list').innerHTML = sp.slice(0, 8).map(function(x){
+    var a = x.n ? Math.round(x.ok / x.n * 100) : 0;
+    return '<div><span>' + dm(x.d) + '</span><b>' + a + '% · ' + (x.rt || '—') + ' мс' +
+           (x.eff !== null && x.eff !== undefined ? ' · помеха ' + x.eff : '') + '</b></div>';
+  }).join('') || '<div>Попыток пока нет.</div>';
+  setTxt('t-str', sp.length ? 'последний: ' + (sp[0].n ? Math.round(sp[0].ok / sp[0].n * 100) : 0) + '% верно' : 'цвет букв, не слово');
+
   document.getElementById('sv-cnt').textContent = String(DB.svet.length);
   var miss = function(x){ return (x.e || 0) + (x.sk || 0); };
   document.getElementById('sv-best').textContent = DB.svet.length ? String(Math.min.apply(null, DB.svet.map(miss))) : '—';
@@ -2213,6 +2495,7 @@ function render(){
   }).join('') || '<div class="sub" style="margin:0">Заметок пока нет.</div>';
 
   renderCk();
+  renderStreak();
   renderProg();
   renderQuote();
   var lr = lastRate('self'), lrr = ratR(lr);
