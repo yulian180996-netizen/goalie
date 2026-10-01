@@ -272,9 +272,7 @@
       <button class="tile wide" data-act="go:prog"><e>📈</e><b>Мой прогресс</b><i id="t-prog">дисциплина и динамика показателей</i></button>
       <button class="tile" data-act="go:wb"><e>☀️</e><b>Самочувствие</b><i id="t-wb">—</i></button>
       <button class="tile" data-act="go:tr"><e>🏒</e><b>Дневник занятий</b><i id="t-tr">—</i></button>
-      <button class="tile" data-act="go:cog"><e>🔢</e><b>Таблица Шульте</b><i id="t-cog">—</i></button>
-      <button class="tile" data-act="go:rx"><e>🧠</e><b>Реакция выбора</b><i id="t-rx">—</i></button>
-      <button class="tile" data-act="go:str"><e>🎨</e><b>Тест Струпа</b><i id="t-str">цвет букв, не слово</i></button>
+      <button class="tile wide" data-act="go:cgn"><e>🧠</e><b>Когнитивка</b><i id="t-cgn">Шульте · реакция выбора · Струп</i></button>
       <button class="tile" data-act="go:goals"><e>🎯</e><b>Цели</b><i id="t-goals">—</i></button>
       <button class="tile" data-act="go:an"><e>🥅</e><b>Разбор игр</b><i id="t-an">—</i></button>
       <button class="tile" data-act="go:rad"><e>🕸</e><b>Оценка вратаря</b><i id="t-rad">—</i></button>
@@ -351,7 +349,28 @@
     </div>
   </section>
 
-  <!-- КОГНИТИВКА -->
+  <!-- КОГНИТИВКА: раздел с тремя тестами -->
+  <section id="p-cgn" class="hide">
+    <h1>Когнитивка</h1>
+    <div class="sub">Внимание, реакция и помехоустойчивость. Мерим каждый день.</div>
+    <div class="tiles">
+      <button class="tile wide" data-act="go:cog"><e>🔢</e><b>Таблица Шульте</b><i id="t-cog">—</i></button>
+      <button class="tile wide" data-act="go:rx"><e>🎯</e><b>Реакция выбора</b><i id="t-rx">—</i></button>
+      <button class="tile wide" data-act="go:str"><e>🎨</e><b>Тест Струпа</b><i id="t-str">цвет букв, не слово</i></button>
+    </div>
+    <div class="card" style="margin-top:12px">
+      <h2>Что мерит каждый</h2>
+      <div class="list">
+        <div><span>Шульте</span><b>объём и скорость сканирования</b></div>
+        <div><span>Реакция выбора</span><b>скорость решения под временем</b></div>
+        <div><span>Струп</span><b>помехоустойчивость</b></div>
+      </div>
+      <div class="sub" style="margin:12px 0 0">Три разных качества — заменять одно другим не стоит.
+        Лучший порядок: Шульте на разминку, потом реакция, Струп последним — он самый утомительный.</div>
+    </div>
+  </section>
+
+  <!-- ТАБЛИЦА ШУЛЬТЕ -->
   <section id="p-cog" class="hide">
     <h1>Таблица Шульте</h1>
     <div class="sub">Внимание и скорость сканирования.</div>
@@ -359,7 +378,7 @@
       <h2>Тренажёр</h2>
       <div class="chips" style="margin:0 0 10px">
         <button data-act="schn:36" id="sn36">6×6</button>
-        <button data-act="schn:49" id="sn49">7×7 · цель октября</button>
+        <button data-act="schn:49" id="sn49">7×7</button>
       </div>
       <div class="sub" style="margin:0">Найди числа от 1 до <b id="sch-max" style="color:#fff">36</b> по порядку. Найденные не подсвечиваются — смотри в центр.</div>
       <div class="big"><span id="timer">0.0</span> с</div>
@@ -942,10 +961,10 @@ function applyRole(){
 }
 
 /* ---------- навигация ---------- */
-var PAGES = ['home','wb','tr','cog','rx','goals','an','notes','me','coach','gk','lib','mat','game','rad','prog','str'];
+var PAGES = ['home','wb','tr','cog','rx','goals','an','notes','me','coach','gk','lib','mat','game','rad','prog','str','cgn'];
 var TITLES = { home:'', wb:'Самочувствие', tr:'Дневник занятий', cog:'Таблица Шульте',
   rx:'Реакция выбора', goals:'Цели', an:'Разбор игр', notes:'Заметки тренера',
-  me:'Профиль', coach:'Кабинет тренера', gk:'Карточка вратаря', lib:'Материалы', mat:'Материал', game:'Игра', rad:'Оценка вратаря', prog:'Мой прогресс', str:'Тест Струпа' };
+  me:'Профиль', coach:'Кабинет тренера', gk:'Карточка вратаря', lib:'Материалы', mat:'Материал', game:'Игра', rad:'Оценка вратаря', prog:'Мой прогресс', str:'Тест Струпа', cgn:'Когнитивка' };
 var navStack = [];
 function go(page, back){
   if (!back && CUR_PAGE && CUR_PAGE !== page) navStack.push(CUR_PAGE);
@@ -2467,6 +2486,11 @@ function render(){
     return '<div><span>' + dm(x.d) + '</span><b>' + a + '% · ' + (x.rt || '—') + ' мс' +
            (x.eff !== null && x.eff !== undefined ? ' · помеха ' + x.eff : '') + '</b></div>';
   }).join('') || '<div>Попыток пока нет.</div>';
+  var cg = [];
+  if (DB.schulte && DB.schulte.length) cg.push('Шульте ' + DB.schulte[0].t + ' с');
+  if (DB.svet && DB.svet.length) cg.push('реакция ' + (DB.svet[0].rt || '—') + ' мс');
+  if (sp.length) cg.push('Струп ' + (sp[0].n ? Math.round(sp[0].ok / sp[0].n * 100) : 0) + '%');
+  setTxt('t-cgn', cg.length ? cg.join(' · ') : 'Шульте · реакция выбора · Струп');
   setTxt('t-str', sp.length ? 'последний: ' + (sp[0].n ? Math.round(sp[0].ok / sp[0].n * 100) : 0) + '% верно' : 'цвет букв, не слово');
 
   document.getElementById('sv-cnt').textContent = String(DB.svet.length);
