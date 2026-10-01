@@ -65,6 +65,8 @@
   input[type=range]::-moz-range-thumb{width:20px;height:20px;border-radius:50%;background:var(--red);border:2px solid #fff}
   /* Шульте */
   #grid{display:grid;grid-template-columns:repeat(6,1fr);gap:6px;margin-top:10px}
+  #grid.g7{grid-template-columns:repeat(7,1fr);gap:5px}
+  #grid.g7 button{font-size:14px;border-radius:8px}
   #grid button{aspect-ratio:1;background:#12161C;border:1px solid var(--line);color:var(--tx);
        border-radius:9px;font-size:16px;font-weight:600;cursor:pointer;font-family:inherit;
        touch-action:manipulation;-webkit-user-select:none;user-select:none;
@@ -108,6 +110,12 @@
   .sw:last-child{border-bottom:0}
   .sw b{font-size:14px;color:#fff;flex:none}
   .sw .gr{color:#4FA765}
+  .cal{display:grid;grid-template-columns:repeat(15,1fr);gap:4px;margin-top:12px}
+  .cal i{display:block;aspect-ratio:1;border-radius:4px;background:#1C2027;border:1px solid var(--line)}
+  .cal i.l1{background:#3A1A1F;border-color:#5A2029}
+  .cal i.l2{background:#8E1326;border-color:#8E1326}
+  .cal i.l3{background:var(--red);border-color:var(--red)}
+  .cal i.tod{box-shadow:0 0 0 2px #fff inset}
   .chips{display:flex;flex-wrap:wrap;gap:6px}
   .chips button{background:#12161C;border:1px solid var(--line);color:var(--tx2);border-radius:9px;
        padding:8px 10px;font-size:12.5px;cursor:pointer}
@@ -229,6 +237,7 @@
       <button class="tile wide hide" id="coach-entry" data-act="roster"
               style="background:#2A1116;border-color:#5A2029">
         <e>🧤</e><b>Кабинет тренера</b><i>все вратари, их данные и заметки</i></button>
+      <button class="tile wide" data-act="go:prog"><e>📈</e><b>Мой прогресс</b><i id="t-prog">дисциплина и динамика показателей</i></button>
       <button class="tile" data-act="go:wb"><e>☀️</e><b>Самочувствие</b><i id="t-wb">—</i></button>
       <button class="tile" data-act="go:tr"><e>🏒</e><b>Дневник занятий</b><i id="t-tr">—</i></button>
       <button class="tile" data-act="go:cog"><e>🔢</e><b>Таблица Шульте</b><i id="t-cog">—</i></button>
@@ -314,8 +323,12 @@
     <h1>Таблица Шульте</h1>
     <div class="sub">Внимание и скорость сканирования.</div>
     <div class="card">
-      <h2>Таблица Шульте 6×6</h2>
-      <div class="sub" style="margin:0">Найди числа от 1 до 36 по порядку. Найденные не подсвечиваются — смотри в центр.</div>
+      <h2>Тренажёр</h2>
+      <div class="chips" style="margin:0 0 10px">
+        <button data-act="schn:36" id="sn36">6×6</button>
+        <button data-act="schn:49" id="sn49">7×7 · цель октября</button>
+      </div>
+      <div class="sub" style="margin:0">Найди числа от 1 до <b id="sch-max" style="color:#fff">36</b> по порядку. Найденные не подсвечиваются — смотри в центр.</div>
       <div class="big"><span id="timer">0.0</span> с</div>
       <div class="sub" style="text-align:center;margin:0">
         Ищем: <b id="next-num" style="color:#fff">1</b> · ошибок: <b id="errs" style="color:#fff">0</b>
@@ -564,6 +577,36 @@
     <div class="card">
       <h2>История оценок</h2>
       <div class="list" id="rad-list"></div>
+    </div>
+  </section>
+
+  <!-- МОЙ ПРОГРЕСС -->
+  <section id="p-prog" class="hide">
+    <h1>Мой прогресс</h1>
+    <div class="sub">Как часто ты работаешь в приложении и что меняется в показателях.</div>
+    <div class="card">
+      <h2>Дисциплина за 30 дней</h2>
+      <div class="stat">
+        <div><b id="pg-days">—</b><span>дней из 30</span></div>
+        <div><b id="pg-pct">—</b><span>чек-лист</span></div>
+        <div><b id="pg-streak">—</b><span>дней подряд</span></div>
+      </div>
+      <div class="cal" id="pg-cal"></div>
+      <div class="sub" id="pg-note" style="margin:12px 0 0"></div>
+    </div>
+    <div class="card">
+      <h2>Что изменилось</h2>
+      <div class="sub" style="margin:0 0 8px">Первые две недели → последние две.</div>
+      <div class="list" id="pg-dyn"></div>
+    </div>
+    <div class="card">
+      <h2>Привычки за 30 дней</h2>
+      <div class="sub" style="margin:0 0 8px">Сколько раз закрыл каждый пункт.</div>
+      <div class="list" id="pg-hab"></div>
+    </div>
+    <div class="card">
+      <h2>Цель октября</h2>
+      <div id="pg-goal"></div>
     </div>
   </section>
 
@@ -824,10 +867,10 @@ function applyRole(){
 }
 
 /* ---------- навигация ---------- */
-var PAGES = ['home','wb','tr','cog','rx','goals','an','notes','me','coach','gk','lib','mat','game','rad'];
+var PAGES = ['home','wb','tr','cog','rx','goals','an','notes','me','coach','gk','lib','mat','game','rad','prog'];
 var TITLES = { home:'', wb:'Самочувствие', tr:'Дневник занятий', cog:'Таблица Шульте',
   rx:'Реакция выбора', goals:'Цели', an:'Разбор игр', notes:'Заметки тренера',
-  me:'Профиль', coach:'Кабинет тренера', gk:'Карточка вратаря', lib:'Материалы', mat:'Материал', game:'Игра', rad:'Оценка вратаря' };
+  me:'Профиль', coach:'Кабинет тренера', gk:'Карточка вратаря', lib:'Материалы', mat:'Материал', game:'Игра', rad:'Оценка вратаря', prog:'Мой прогресс' };
 var navStack = [];
 function go(page, back){
   if (!back && CUR_PAGE && CUR_PAGE !== page) navStack.push(CUR_PAGE);
@@ -954,6 +997,7 @@ document.addEventListener('click', function(ev){
     else if (a[0] === 'gdelgame') delGame();
     else if (a[0] === 'radsave') saveRating();
     else if (a[0] === 'radk') { RADSEL = a[1]; renderRadar(); }
+    else if (a[0] === 'schn') setSchN(a[1]);
     else if (a[0] === 'scale') { alertMsg(SCALE.map(function(x, i){ return i + ' — ' + x[1]; }).reverse().join('\n')); }
     else if (a[0] === 'sit') pickSit(parseInt(a[1],10));
     else if (a[0] === 'mesave') saveMe();
@@ -1390,7 +1434,7 @@ var CHECKS = [
   'Визуализирую успешные моменты, когда надеваю форму (вход в ОБС)',
   'Контролирую дыхание (саморегуляция)',
   'Заполнил дневник занятия',
-  'Посмотрел видео с тренировки и заметки тренера',
+  'Читаю книгу',
   'Проверил цели, что выполнил, поставил фокус на следующее занятие'
 ];
 
@@ -1609,14 +1653,36 @@ function delDay(i){ DB.goals.days.splice(i,1); save('goals', DB.goals, function(
 
 /* ---------- Шульте ---------- */
 var order = [], next = 1, errs = 0, t0 = 0, tick = null, running = false;
+var SCH_N = 36;                        /* 36 — 6×6, 49 — 7×7 */
+try { SCH_N = Number(localStorage.getItem('schn')) === 49 ? 49 : 36; } catch(e){}
+
+function setSchN(n){
+  if (running) return;
+  SCH_N = (Number(n) === 49) ? 49 : 36;
+  try { localStorage.setItem('schn', String(SCH_N)); } catch(e){}
+  haptic();
+  buildGrid(true);
+  render();
+}
+function schSide(){ return SCH_N === 49 ? 7 : 6; }
+function schList(){
+  return (DB.schulte || []).filter(function(x){ return (Number(x.n) || 36) === SCH_N; });
+}
+
 function buildGrid(preview){
   var nums = [];
-  for (var i=1;i<=36;i++) nums.push(i);
+  for (var i=1;i<=SCH_N;i++) nums.push(i);
   for (var j=nums.length-1;j>0;j--){ var k = Math.floor(Math.random()*(j+1)); var t=nums[j]; nums[j]=nums[k]; nums[k]=t; }
   order = nums;
   var html = '';
-  for (var q=0;q<36;q++) html += '<button id="c' + q + '" data-act="hit:' + q + '">' + nums[q] + '</button>';
-  document.getElementById('grid').innerHTML = html;
+  for (var q=0;q<SCH_N;q++) html += '<button id="c' + q + '" data-act="hit:' + q + '">' + nums[q] + '</button>';
+  var gr = document.getElementById('grid');
+  gr.className = (SCH_N === 49) ? 'g7' : '';
+  gr.innerHTML = html;
+  setTxt('sch-max', String(SCH_N));
+  var b36 = document.getElementById('sn36'), b49 = document.getElementById('sn49');
+  if (b36) b36.className = (SCH_N === 36) ? 'on' : '';
+  if (b49) b49.className = (SCH_N === 49) ? 'on' : '';
   next = 1; errs = 0; running = !preview;
   document.getElementById('next-num').textContent = '1';
   document.getElementById('errs').textContent = '0';
@@ -1634,8 +1700,8 @@ function hit(idx){
   if (order[idx] === next){
     haptic();                                  /* найденное число не подсвечиваем */
     next++;
-    document.getElementById('next-num').textContent = String(Math.min(next,36));
-    if (next > 36) finishSchulte();
+    document.getElementById('next-num').textContent = String(Math.min(next, SCH_N));
+    if (next > SCH_N) finishSchulte();
   } else {
     errs++; document.getElementById('errs').textContent = String(errs);
     btn.className = 'bad'; haptic('heavy');
@@ -1645,7 +1711,7 @@ function hit(idx){
 function finishSchulte(){
   running = false; clearInterval(tick);
   var sec = Math.round((Date.now()-t0)/100)/10;
-  DB.schulte.unshift({ d: today, t: sec, e: errs });
+  DB.schulte.unshift({ d: today, t: sec, e: errs, n: SCH_N });
   DB.schulte = DB.schulte.slice(0,60);
   ckAuto(1);
   save('schulte', DB.schulte, function(){
@@ -1655,7 +1721,10 @@ function finishSchulte(){
     render();
   });
 }
-function bestSchulte(){ return DB.schulte.length ? DB.schulte.reduce(function(a,x){ return Math.min(a,x.t); }, 999) : 999; }
+function bestSchulte(){
+  var l = schList();
+  return l.length ? l.reduce(function(a,x){ return Math.min(a,x.t); }, 999) : 999;
+}
 
 /* ---------- аналитика голов ---------- */
 var anPick = { x:null, y:null, z:null, s:null };
@@ -1910,6 +1979,107 @@ function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').rep
 function setTxt(id, t){ var e = document.getElementById(id); if (e) e.textContent = t; }
 function cut(s2, n){ s2 = String(s2); return s2.length > n ? s2.slice(0, n - 1) + '…' : s2; }
 function human(d){ return d.slice(8,10) + '.' + d.slice(5,7) + '.' + d.slice(0,4); }
+function dayShift(iso, delta){
+  var p = iso.split('-');
+  var dt = new Date(Date.UTC(+p[0], +p[1] - 1, +p[2]));
+  dt.setUTCDate(dt.getUTCDate() + delta);
+  return dt.toISOString().slice(0, 10);
+}
+function wordDay(n){
+  var d = n % 100; if (d > 10 && d < 20) return 'дней';
+  d = n % 10; if (d === 1) return 'день'; if (d >= 2 && d <= 4) return 'дня'; return 'дней';
+}
+
+/* ---------- мой прогресс ---------- */
+function halfAvg(list, days, key){
+  var from = dayShift(today, -days + 1), mid = dayShift(today, -Math.floor(days / 2));
+  var a = [], b = [];
+  (list || []).forEach(function(x){
+    if (!x || !x.d || x.d < from) return;
+    var v = (typeof key === 'function') ? key(x) : Number(x[key]);
+    if (v === null || v === undefined || isNaN(v)) return;
+    (x.d < mid ? a : b).push(v);
+  });
+  return { a: a.length ? avg(a) : null, b: b.length ? avg(b) : null, na: a.length, nb: b.length };
+}
+function dynRow(name, r, unit, lessIsBetter){
+  if (r.a === null && r.b === null) return '';
+  var f = function(v){ return v === null ? '—' : fmt(v).replace('-', '−') + (unit || ''); };
+  var tag = '';
+  if (r.a !== null && r.b !== null){
+    var diff = r.b - r.a;
+    var good = lessIsBetter ? diff < 0 : diff > 0;
+    if (Math.abs(diff) >= 0.05){
+      tag = ' <span style="color:' + (good ? '#4FA765' : '#E2606F') + '">' +
+            (diff > 0 ? '+' : '−') + fmt(Math.abs(diff)) + '</span>';
+    } else tag = ' <span style="color:#8A929B">без изменений</span>';
+  }
+  return '<div><span>' + name + '</span><b>' + f(r.a) + ' → ' + f(r.b) + tag + '</b></div>';
+}
+function renderProg(){
+  var box = document.getElementById('pg-cal');
+  if (!box) return;
+  var chk = (DB.goals && DB.goals.chk) || {};
+  var cells = '', filled = 0, sum = 0, streak = 0, broken = false;
+  for (var i = 29; i >= 0; i--){
+    var d = dayShift(today, -i), n = (chk[d] || []).length;
+    var cls = n === 0 ? '' : (n <= 2 ? 'l1' : (n <= 5 ? 'l2' : 'l3'));
+    cells += '<i class="' + cls + (i === 0 ? ' tod' : '') + '" title="' + dm(d) + ': ' + n + '"></i>';
+    if (n > 0){ filled++; sum += n; }
+  }
+  for (var j = 0; j < 30; j++){
+    var dd = dayShift(today, -j);
+    if ((chk[dd] || []).length > 0) streak++;
+    else if (j === 0) continue;          /* сегодня ещё можно закрыть */
+    else break;
+  }
+  box.innerHTML = cells;
+  setTxt('pg-days', String(filled));
+  setTxt('pg-pct', filled ? Math.round(sum / filled / CHECKS.length * 100) + '%' : '—');
+  setTxt('pg-streak', String(streak));
+
+  var note;
+  if (filled >= 24) note = 'Отличная дисциплина. Так и держи — на этих данных уже можно строить выводы.';
+  else if (filled >= 18) note = 'Хорошо, но до цели не хватает. Ориентир — 24 дня из 30.';
+  else if (filled >= 10) note = 'Половина месяца пропущена. Динамику по таким данным посчитать трудно.';
+  else note = 'Данных почти нет. Начни с простого: отмечаться каждый день, пусть даже один пункт.';
+  setTxt('pg-note', note);
+
+  var wb = DB.wb || [], sch = schList(), sv = DB.svet || [];
+  var rows = [
+    dynRow('Сон, ч', halfAvg(wb, 30, 'sl'), '', false),
+    dynRow('Готовность', halfAvg(wb, 30, function(x){ return (x.v || {}).rd; }), '', false),
+    dynRow('Усталость', halfAvg(wb, 30, function(x){ return (x.v || {}).f; }), '', true),
+    dynRow('Шульте ' + schSide() + '×' + schSide() + ', с', halfAvg(sch, 30, 't'), '', true),
+    dynRow('«Светофон», % верных', halfAvg(sv, 30, function(x){
+      return (x.n ? x.ok / x.n * 100 : null); }), '', false),
+    dynRow('«Светофон», реакция мс', halfAvg(sv, 30, 'rt'), '', true)
+  ].filter(function(x){ return x; });
+  document.getElementById('pg-dyn').innerHTML = rows.join('') ||
+    '<div>Пока мало записей — заполняй дневник и тесты.</div>';
+
+  var cnt = [];
+  for (var c = 0; c < CHECKS.length; c++) cnt.push(0);
+  for (var k2 = 0; k2 < 30; k2++){
+    var key = dayShift(today, -k2);
+    (chk[key] || []).forEach(function(ix){ if (cnt[ix] !== undefined) cnt[ix]++; });
+  }
+  document.getElementById('pg-hab').innerHTML = CHECKS.map(function(t, ix){
+    var c2 = cnt[ix], col = c2 >= 20 ? '#4FA765' : (c2 >= 10 ? '#E9A400' : '#E2606F');
+    return '<div><span>' + t + '</span><b style="color:' + col + '">' + c2 + '</b></div>';
+  }).join('');
+
+  var l49 = (DB.schulte || []).filter(function(x){ return Number(x.n) === 49; });
+  var best49 = l49.length ? l49.reduce(function(a, x){ return Math.min(a, x.t); }, 999) : null;
+  document.getElementById('pg-goal').innerHTML =
+    '<div class="goal"><div class="t">Таблица Шульте 7×7</div>' +
+    '<div class="c">49 чисел вместо 36. Поле шире, периферию держать труднее. ' +
+    'Переключись на 7×7 в разделе «Таблица Шульте» и мерься каждый день.</div></div>' +
+    '<div class="list">' +
+    '<div><span>Попыток на 7×7</span><b>' + l49.length + '</b></div>' +
+    '<div><span>Лучший результат</span><b>' + (best49 !== null ? best49 + ' с' : '—') + '</b></div>' +
+    '</div>';
+}
 function dm(d){ return d.slice(8,10) + '.' + d.slice(5,7); }
 
 /* ---------- отрисовка ---------- */
@@ -2004,17 +2174,18 @@ function render(){
   }).join('') || '<div class="sub" style="margin:0">Целей пока нет.</div>';
 
   /* когнитивка */
-  document.getElementById('sch-cnt').textContent = String(DB.schulte.length);
-  document.getElementById('sch-best').textContent = DB.schulte.length ? String(bestSchulte()) : '—';
-  var s7 = DB.schulte.slice(0,7).map(function(x){ return x.t; });
+  var sl = schList();
+  document.getElementById('sch-cnt').textContent = String(sl.length);
+  document.getElementById('sch-best').textContent = sl.length ? String(bestSchulte()) : '—';
+  var s7 = sl.slice(0,7).map(function(x){ return x.t; });
   document.getElementById('sch-avg').textContent = s7.length ? fmt(avg(s7)) : '—';
-  var sser = DB.schulte.slice(0,14).reverse();
+  var sser = sl.slice(0,14).reverse();
   document.getElementById('sch-bars').innerHTML = lineSVG(sser.map(function(x){
     return { d: dm(x.d), v: x.t };
   }), { last: sser.length ? sser[sser.length-1].t + ' с' : '' });
-  document.getElementById('sch-list').innerHTML = DB.schulte.slice(0,8).map(function(x){
+  document.getElementById('sch-list').innerHTML = sl.slice(0,8).map(function(x){
     return '<div><span>' + dm(x.d) + '</span><b>' + x.t + ' с · ошибок ' + x.e + '</b></div>';
-  }).join('') || '<div>Попыток пока нет.</div>';
+  }).join('') || '<div>На этом размере попыток пока нет.</div>';
 
   document.getElementById('sv-cnt').textContent = String(DB.svet.length);
   var miss = function(x){ return (x.e || 0) + (x.sk || 0); };
@@ -2042,6 +2213,7 @@ function render(){
   }).join('') || '<div class="sub" style="margin:0">Заметок пока нет.</div>';
 
   renderCk();
+  renderProg();
   renderQuote();
   var lr = lastRate('self'), lrr = ratR(lr);
   setTxt('t-rad', lrr
