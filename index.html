@@ -282,6 +282,47 @@
   .ck.on .ckt{color:var(--okTx3)}
   .ckbar{height:6px;background:var(--bg2);border-radius:3px;overflow:hidden;margin-top:4px}
   .ckbar i{display:block;height:100%;background:var(--ok);border-radius:3px;transition:width .2s}
+  /* слежение за шариками */
+  .motbox{position:relative;background:var(--bg3);border:1px solid var(--line);
+          border-radius:14px;overflow:hidden;margin-top:10px;touch-action:manipulation}
+  .motbox canvas{display:block;width:100%;height:auto}
+  .motbox .ov{position:absolute;left:0;top:0;right:0;bottom:0;display:flex;
+       align-items:center;justify-content:center;flex-direction:column;gap:6px;
+       background:rgba(14,18,22,.72);color:#fff;text-align:center;padding:18px}
+  body.lt .motbox .ov{background:rgba(255,255,255,.82);color:var(--tx)}
+  .motbox .ov b{font-size:19px;font-weight:800}
+  .motbox .ov span{font-size:12.5px;color:var(--tx2);line-height:1.4;max-width:260px}
+  .motbox .ov.hide{display:none}
+  .motbar{display:flex;gap:8px;margin-top:9px}
+  .motbar div{flex:1;background:var(--bg2);border:1px solid var(--line);border-radius:10px;
+       padding:9px 6px;text-align:center}
+  .motbar b{display:block;font-size:17px;font-weight:800;color:var(--w)}
+  .motbar span{font-size:10px;color:var(--tx2)}
+  /* план занятия */
+  .pgw{position:relative;margin-bottom:10px;border-radius:12px;overflow:hidden;
+       background:var(--bg3);border:1px solid var(--line)}
+  .pgw img{width:100%;display:block;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;
+           pointer-events:none}
+  .pgw .wm{position:absolute;left:0;top:0;right:0;bottom:0;pointer-events:none;
+           background-repeat:repeat;background-position:center}
+  .pgw .pn{position:absolute;right:8px;bottom:8px;background:rgba(0,0,0,.55);color:#fff;
+           font-size:10.5px;border-radius:6px;padding:3px 7px}
+  .tmr{display:flex;align-items:center;gap:11px;background:var(--roseBg);border:1px solid var(--roseLn);
+       border-radius:13px;padding:12px 14px;margin-bottom:11px}
+  .tmr .ic{font-size:22px;flex:none}
+  .tmr b{display:block;font-size:15px;color:var(--w)}
+  .tmr span{display:block;font-size:11.5px;color:var(--tx2);line-height:1.35;margin-top:2px}
+  .pupl{border:1px dashed var(--line);border-radius:12px;padding:16px;text-align:center;
+        background:var(--bg2);margin-bottom:10px}
+  .pupl input{display:none}
+  .pupl label{display:inline-block;background:var(--sec);color:var(--tx);border-radius:10px;
+       padding:11px 18px;font-size:14px;cursor:pointer;margin:0}
+  .pupl .h{font-size:11.5px;color:var(--tx2);margin-top:9px;line-height:1.35}
+  .pthumbs{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:10px}
+  .pthumbs div{position:relative;border-radius:8px;overflow:hidden;border:1px solid var(--line)}
+  .pthumbs img{width:100%;display:block;aspect-ratio:3/4;object-fit:cover}
+  .pthumbs u{position:absolute;right:2px;top:2px;background:rgba(0,0,0,.6);color:#fff;
+       font-size:12px;line-height:1;border-radius:5px;padding:3px 5px;text-decoration:none;cursor:pointer}
   /* сводная тренера */
   .ctab{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-top:6px}
   .ctab table{border-collapse:collapse;width:100%}
@@ -433,6 +474,9 @@
       <button class="tile wide hide" id="coach-entry" data-act="roster"
               style="background:var(--roseBg);border-color:var(--roseLn)">
         <e>🧤</e><b>Кабинет тренера</b><i>все вратари, их данные и заметки</i></button>
+      <button class="tile wide hide" id="plan-entry" data-act="go:plan"
+              style="background:var(--roseBg);border-color:var(--roseLn)">
+        <e>📋</e><b>План занятия</b><i id="t-plan">—</i></button>
       <button class="tile wide" data-act="go:prog"><e>📈</e><b>Мой прогресс</b><i id="t-prog">дисциплина и динамика показателей</i></button>
       <button class="tile" data-act="go:wb"><e>☀️</e><b>Самочувствие</b><i id="t-wb">—</i></button>
       <button class="tile" data-act="go:tr"><e>🏒</e><b>Дневник занятий</b><i id="t-tr">—</i></button>
@@ -529,6 +573,7 @@
       <button class="tile wide" data-act="go:cog"><e>🔢</e><b>Таблица Шульте</b><i id="t-cog">—</i></button>
       <button class="tile wide" data-act="go:rx"><e>🎯</e><b>Реакция выбора</b><i id="t-rx">—</i></button>
       <button class="tile wide" data-act="go:str"><e>🎨</e><b>Тест Струпа</b><i id="t-str">цвет букв, не слово</i></button>
+      <button class="tile wide" data-act="go:mot"><e>🔴</e><b>Слежение</b><i id="t-mot">держать своих боковым зрением</i></button>
     </div>
     <div class="card" style="margin-top:12px">
       <h2>Что мерит каждый</h2>
@@ -536,6 +581,7 @@
         <div><span>Шульте</span><b>объём и скорость сканирования</b></div>
         <div><span>Реакция выбора</span><b>скорость решения под временем</b></div>
         <div><span>Струп</span><b>помехоустойчивость</b></div>
+        <div><span>Слежение</span><b>распределённое внимание</b></div>
       </div>
       <div class="sub" style="margin:12px 0 0">Три разных качества — заменять одно другим не стоит.
         Лучший порядок: Шульте на разминку, потом реакция, Струп последним — он самый утомительный.</div>
@@ -998,6 +1044,7 @@
     <div class="seg" id="c-tabs" style="margin-bottom:12px">
       <button data-act="ctab:sum">Сводная</button>
       <button data-act="ctab:one">По одному</button>
+      <button data-act="ctab:plan">План</button>
     </div>
 
     <div id="c-sum" class="hide">
@@ -1016,6 +1063,95 @@
         <div id="c-list"><div class="sub" style="margin:0">Загружаю…</div></div>
       </div>
     </div>
+
+    <div id="c-plan" class="hide">
+      <div class="card">
+        <h2>Выложить план занятия</h2>
+        <div class="sub" style="margin:0 0 10px">Фотографии конспекта или PDF. PDF приложение само
+          разложит на страницы. Поверх ляжет подпись с фамилией вратаря — скрин будет видно, чей.</div>
+        <div class="pupl">
+          <input id="pl-file" type="file" accept="image/*,application/pdf" multiple>
+          <label for="pl-file">Выбрать файлы</label>
+          <div class="h" id="pl-hint">Можно выбрать несколько. Картинки сжимаются автоматически.</div>
+        </div>
+        <div class="pthumbs" id="pl-thumbs"></div>
+        <label>Заголовок</label>
+        <input id="pl-title" placeholder="Например: Лёд 07.10 — переводы и отскоки">
+        <label>Пояснение · не обязательно</label>
+        <textarea id="pl-note" placeholder="На что обратить внимание"></textarea>
+        <label>Доступен</label>
+        <div class="chips" id="pl-hours"></div>
+        <button class="btn" data-act="plput">Выложить</button>
+      </div>
+      <div class="card">
+        <h2>Сейчас в приложении</h2>
+        <div class="sub" style="margin:0 0 8px">Пропадут сами, когда выйдет срок.</div>
+        <div id="pl-list"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- СЛЕЖЕНИЕ -->
+  <section id="p-mot" class="hide">
+    <h1>Слежение</h1>
+    <div class="sub">Запомни красные шарики. Они станут серыми и поедут. Когда остановятся — ткни в них.
+      Глазами за всеми не уследишь: держи взгляд в центре, а шарики боковым зрением.</div>
+
+    <div class="card">
+      <h2>Поле</h2>
+      <div class="motbar">
+        <div><b id="mot-n">0 / 20</b><span>попытка</span></div>
+        <div><b id="mot-ok">0</b><span>верно</span></div>
+        <div><b id="mot-sp">—</b><span>скорость</span></div>
+      </div>
+      <div class="motbox" id="mot-box">
+        <canvas id="mot-cv"></canvas>
+        <div class="ov" id="mot-ov">
+          <b id="mot-ovt">Готов?</b>
+          <span id="mot-ovs">Нажми «Начать серию». Первые попытки будут лёгкие — это нормально,
+            приложение ищет твой уровень.</span>
+        </div>
+      </div>
+      <button class="btn" data-act="motstart" id="mot-btn">Начать серию</button>
+    </div>
+
+    <div class="card">
+      <h2>Настройка</h2>
+      <label style="margin-top:0">Сколько запоминать</label>
+      <div class="chips" id="mot-tg"></div>
+      <label>Всего шариков</label>
+      <div class="chips" id="mot-bl"></div>
+      <label>Сколько едут</label>
+      <div class="chips" id="mot-du"></div>
+      <label>Попыток в серии</label>
+      <div class="chips" id="mot-tr"></div>
+      <div class="sub" style="margin:12px 0 0">Скорость подбирается сама: угадал — быстрее, ошибся — медленнее.
+        В результат идёт твой порог скорости.</div>
+    </div>
+
+    <div class="card">
+      <h2>Последние серии</h2>
+      <div class="list" id="mot-list"></div>
+      <div class="sub" style="margin:12px 0 0">Порог скорости — главное число. Процент верных держится
+        около 70–80 %, потому что скорость всё время подстраивается под тебя.</div>
+    </div>
+  </section>
+
+  <!-- ПЛАН ЗАНЯТИЯ · для вратаря -->
+  <section id="p-plan" class="hide">
+    <h1 id="pv-title">План занятия</h1>
+    <div class="sub" id="pv-sub"></div>
+    <div class="tmr" id="pv-timer">
+      <div class="ic">⏳</div>
+      <div><b id="pv-left">—</b><span>после этого план пропадёт из приложения</span></div>
+    </div>
+    <div class="card" id="pv-notecard">
+      <h2>От тренера</h2>
+      <div class="mattext" id="pv-note"></div>
+    </div>
+    <div id="pv-pages"></div>
+    <div class="sub" id="pv-warn" style="margin-top:14px">Это внутренний материал команды.
+      Не пересылай и не выкладывай. На каждой странице стоит твоя фамилия.</div>
   </section>
 
   <!-- КАРТОЧКА ВРАТАРЯ -->
@@ -1249,13 +1385,13 @@ var SITS = ['Реагирование','Бросок с приёма','Брос�
             'Трафик','Подправление','Добивание','Выход 1 на 1','Блокирование','Клюшка','Буллит'];
 var NZ = ['Верх лев','Верх центр','Верх прав','Блин','Корпус','Ловушка','Низ лев','Домик','Низ прав'];
 
-var DB = { wb:[], tr:[], schulte:[], svet:[], stroop:[], goals:{season:null,months:{},days:[]}, gls:[], games:[], notes:[], me:{} };
+var DB = { wb:[], tr:[], schulte:[], svet:[], stroop:[], mot:[], goals:{season:null,months:{},days:[]}, gls:[], games:[], notes:[], me:{} };
 var LIB = { m:[], q:[] };
 var today = new Date().toISOString().slice(0,10);
 var curMonth = today.slice(0,7);
 var trType = 0;
 
-var DATA_KEYS = ['wb','tr','schulte','svet','stroop','goals','gls','games','me'];
+var DATA_KEYS = ['wb','tr','schulte','svet','stroop','mot','goals','gls','games','me'];
 
 function boot(){
   /* 0. неотправленное с прошлого раза */
@@ -1298,6 +1434,7 @@ function boot(){
     buildForms();
     render();
     if (IS_COACH) loadRoster();
+    loadPlans();
   });
 }
 
@@ -1310,12 +1447,13 @@ function applyRole(){
 }
 
 /* ---------- навигация ---------- */
-var PAGES = ['home','wb','tr','cog','rx','goals','an','notes','me','coach','gk','lib','mat','game','rad','prog','str','cgn'];
+var PAGES = ['home','wb','tr','cog','rx','goals','an','notes','me','coach','gk','lib','mat','game','rad','prog','str','cgn','plan','mot'];
 var TITLES = { home:'', wb:'Самочувствие', tr:'Дневник занятий', cog:'Таблица Шульте',
   rx:'Реакция выбора', goals:'Цели', an:'Разбор игр', notes:'Заметки тренера',
-  me:'Профиль', coach:'Кабинет тренера', gk:'Карточка вратаря', lib:'Материалы', mat:'Материал', game:'Игра', rad:'Оценка вратаря', prog:'Мой прогресс', str:'Тест Струпа', cgn:'Когнитивка' };
+  me:'Профиль', coach:'Кабинет тренера', gk:'Карточка вратаря', lib:'Материалы', mat:'Материал', game:'Игра', rad:'Оценка вратаря', prog:'Мой прогресс', str:'Тест Струпа', cgn:'Когнитивка', plan:'План занятия', mot:'Слежение' };
 var navStack = [];
 function go(page, back){
+  if (page === 'plan' && !PLAN_CUR && PLANS.length){ openPlan(); return; }
   if (!back && CUR_PAGE && CUR_PAGE !== page) navStack.push(CUR_PAGE);
   if (page === 'home') navStack = [];
   CUR_PAGE = page;
@@ -1334,7 +1472,9 @@ function go(page, back){
   if (page === 'an') renderAnalytics();
   if (page === 'lib') renderLib();
   if (page === 'rad') renderRadar();
-  if (page === 'prog'){ renderWork(); curveBlock('pg-chips','pg-curve',['rd','sl','fat','sch','svrt','stac'],PCURVE,'pcv'); }
+  if (page !== 'plan' && PL_TICK){ clearInterval(PL_TICK); PL_TICK = null; }
+  if (page === 'mot') openMot(); else if (MOT.run) motStop();
+  if (page === 'prog'){ renderWork(); curveBlock('pg-chips','pg-curve',['rd','sl','fat','sch','svrt','stac','mot'],PCURVE,'pcv'); }
 }
 var CUR_PAGE = 'home';
 function goBack(){ go(navStack.length ? navStack.pop() : 'home', true); }
@@ -1464,6 +1604,14 @@ document.addEventListener('click', function(ev){
     else if (a[0] === 'ckreset') cklReset();
     else if (a[0] === 'radtab') setRadTab(a[1]);
     else if (a[0] === 'radck') { RADSELC = a[1]; haptic(); renderRadCoach(); }
+    else if (a[0] === 'motstart') motStart();
+    else if (a[0] === 'moto') { MOT[a[1]] = parseInt(a[2], 10); haptic(); renderMotOpts();
+                                if (!MOT.run){ MOT.balls = []; motDraw(); } }
+    else if (a[0] === 'plput') putPlan();
+    else if (a[0] === 'plh') { PL_HOURS = parseInt(a[1], 10); haptic(); renderPlanHours(); }
+    else if (a[0] === 'plrm') { PL_PAGES.splice(parseInt(a[1], 10), 1); renderPlThumbs(); }
+    else if (a[0] === 'pldel') delPlan(a[1]);
+    else if (a[0] === 'plwho') planWho(a[1]);
     else if (a[0] === 'ctab') setCTab(a[1]);
     else if (a[0] === 'cmet') { CMETRIC = a[1]; haptic(); renderCSum(); }
     else if (a[0] === 'csumload') { CDATA = {}; renderCSum(); loadAllGoalies(); }
@@ -1537,6 +1685,7 @@ function metrics(){
     svrt: ['«Светофон», мс', DB.svet || [], 'rt', 'min'],
     stac: ['Струп, точность %', DB.stroop || [],
            function(x){ return x.n ? x.ok / x.n * 100 : null; }, 'max'],
+    mot:  ['Слежение, порог', DB.mot || [], function(x){ return x.sp * 100; }, 'max'],
     rd:   ['Готовность', DB.wb || [], function(x){ return (x.v || {}).rd; }, 'max'],
     sl:   ['Сон, ч', DB.wb || [], 'sl', 'max'],
     fat:  ['Усталость', DB.wb || [], function(x){ return (x.v || {}).f; }, 'min']
@@ -1558,8 +1707,8 @@ function secName(code){
   return '';
 }
 var HCURVE = 'sch', PCURVE = 'rd';
-function setHCurve(k){ HCURVE = k; haptic(); curveBlock('h-cchips', 'h-curve', ['sch','svrt','stac'], HCURVE, 'hcv'); }
-function setPCurve(k){ PCURVE = k; haptic(); curveBlock('pg-chips', 'pg-curve', ['rd','sl','fat','sch','svrt','stac'], PCURVE, 'pcv'); }
+function setHCurve(k){ HCURVE = k; haptic(); curveBlock('h-cchips', 'h-curve', ['sch','svrt','stac','mot'], HCURVE, 'hcv'); }
+function setPCurve(k){ PCURVE = k; haptic(); curveBlock('pg-chips', 'pg-curve', ['rd','sl','fat','sch','svrt','stac','mot'], PCURVE, 'pcv'); }
 
 /* ---------- дашборд главной ---------- */
 function renderDash(){
@@ -1578,7 +1727,7 @@ function renderDash(){
   var st = (DB.stroop || []).filter(function(x){ return x.n; });
   setTxt('h-cg3', st.length ? Math.round(Math.max.apply(null, st.map(function(x){ return x.ok / x.n * 100; }))) + ' %' : '—');
 
-  curveBlock('h-cchips', 'h-curve', ['sch','svrt','stac'], HCURVE, 'hcv');
+  curveBlock('h-cchips', 'h-curve', ['sch','svrt','stac','mot'], HCURVE, 'hcv');
   renderHomeRadar();
 
   /* карточка вратаря */
@@ -3312,8 +3461,12 @@ function render(){
   if (DB.schulte && DB.schulte.length) cg.push('Шульте ' + fmt(DB.schulte[0].t) + ' с');
   if (DB.svet && DB.svet.length) cg.push('реакция ' + (DB.svet[0].rt || '—') + ' мс');
   if (sp.length) cg.push('Струп ' + (sp[0].n ? Math.round(sp[0].ok / sp[0].n * 100) : 0) + '%');
+  if (DB.mot && DB.mot.length) cg.push('слежение ' + Math.round(DB.mot[0].sp * 100));
   setTxt('t-cgn', cg.length ? cg.join(' · ') : 'Шульте · реакция выбора · Струп');
   setTxt('t-str', sp.length ? 'последний: ' + (sp[0].n ? Math.round(sp[0].ok / sp[0].n * 100) : 0) + '% верно' : 'цвет букв, не слово');
+  var mt = DB.mot || [];
+  setTxt('t-mot', mt.length ? 'порог ' + Math.round(mt[0].sp * 100) + ' · ' + mt[0].tg + ' из ' + mt[0].bl
+                            : 'держать своих боковым зрением');
 
   document.getElementById('sv-cnt').textContent = String(DB.svet.length);
   var miss = function(x){ return (x.e || 0) + (x.sk || 0); };
@@ -3407,6 +3560,523 @@ function renderAnalytics(){
   }).join('') : '<div class="sub" style="margin:0">Игр пока нет.</div>';
 }
 
+/* ══════════════════ СЛЕЖЕНИЕ ЗА ШАРИКАМИ ══════════════════ */
+
+var MOT = {
+  tg: 2, bl: 12, du: 6, tr: 20,         /* целей · всего · секунд · попыток */
+  sp: 0.17,                              /* доля поля в секунду */
+  i: 0, ok: 0, run: false, phase: 'idle',
+  balls: [], pick: [], log: [], raf: null, t0: 0
+};
+var MOT_OPT = {
+  tg: [1, 2, 3, 4],
+  bl: [8, 12, 16],
+  du: [4, 6, 8],
+  tr: [10, 20]
+};
+
+function motList(){ return DB.mot || (DB.mot = []); }
+
+function renderMotOpts(){
+  [['tg', 'mot-tg', ''], ['bl', 'mot-bl', ''], ['du', 'mot-du', ' с'], ['tr', 'mot-tr', '']].forEach(function(o){
+    var el = document.getElementById(o[1]);
+    if (!el) return;
+    el.innerHTML = MOT_OPT[o[0]].map(function(v){
+      return '<button data-act="moto:' + o[0] + ':' + v + '"' + (MOT[o[0]] === v ? ' class="on"' : '') + '>' +
+             v + o[2] + '</button>';
+    }).join('');
+  });
+}
+
+function renderMotList(){
+  var box = document.getElementById('mot-list');
+  if (!box) return;
+  var l = motList();
+  box.innerHTML = l.length ? l.slice(0, 12).map(function(x){
+    return '<div><span>' + dm(x.d) + ' · ' + x.tg + ' из ' + x.bl + ' · ' + x.du + ' с</span><b>' +
+           Math.round(x.sp * 100) + ' <span style="color:var(--tx2);font-size:11px">порог</span> · ' +
+           x.acc + '%</b></div>';
+  }).join('') : '<div>Серий пока нет.</div>';
+}
+
+function motSize(){
+  var box = document.getElementById('mot-box'), cv = document.getElementById('mot-cv');
+  if (!box || !cv) return 0;
+  var w = box.clientWidth || 320;
+  var h = Math.round(w * 0.78);
+  var dpr = Math.min(2, window.devicePixelRatio || 1);
+  cv.style.height = h + 'px';
+  cv.width = Math.round(w * dpr);
+  cv.height = Math.round(h * dpr);
+  MOT.w = w; MOT.h = h; MOT.dpr = dpr;
+  return w;
+}
+
+function motOv(show, t, sub){
+  var ov = document.getElementById('mot-ov');
+  if (!ov) return;
+  ov.className = show ? 'ov' : 'ov hide';
+  if (t !== undefined) setTxt('mot-ovt', t);
+  if (sub !== undefined) setTxt('mot-ovs', sub);
+}
+
+function motDraw(){
+  var cv = document.getElementById('mot-cv');
+  if (!cv) return;
+  var g = cv.getContext('2d'), d = MOT.dpr;
+  g.setTransform(d, 0, 0, d, 0, 0);
+  g.clearRect(0, 0, MOT.w, MOT.h);
+
+  /* метка центра: подсказка держать взгляд тут */
+  g.strokeStyle = 'rgba(140,150,165,.45)';
+  g.lineWidth = 1;
+  g.beginPath();
+  g.moveTo(MOT.w / 2 - 7, MOT.h / 2); g.lineTo(MOT.w / 2 + 7, MOT.h / 2);
+  g.moveTo(MOT.w / 2, MOT.h / 2 - 7); g.lineTo(MOT.w / 2, MOT.h / 2 + 7);
+  g.stroke();
+
+  MOT.balls.forEach(function(b, i){
+    var lit = (MOT.phase === 'show' && b.t) ||
+              (MOT.phase === 'done' && b.t) ||
+              (MOT.phase === 'pick' && MOT.pick.indexOf(i) >= 0);
+    g.beginPath();
+    g.arc(b.x, b.y, b.r, 0, Math.PI * 2);
+    if (MOT.phase === 'done'){
+      g.fillStyle = b.t ? (MOT.pick.indexOf(i) >= 0 ? '#2FA84F' : '#D6112E')
+                        : (MOT.pick.indexOf(i) >= 0 ? '#8E1326' : '#7E8894');
+    } else {
+      g.fillStyle = lit ? '#D6112E' : '#7E8894';
+    }
+    g.fill();
+    if (MOT.phase === 'pick' && MOT.pick.indexOf(i) >= 0){
+      g.lineWidth = 3; g.strokeStyle = '#D6112E'; g.stroke();
+    }
+  });
+}
+
+function motSpawn(){
+  var w = MOT.w, h = MOT.h, n = MOT.bl;
+  var r = Math.max(9, Math.round(Math.min(w, h) / 22));
+  var v = MOT.sp * Math.min(w, h);          /* пикселей в секунду */
+  MOT.balls = [];
+  for (var i = 0; i < n; i++){
+    var tries = 0, x, y, okp;
+    do {
+      okp = true;
+      x = r + Math.random() * (w - 2 * r);
+      y = r + Math.random() * (h - 2 * r);
+      for (var j = 0; j < MOT.balls.length; j++){
+        var dx = MOT.balls[j].x - x, dy = MOT.balls[j].y - y;
+        if (dx * dx + dy * dy < (r * 2.6) * (r * 2.6)) { okp = false; break; }
+      }
+    } while (!okp && ++tries < 200);
+    var a = Math.random() * Math.PI * 2;
+    MOT.balls.push({ x: x, y: y, r: r, vx: Math.cos(a) * v, vy: Math.sin(a) * v, t: false });
+  }
+  var idx = [];
+  for (var k = 0; k < n; k++) idx.push(k);
+  idx.sort(function(){ return Math.random() - 0.5; });
+  for (var m = 0; m < MOT.tg; m++) MOT.balls[idx[m]].t = true;
+}
+
+function motStep(dt){
+  var w = MOT.w, h = MOT.h, B = MOT.balls;
+  for (var i = 0; i < B.length; i++){
+    var b = B[i];
+    b.x += b.vx * dt; b.y += b.vy * dt;
+    if (b.x < b.r){ b.x = b.r; b.vx = Math.abs(b.vx); }
+    if (b.x > w - b.r){ b.x = w - b.r; b.vx = -Math.abs(b.vx); }
+    if (b.y < b.r){ b.y = b.r; b.vy = Math.abs(b.vy); }
+    if (b.y > h - b.r){ b.y = h - b.r; b.vy = -Math.abs(b.vy); }
+  }
+  /* шарики отталкиваются друг от друга, чтобы не слипались */
+  for (var a = 0; a < B.length; a++){
+    for (var c = a + 1; c < B.length; c++){
+      var p = B[a], q = B[c];
+      var dx = q.x - p.x, dy = q.y - p.y, dd = Math.sqrt(dx * dx + dy * dy) || 0.01;
+      var min = p.r + q.r + 2;
+      if (dd >= min) continue;
+      var nx = dx / dd, ny = dy / dd, push = (min - dd) / 2;
+      p.x -= nx * push; p.y -= ny * push;
+      q.x += nx * push; q.y += ny * push;
+      var pv = p.vx * nx + p.vy * ny, qv = q.vx * nx + q.vy * ny;
+      p.vx += (qv - pv) * nx; p.vy += (qv - pv) * ny;
+      q.vx += (pv - qv) * nx; q.vy += (pv - qv) * ny;
+    }
+  }
+}
+
+function motLoop(ts){
+  if (!MOT.run) return;
+  if (!MOT.t0) MOT.t0 = ts;
+  var dt = Math.min(0.05, (ts - (MOT.last || ts)) / 1000);
+  MOT.last = ts;
+  if (MOT.phase === 'move'){
+    motStep(dt);
+    motDraw();
+    if ((ts - MOT.t0) / 1000 >= MOT.du){ motPick(); return; }
+  }
+  MOT.raf = requestAnimationFrame(motLoop);
+}
+
+function motStart(){
+  if (MOT.run){ motStop(); return; }
+  motSize();
+  MOT.run = true; MOT.i = 0; MOT.ok = 0; MOT.log = [];
+  MOT.sp = 0.17;
+  setTxt('mot-btn', 'Прервать');
+  motTrial();
+}
+
+function motStop(){
+  MOT.run = false; MOT.phase = 'idle';
+  if (MOT.raf) cancelAnimationFrame(MOT.raf);
+  setTxt('mot-btn', 'Начать серию');
+  motOv(true, 'Готов?', 'Нажми «Начать серию».');
+}
+
+function motTrial(){
+  if (!MOT.run) return;
+  if (MOT.i >= MOT.tr){ motFinish(); return; }
+  MOT.i++;
+  setTxt('mot-n', MOT.i + ' / ' + MOT.tr);
+  setTxt('mot-sp', String(Math.round(MOT.sp * 100)));
+  MOT.phase = 'show';
+  MOT.pick = [];
+  motSpawn();
+  motDraw();
+  motOv(true, 'Запомни красные', MOT.tg === 1 ? 'Один шарик.' : 'Шариков: ' + MOT.tg + '. Смотри в центр.');
+  setTimeout(function(){
+    if (!MOT.run) return;
+    motOv(false);
+    MOT.phase = 'move';
+    MOT.t0 = 0; MOT.last = 0;
+    MOT.raf = requestAnimationFrame(motLoop);
+  }, 1800);
+}
+
+function motPick(){
+  MOT.phase = 'pick';
+  if (MOT.raf) cancelAnimationFrame(MOT.raf);
+  motDraw();
+  motOv(true, 'Где они?', 'Ткни в ' + MOT.tg + (MOT.tg === 1 ? ' шарик' : ' шарика'));
+  setTimeout(function(){ if (MOT.phase === 'pick') motOv(false); }, 700);
+}
+
+function motTap(ev){
+  if (MOT.phase !== 'pick') return;
+  var cv = document.getElementById('mot-cv'), rect = cv.getBoundingClientRect();
+  var t = (ev.touches && ev.touches[0]) || ev;
+  var x = (t.clientX - rect.left), y = (t.clientY - rect.top);
+  var best = -1, bd = 1e9;
+  MOT.balls.forEach(function(b, i){
+    var d = (b.x - x) * (b.x - x) + (b.y - y) * (b.y - y);
+    if (d < bd){ bd = d; best = i; }
+  });
+  if (best < 0 || bd > Math.pow(MOT.balls[best].r * 2.2, 2)) return;
+  var p = MOT.pick.indexOf(best);
+  if (p >= 0) MOT.pick.splice(p, 1);
+  else if (MOT.pick.length < MOT.tg) MOT.pick.push(best);
+  haptic();
+  motDraw();
+  if (MOT.pick.length === MOT.tg) setTimeout(motJudge, 180);
+}
+
+function motJudge(){
+  var right = 0;
+  MOT.pick.forEach(function(i){ if (MOT.balls[i].t) right++; });
+  var win = right === MOT.tg;
+  if (win){ MOT.ok++; MOT.sp *= 1.12; }
+  else MOT.sp /= 1.12;
+  if (MOT.sp < 0.05) MOT.sp = 0.05;
+  if (MOT.sp > 0.80) MOT.sp = 0.80;
+  MOT.log.push(MOT.sp);
+  setTxt('mot-ok', String(MOT.ok));
+  MOT.phase = 'done';
+  motDraw();
+  motOv(true, win ? 'Верно' : 'Мимо',
+        win ? 'Дальше будет быстрее.' : 'Правильные подсвечены красным. Сбавляю скорость.');
+  haptic(win ? 'light' : 'medium');
+  setTimeout(function(){ if (MOT.run) motTrial(); }, win ? 700 : 1400);
+}
+
+function motFinish(){
+  MOT.run = false; MOT.phase = 'idle';
+  setTxt('mot-btn', 'Начать серию');
+  var tail = MOT.log.slice(Math.max(0, MOT.log.length - 10));
+  var thr = tail.length ? tail.reduce(function(a, b){ return a + b; }, 0) / tail.length : MOT.sp;
+  var acc = Math.round(MOT.ok / MOT.tr * 100);
+  motList().unshift({ d: today, tg: MOT.tg, bl: MOT.bl, du: MOT.du, n: MOT.tr,
+                      ok: MOT.ok, acc: acc, sp: Math.round(thr * 1000) / 1000 });
+  DB.mot = motList().slice(0, 60);
+  motOv(true, 'Порог ' + Math.round(thr * 100),
+        'Верно ' + MOT.ok + ' из ' + MOT.tr + ' · ' + acc + ' %. Это твоя рабочая скорость на сегодня.');
+  ckAuto(1);
+  save('mot', DB.mot, function(){ haptic('medium'); renderMotList(); render(); });
+}
+
+function openMot(){
+  renderMotOpts();
+  renderMotList();
+  motSize();
+  MOT.balls = [];
+  motDraw();
+  motOv(true, 'Готов?', 'Нажми «Начать серию». Первые попытки будут лёгкие — приложение ищет твой уровень.');
+  var cv = document.getElementById('mot-cv');
+  if (cv && !cv._b){
+    cv._b = true;
+    cv.addEventListener('click', motTap);
+  }
+}
+
+/* ══════════════════ ПЛАН ЗАНЯТИЯ ══════════════════ */
+/* Страницы нигде не сохраняются: только в памяти, пока открыто приложение. */
+
+var PLANS = [], PLAN_CUR = null, PL_PAGES = [], PL_HOURS = 24, PL_TICK = null;
+var PL_HOPT = [[6, '6 часов'], [12, '12 часов'], [24, 'сутки'], [48, '2 суток']];
+
+function planLeft(exp){
+  var ms = exp - Date.now();
+  if (ms <= 0) return null;
+  var h = Math.floor(ms / 3600000), m = Math.floor(ms % 3600000 / 60000);
+  return h ? (h + ' ч ' + m + ' мин') : (m + ' мин');
+}
+
+function loadPlans(cb){
+  api({ a: 'plans' }, function(res){
+    PLANS = (res && res.ok) ? (res.list || []) : [];
+    renderPlanTile();
+    renderPlanAdmin();
+    if (cb) cb();
+  });
+}
+
+function renderPlanTile(){
+  var t = document.getElementById('plan-entry');
+  if (!t) return;
+  var p = PLANS[0];
+  t.className = p ? 'tile wide' : 'tile wide hide';
+  if (p){
+    var l = planLeft(p.exp);
+    setTxt('t-plan', cut(p.title, 34) + (l ? ' · осталось ' + l : ''));
+  }
+}
+
+/* ── просмотр ── */
+function openPlan(){
+  var p = PLANS[0];
+  if (!p){ alertMsg('Плана сейчас нет.'); return; }
+  PLAN_CUR = p;
+  go('plan');
+  setTxt('pv-title', p.title || 'План занятия');
+  setTxt('pv-sub', 'Страниц: ' + p.pages.length);
+  var nc = document.getElementById('pv-notecard');
+  if (nc) nc.className = p.note ? 'card' : 'card hide';
+  setTxt('pv-note', p.note || '');
+  tickPlan();
+  if (PL_TICK) clearInterval(PL_TICK);
+  PL_TICK = setInterval(tickPlan, 30000);
+
+  var who = (DB.me && DB.me.n) ? DB.me.n : 'вратарь';
+  var box = document.getElementById('pv-pages');
+  box.innerHTML = p.pages.map(function(pg, i){
+    return '<div class="pgw" id="pg' + i + '">' +
+      '<div class="sub" style="margin:0;padding:22px 12px;text-align:center">Страница ' + (i + 1) + ' загружается…</div>' +
+      '</div>';
+  }).join('');
+
+  p.pages.forEach(function(pg, i){
+    api({ a: 'planfile', id: p.id, fid: pg.fid }, function(res){
+      var el = document.getElementById('pg' + i);
+      if (!el) return;
+      if (!res || !res.ok){
+        el.innerHTML = '<div class="sub" style="margin:0;padding:22px 12px;text-align:center">' +
+                       esc((res && res.err) || 'Не удалось загрузить') + '</div>';
+        return;
+      }
+      el.innerHTML = '<img src="data:' + res.m + ';base64,' + res.b64 + '" alt="">' +
+                     '<div class="wm" style="background-image:url(&quot;' + wmSVG(who) + '&quot;)"></div>' +
+                     '<div class="pn">' + (i + 1) + ' / ' + p.pages.length + '</div>';
+    });
+  });
+}
+
+function tickPlan(){
+  if (!PLAN_CUR) return;
+  var l = planLeft(PLAN_CUR.exp);
+  if (!l){
+    setTxt('pv-left', 'Срок вышел');
+    document.getElementById('pv-pages').innerHTML =
+      '<div class="card"><div class="sub" style="margin:0">План закрыт. Если он ещё нужен, попроси тренера выложить снова.</div></div>';
+    PLANS = []; renderPlanTile();
+    if (PL_TICK) clearInterval(PL_TICK);
+    return;
+  }
+  setTxt('pv-left', 'Осталось ' + l);
+}
+
+/* водяной знак: фамилия и дата, плиткой по всей странице */
+function wmSVG(who){
+  var d = new Date();
+  var txt = who + ' · ' + ('0' + d.getDate()).slice(-2) + '.' + ('0' + (d.getMonth() + 1)).slice(-2) + '.' + d.getFullYear();
+  var svg = '<svg xmlns="http://www.w3.org/2000/svg" width="320" height="170">' +
+    '<text x="12" y="104" transform="rotate(-28 160 85)" font-family="sans-serif" font-size="15" ' +
+    'fill="rgba(214,17,46,.30)">' + txt.replace(/&/g, '&amp;').replace(/</g, '&lt;') + '</text></svg>';
+  return 'data:image/svg+xml;utf8,' + encodeURIComponent(svg);
+}
+
+/* ══════════════════ ЗАГРУЗКА · ТРЕНЕР ══════════════════ */
+
+function renderPlanHours(){
+  var el = document.getElementById('pl-hours');
+  if (el) el.innerHTML = PL_HOPT.map(function(h){
+    return '<button data-act="plh:' + h[0] + '"' + (PL_HOURS === h[0] ? ' class="on"' : '') + '>' + h[1] + '</button>';
+  }).join('');
+}
+
+function renderPlThumbs(){
+  var el = document.getElementById('pl-thumbs');
+  if (!el) return;
+  el.innerHTML = PL_PAGES.map(function(p, i){
+    return '<div><img src="data:' + p.m + ';base64,' + p.b64 + '"><u data-act="plrm:' + i + '">×</u></div>';
+  }).join('');
+  setTxt('pl-hint', PL_PAGES.length
+    ? 'Страниц: ' + PL_PAGES.length + ' · примерно ' + Math.round(PL_PAGES.reduce(function(a, p){ return a + p.b64.length; }, 0) / 1024 / 1.37) + ' КБ'
+    : 'Можно выбрать несколько. Картинки сжимаются автоматически.');
+}
+
+/* сжатие картинки до разумного размера */
+function shrink(blobUrl, cb){
+  var img = new Image();
+  img.onload = function(){
+    var MAX = 1600, w = img.width, h = img.height;
+    if (w > MAX){ h = Math.round(h * MAX / w); w = MAX; }
+    var c = document.createElement('canvas');
+    c.width = w; c.height = h;
+    c.getContext('2d').drawImage(img, 0, 0, w, h);
+    cb(c.toDataURL('image/jpeg', 0.72).split(',')[1]);
+  };
+  img.onerror = function(){ cb(null); };
+  img.src = blobUrl;
+}
+
+var PDFJS_SRC = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
+function withPdfJs(cb){
+  if (window.pdfjsLib){ cb(window.pdfjsLib); return; }
+  var sc = document.createElement('script');
+  sc.src = PDFJS_SRC;
+  sc.onload = function(){
+    try {
+      window.pdfjsLib.GlobalWorkerOptions.workerSrc =
+        'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    } catch(e){}
+    cb(window.pdfjsLib);
+  };
+  sc.onerror = function(){ cb(null); };
+  document.head.appendChild(sc);
+}
+
+function pdfPages(file, cb){
+  withPdfJs(function(lib){
+    if (!lib){ alertMsg('Не удалось открыть PDF — нет связи с интернетом.'); cb([]); return; }
+    var fr = new FileReader();
+    fr.onload = function(){
+      lib.getDocument({ data: new Uint8Array(fr.result) }).promise.then(function(doc){
+        var out = [], i = 1;
+        var one = function(){
+          if (i > doc.numPages){ cb(out); return; }
+          doc.getPage(i).then(function(pg){
+            var v1 = pg.getViewport({ scale: 1 });
+            var sc = Math.min(2.2, 1500 / v1.width);
+            var v = pg.getViewport({ scale: sc });
+            var c = document.createElement('canvas');
+            c.width = Math.round(v.width); c.height = Math.round(v.height);
+            pg.render({ canvasContext: c.getContext('2d'), viewport: v }).promise.then(function(){
+              out.push({ m: 'image/jpeg', b64: c.toDataURL('image/jpeg', 0.72).split(',')[1] });
+              i++; setTxt('pl-hint', 'Разбираю PDF: ' + out.length + ' из ' + doc.numPages + '…'); one();
+            });
+          });
+        };
+        one();
+      }).catch(function(){ alertMsg('Файл PDF не читается.'); cb([]); });
+    };
+    fr.readAsArrayBuffer(file);
+  });
+}
+
+function onPlanFiles(files){
+  var list = [].slice.call(files), i = 0;
+  setTxt('pl-hint', 'Готовлю страницы…');
+  var next = function(){
+    if (i >= list.length){ renderPlThumbs(); return; }
+    var f = list[i++];
+    if (f.type === 'application/pdf'){
+      pdfPages(f, function(pgs){ PL_PAGES = PL_PAGES.concat(pgs); renderPlThumbs(); next(); });
+    } else {
+      var url = URL.createObjectURL(f);
+      shrink(url, function(b64){
+        URL.revokeObjectURL(url);
+        if (b64) PL_PAGES.push({ m: 'image/jpeg', b64: b64 });
+        renderPlThumbs(); next();
+      });
+    }
+  };
+  next();
+}
+
+function putPlan(){
+  if (!PL_PAGES.length){ alertMsg('Сначала выбери файлы.'); return; }
+  var title = val('pl-title').trim();
+  if (!title){ alertMsg('Впиши заголовок — вратари увидят его в списке.'); return; }
+  haptic('medium');
+  setTxt('pl-hint', 'Отправляю…');
+  api({ a: 'planput', title: title, note: val('pl-note').trim(), hours: PL_HOURS, files: PL_PAGES },
+    function(res){
+      if (!res || !res.ok){ alertMsg((res && res.err) || 'Не удалось выложить — нет связи.'); return; }
+      PL_PAGES = [];
+      document.getElementById('pl-title').value = '';
+      document.getElementById('pl-note').value = '';
+      document.getElementById('pl-file').value = '';
+      renderPlThumbs();
+      PLANS = res.list || [];
+      renderPlanAdmin(); renderPlanTile();
+      alertMsg('Готово. План виден вратарям.');
+    });
+}
+
+function delPlan(id){
+  if (!confirm('Убрать план из приложения? Файлы удалятся с Диска.')) return;
+  api({ a: 'plandel', id: id }, function(res){
+    if (!res || !res.ok){ alertMsg('Не удалось удалить.'); return; }
+    PLANS = res.list || [];
+    renderPlanAdmin(); renderPlanTile();
+  });
+}
+
+function planWho(id){
+  api({ a: 'planviews', id: id }, function(res){
+    if (!res || !res.ok){ alertMsg('Не удалось получить журнал.'); return; }
+    var l = res.list || [];
+    alertMsg(l.length
+      ? 'Открывали (' + l.length + '):\n' + l.map(function(x){ return '· ' + (x.name || x.uid); }).join('\n')
+      : 'Пока никто не открывал.');
+  });
+}
+
+function renderPlanAdmin(){
+  renderPlanHours();
+  var box = document.getElementById('pl-list');
+  if (!box) return;
+  box.innerHTML = PLANS.length ? PLANS.map(function(p){
+    var l = planLeft(p.exp);
+    return '<div class="goal"><span class="x" data-act="pldel:' + p.id + '">×</span>' +
+      '<div class="tag">' + (l ? 'осталось ' + l : 'истёк') + '</div>' +
+      '<div class="t">' + esc(p.title) + '</div>' +
+      '<div class="c">страниц: ' + p.pages.length + (p.note ? ' · есть пояснение' : '') + '</div>' +
+      '<button class="btn sec" style="margin-top:8px" data-act="plwho:' + p.id + '">Кто открывал</button></div>';
+  }).join('') : '<div class="sub" style="margin:0">Сейчас ничего не выложено.</div>';
+}
+
 /* ══════════════════ КАБИНЕТ ТРЕНЕРА ══════════════════ */
 
 var ROSTER = [], CUR = null;
@@ -3442,9 +4112,11 @@ function setCTab(t, quiet){
   if (seg) [].forEach.call(seg.children, function(b){
     b.className = (b.getAttribute('data-act') === 'ctab:' + t) ? 'on' : '';
   });
-  var a = document.getElementById('c-sum'), b2 = document.getElementById('c-one');
-  if (a) a.className = (t === 'sum') ? '' : 'hide';
-  if (b2) b2.className = (t === 'one') ? '' : 'hide';
+  [['c-sum','sum'], ['c-one','one'], ['c-plan','plan']].forEach(function(p){
+    var el = document.getElementById(p[0]);
+    if (el) el.className = (t === p[1]) ? '' : 'hide';
+  });
+  if (t === 'plan'){ renderPlanAdmin(); loadPlans(); }
   if (t === 'sum'){
     renderCSum();
     if (!Object.keys(CDATA).length) loadAllGoalies();
