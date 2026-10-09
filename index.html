@@ -56,6 +56,9 @@
   .list div:last-child{border:0}
   .list b{color:var(--tx);font-weight:600;text-align:right}
   .list b i{font-style:normal;font-weight:300;font-size:11px;color:var(--tx2);margin-left:4px}
+  .list .rm{flex:none;color:var(--tx2);cursor:pointer;font-size:17px;line-height:1;
+       padding:0 1px 0 9px;font-weight:300}
+  .list .rm:active{color:var(--rose)}
   .hide{display:none}
   header{position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:8px;
          background:var(--ink);padding:8px 12px 8px 4px;border-bottom:1px solid var(--line)}
@@ -1026,6 +1029,8 @@
       <div class="sub" style="margin:0">Экспорт — на случай смены телефона.</div>
       <button class="btn sec" data-act="export">Скопировать все данные</button>
       <div class="sub" id="diag" style="margin:12px 0 0;font-size:11px"></div>
+      <button class="btn sec" data-act="selftest">Проверить связь с базой</button>
+      <div class="sub" id="st-out" style="margin:10px 0 0;font-size:11.5px;white-space:pre-wrap;line-height:1.45"></div>
     </div>
     <div class="card">
       <h2>Код от тренера</h2>
@@ -1307,23 +1312,52 @@ function save(key, obj, cb){
 }
 
 var flushing = false;
+var QERR = {}, qIdx = 0;
+var SECT = { me:'профиль', wb:'самочувствие', tr:'дневник занятий', schulte:'Шульте',
+             svet:'«Светофон»', stroop:'Струп', mot:'слежение', goals:'цели и чек-лист',
+             gls:'голы', games:'игры' };
+function sectName(k){ return SECT[k] || k; }
+
 function flushQueue(){
   if (flushing || !apiReady()) return;
   var keys = Object.keys(QUEUE);
-  if (!keys.length) return;
+  if (!keys.length){ QERR = {}; qIdx = 0; setSync('на связи'); renderWarn(); return; }
+  if (qIdx >= keys.length) qIdx = 0;
   flushing = true;
-  var k = keys[0], body = QUEUE[k];
+  var k = keys[qIdx], body = QUEUE[k];
+
+  /* слишком большой раздел сервер не примет — режем сами, чтобы не встало всё */
+  if (body.length > 85000){
+    try {
+      var arr = parse(body);
+      if (arr && arr.length > 10){
+        arr = arr.slice(0, Math.max(10, Math.floor(arr.length / 2)));
+        DB[k] = arr; lset(k, arr);
+        QUEUE[k] = body = JSON.stringify(arr);
+        qSave();
+      }
+    } catch(e){}
+  }
+
   api({ a: 'push', key: k, json: body }, function(res){
     flushing = false;
     if (res && res.ok){
       if (QUEUE[k] === body) delete QUEUE[k];
-      qSave();
+      delete QERR[k];
+      qIdx = 0;
+      qSave(); renderWarn();
       setSync(qCount() ? 'отправляю, осталось ' + qCount() : 'сохранено');
       flushQueue();
-    } else {
-      setSync('НЕ ОТПРАВЛЕНО: ' + qCount() + '. Нажми, чтобы повторить');
-      setTimeout(flushQueue, 15000);
+      return;
     }
+    /* не ушло: запоминаем причину и переходим к следующему разделу,
+       чтобы один сбойный не держал всю очередь */
+    QERR[k] = (res && res.err) ? String(res.err) : 'нет связи';
+    qIdx++;
+    qSave(); renderWarn();
+    setSync('не ушло: ' + sectName(k) + ' — ' + QERR[k]);
+    if (qIdx < Object.keys(QUEUE).length) flushQueue();
+    else { qIdx = 0; setTimeout(flushQueue, 20000); }
   });
 }
 setInterval(flushQueue, 30000);
@@ -1340,7 +1374,14 @@ function renderWarn(){
   if (!w) return;
   var n = qCount();
   w.className = n ? 'warn' : 'warn hide';
-  if (n) setTxt('w-t', 'Не отправлено в базу: ' + n + (n === 1 ? ' раздел' : ' раздела'));
+  if (!n) return;
+  var ks = Object.keys(QUEUE).map(sectName).join(', ');
+  setTxt('w-t', 'Не ушло в базу: ' + ks);
+  var errs = Object.keys(QERR).map(function(k){ return sectName(k) + ' — ' + QERR[k]; });
+  var sub = w.querySelector('span');
+  if (sub) sub.textContent = errs.length
+    ? 'Причина: ' + errs.join('; ') + '. Нажми, чтобы отправить ещё раз. Если не уходит — покажи это тренеру.'
+    : 'Тренер этого пока не видит. Нажми, чтобы отправить сейчас.';
 }
 function setSync(s){
   SYNC = s;
@@ -1604,6 +1645,8 @@ document.addEventListener('click', function(ev){
     else if (a[0] === 'ckreset') cklReset();
     else if (a[0] === 'radtab') setRadTab(a[1]);
     else if (a[0] === 'radck') { RADSELC = a[1]; haptic(); renderRadCoach(); }
+    else if (a[0] === 'selftest') selfTest();
+    else if (a[0] === 'rmrec') rmRec(a[1], a[2]);
     else if (a[0] === 'motstart') motStart();
     else if (a[0] === 'moto') { MOT[a[1]] = parseInt(a[2], 10); haptic(); renderMotOpts();
                                 if (!MOT.run){ MOT.balls = []; motDraw(); } }
@@ -3438,7 +3481,8 @@ function render(){
     return { d: dm(x.d), v: x.t };
   }), { last: sser.length ? sser[sser.length-1].t + ' с' : '' });
   document.getElementById('sch-list').innerHTML = sl.slice(0,8).map(function(x){
-    return '<div><span>' + dm(x.d) + '</span><b>' + x.t + ' с · ошибок ' + x.e + '</b></div>';
+    return '<div><span>' + dm(x.d) + '</span><b>' + x.t + ' с · ошибок ' + x.e + '</b>' +
+           '<span class="rm" data-act="rmrec:schulte:' + DB.schulte.indexOf(x) + '">×</span></div>';
   }).join('') || '<div>На этом размере попыток пока нет.</div>';
 
   stLevels();
@@ -3452,10 +3496,11 @@ function render(){
   document.getElementById('sr-bars').innerHTML = lineSVG(sser2.map(function(x){
     return { d: dm(x.d), v: x.n ? Math.round(x.ok / x.n * 100) : 0 };
   }), { min: 0, max: 100, last: sser2.length ? (sser2[sser2.length-1].n ? Math.round(sser2[sser2.length-1].ok / sser2[sser2.length-1].n * 100) + '%' : '') : '' });
-  document.getElementById('sr-list').innerHTML = sp.slice(0, 8).map(function(x){
+  document.getElementById('sr-list').innerHTML = sp.slice(0, 8).map(function(x, i){
     var a = x.n ? Math.round(x.ok / x.n * 100) : 0;
     return '<div><span>' + dm(x.d) + '</span><b>' + a + '% · ' + (x.rt || '—') + ' мс' +
-           (x.eff !== null && x.eff !== undefined ? ' · помеха ' + x.eff : '') + '</b></div>';
+           (x.eff !== null && x.eff !== undefined ? ' · помеха ' + x.eff : '') + '</b>' +
+           '<span class="rm" data-act="rmrec:stroop:' + i + '">×</span></div>';
   }).join('') || '<div>Попыток пока нет.</div>';
   var cg = [];
   if (DB.schulte && DB.schulte.length) cg.push('Шульте ' + fmt(DB.schulte[0].t) + ' с');
@@ -3477,10 +3522,11 @@ function render(){
   document.getElementById('sv-bars').innerHTML = lineSVG(vser.map(function(x){
     return { d: dm(x.d), v: miss(x) };
   }), { last: vser.length ? miss(vser[vser.length-1]) + ' промах.' : '' });
-  document.getElementById('sv-list').innerHTML = DB.svet.slice(0,8).map(function(x){
+  document.getElementById('sv-list').innerHTML = DB.svet.slice(0,8).map(function(x, i){
     return '<div><span>' + dm(x.d) + (x.src === 'app' ? ' · в приложении' : '') + '</span><b>' +
       x.e + ' ошиб.' + (ok(x.sk) ? ' · ' + x.sk + ' проп.' : '') +
-      (ok(x.ms) ? ' · ' + x.ms + ' мс' : '') + (ok(x.rt) ? ' · ' + x.rt + ' мс реакция' : '') + '</b></div>';
+      (ok(x.ms) ? ' · ' + x.ms + ' мс' : '') + (ok(x.rt) ? ' · ' + x.rt + ' мс реакция' : '') + '</b>' +
+      '<span class="rm" data-act="rmrec:svet:' + i + '">×</span></div>';
   }).join('') || '<div>Записей пока нет.</div>';
 
   /* заметки */
@@ -3560,6 +3606,57 @@ function renderAnalytics(){
   }).join('') : '<div class="sub" style="margin:0">Игр пока нет.</div>';
 }
 
+/* ---------- самопроверка связи ---------- */
+function selfTest(){
+  var out = document.getElementById('st-out');
+  if (!out) return;
+  var L = [];
+  var put = function(){ out.textContent = L.join('\n'); };
+
+  L.push('Telegram: ' + (TG ? 'подключён' : 'НЕТ'));
+  L.push('Подпись: ' + (INIT ? 'есть, ' + INIT.length + ' зн.' : 'НЕТ — зайди через кнопку в боте'));
+  L.push('Адрес базы: ' + (API_URL ? 'задан' : 'НЕТ'));
+  var sizes = DATA_KEYS.map(function(k){
+    return k + ' ' + Math.round(JSON.stringify(DB[k] || []).length / 1024) + 'КБ';
+  });
+  L.push('Размер разделов: ' + sizes.join(' · '));
+  L.push('В очереди: ' + (qCount() ? Object.keys(QUEUE).map(sectName).join(', ') : 'пусто'));
+  Object.keys(QERR).forEach(function(k){ L.push('Ошибка ' + sectName(k) + ': ' + QERR[k]); });
+  L.push('');
+  put();
+
+  if (!apiReady()){ L.push('Проверка невозможна: нет подписи или адреса базы.'); put(); return; }
+
+  L.push('Проверяю чтение…'); put();
+  api({ a: 'pull' }, function(res){
+    L[L.length-1] = 'Чтение: ' + (res ? (res.ok ? 'ОК' : 'ОТКАЗ — ' + (res.err || '?')) : 'НЕТ ОТВЕТА');
+    put();
+    L.push('Проверяю запись…'); put();
+    api({ a: 'push', key: 'me', json: JSON.stringify(DB.me || {}) }, function(r2){
+      L[L.length-1] = 'Запись: ' + (r2 ? (r2.ok ? 'ОК' : 'ОТКАЗ — ' + (r2.err || '?')) : 'НЕТ ОТВЕТА');
+      L.push('');
+      L.push(r2 && r2.ok
+        ? 'Связь в порядке. Если записи всё равно не доходят — покажи это тренеру.'
+        : 'Запись не проходит. Сфотографируй этот экран и отправь тренеру.');
+      put();
+      flushQueue();
+    });
+  });
+}
+
+/* ---------- удаление одной записи ---------- */
+var RM_NAME = { schulte: 'Шульте', svet: '«Светофон»', stroop: 'Струп', mot: 'Слежение' };
+function rmRec(key, i){
+  i = parseInt(i, 10);
+  var l = DB[key] || [];
+  if (!l[i]) return;
+  if (!confirm('Удалить запись ' + RM_NAME[key] + ' за ' + dm(l[i].d) + '? Вернуть не получится.')) return;
+  l.splice(i, 1);
+  DB[key] = l;
+  haptic('medium');
+  save(key, DB[key], function(){ render(); if (key === 'mot') renderMotList(); });
+}
+
 /* ══════════════════ СЛЕЖЕНИЕ ЗА ШАРИКАМИ ══════════════════ */
 
 var MOT = {
@@ -3592,10 +3689,10 @@ function renderMotList(){
   var box = document.getElementById('mot-list');
   if (!box) return;
   var l = motList();
-  box.innerHTML = l.length ? l.slice(0, 12).map(function(x){
+  box.innerHTML = l.length ? l.slice(0, 12).map(function(x, i){
     return '<div><span>' + dm(x.d) + ' · ' + x.tg + ' из ' + x.bl + ' · ' + x.du + ' с</span><b>' +
            Math.round(x.sp * 100) + ' <span style="color:var(--tx2);font-size:11px">порог</span> · ' +
-           x.acc + '%</b></div>';
+           x.acc + '%</b><span class="rm" data-act="rmrec:mot:' + i + '">×</span></div>';
   }).join('') : '<div>Серий пока нет.</div>';
 }
 
