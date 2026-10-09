@@ -577,6 +577,7 @@
       <button class="tile wide" data-act="go:rx"><e>🎯</e><b>Реакция выбора</b><i id="t-rx">—</i></button>
       <button class="tile wide" data-act="go:str"><e>🎨</e><b>Тест Струпа</b><i id="t-str">цвет букв, не слово</i></button>
       <button class="tile wide" data-act="go:mot"><e>🔴</e><b>Слежение</b><i id="t-mot">держать своих боковым зрением</i></button>
+      <button class="tile wide" data-act="go:gng"><e>🚦</e><b>Стоп-сигнал</b><i id="t-gng">зелёный жми, красный пропусти</i></button>
     </div>
     <div class="card" style="margin-top:12px">
       <h2>Что мерит каждый</h2>
@@ -585,6 +586,7 @@
         <div><span>Реакция выбора</span><b>скорость решения под временем</b></div>
         <div><span>Струп</span><b>помехоустойчивость</b></div>
         <div><span>Слежение</span><b>распределённое внимание</b></div>
+        <div><span>Стоп-сигнал</span><b>скорость и умение не дёрнуться</b></div>
       </div>
       <div class="sub" style="margin:12px 0 0">Три разных качества — заменять одно другим не стоит.
         Лучший порядок: Шульте на разминку, потом реакция, Струп последним — он самый утомительный.</div>
@@ -1096,6 +1098,47 @@
     </div>
   </section>
 
+  <!-- СТОП-СИГНАЛ -->
+  <section id="p-gng" class="hide">
+    <h1>Стоп-сигнал</h1>
+    <div class="sub">Кружки загораются по одному в случайном месте. <b style="color:var(--w)">Зелёный —
+      закрывай</b>, <b style="color:var(--w)">красный — не трогай</b>. Кружок живёт недолго и гаснет сам.
+      Минута.</div>
+
+    <div class="card">
+      <h2>Поле</h2>
+      <div class="motbar">
+        <div><b id="gn-left">60</b><span>секунд</span></div>
+        <div><b id="gn-ok">0</b><span>закрыто</span></div>
+        <div><b id="gn-rt">—</b><span>среднее, мс</span></div>
+      </div>
+      <div class="motbox" id="gn-box">
+        <canvas id="gn-cv"></canvas>
+        <div class="ov" id="gn-ov">
+          <b id="gn-ovt">Готов?</b>
+          <span id="gn-ovs">Держи палец над центром. Зелёный закрывай, красный пропускай —
+            на него тянет сильнее всего.</span>
+        </div>
+      </div>
+      <button class="btn" data-act="gnstart" id="gn-btn">Начать</button>
+      <div class="sub" id="gn-res" style="margin:10px 0 0"></div>
+    </div>
+
+    <div class="card">
+      <h2>Уровень</h2>
+      <div class="sub" style="margin:0 0 8px">Сколько кружок держится на экране.</div>
+      <div class="chips" id="gn-lvl"></div>
+    </div>
+
+    <div class="card">
+      <h2>Последние попытки</h2>
+      <div class="list" id="gn-list"></div>
+      <div class="sub" style="margin:12px 0 0">Главное — <b style="color:var(--w)">ошибки на красный</b>:
+        это и есть умение не дёрнуться. Второе — <b style="color:var(--w)">пропуски</b>.
+        Разброс показывает ровность: чем он меньше, тем надёжнее.</div>
+    </div>
+  </section>
+
   <!-- СЛЕЖЕНИЕ -->
   <section id="p-mot" class="hide">
     <h1>Слежение</h1>
@@ -1317,7 +1360,8 @@ function save(key, obj, cb){
 var flushing = false;
 var QERR = {}, qIdx = 0;
 var SECT = { me:'профиль', wb:'самочувствие', tr:'дневник занятий', schulte:'Шульте',
-             svet:'«Светофон»', stroop:'Струп', mot:'слежение', goals:'цели и чек-лист',
+             svet:'«Светофон»', stroop:'Струп', mot:'слежение', gng:'стоп-сигнал',
+             goals:'цели и чек-лист',
              gls:'голы', games:'игры' };
 function sectName(k){ return SECT[k] || k; }
 
@@ -1429,13 +1473,13 @@ var SITS = ['Реагирование','Бросок с приёма','Брос�
             'Трафик','Подправление','Добивание','Выход 1 на 1','Блокирование','Клюшка','Буллит'];
 var NZ = ['Верх лев','Верх центр','Верх прав','Блин','Корпус','Ловушка','Низ лев','Домик','Низ прав'];
 
-var DB = { wb:[], tr:[], schulte:[], svet:[], stroop:[], mot:[], goals:{season:null,months:{},days:[]}, gls:[], games:[], notes:[], me:{} };
+var DB = { wb:[], tr:[], schulte:[], svet:[], stroop:[], mot:[], gng:[], goals:{season:null,months:{},days:[]}, gls:[], games:[], notes:[], me:{} };
 var LIB = { m:[], q:[] };
 var today = new Date().toISOString().slice(0,10);
 var curMonth = today.slice(0,7);
 var trType = 0;
 
-var DATA_KEYS = ['wb','tr','schulte','svet','stroop','mot','goals','gls','games','me'];
+var DATA_KEYS = ['wb','tr','schulte','svet','stroop','mot','gng','goals','gls','games','me'];
 
 function boot(){
   /* 0. неотправленное с прошлого раза */
@@ -1491,10 +1535,10 @@ function applyRole(){
 }
 
 /* ---------- навигация ---------- */
-var PAGES = ['home','wb','tr','cog','rx','goals','an','notes','me','coach','gk','lib','mat','game','rad','prog','str','cgn','plan','mot'];
+var PAGES = ['home','wb','tr','cog','rx','goals','an','notes','me','coach','gk','lib','mat','game','rad','prog','str','cgn','plan','mot','gng'];
 var TITLES = { home:'', wb:'Самочувствие', tr:'Дневник занятий', cog:'Таблица Шульте',
   rx:'Реакция выбора', goals:'Цели', an:'Разбор игр', notes:'Заметки тренера',
-  me:'Профиль', coach:'Кабинет тренера', gk:'Карточка вратаря', lib:'Материалы', mat:'Материал', game:'Игра', rad:'Оценка вратаря', prog:'Мой прогресс', str:'Тест Струпа', cgn:'Когнитивка', plan:'План занятия', mot:'Слежение' };
+  me:'Профиль', coach:'Кабинет тренера', gk:'Карточка вратаря', lib:'Материалы', mat:'Материал', game:'Игра', rad:'Оценка вратаря', prog:'Мой прогресс', str:'Тест Струпа', cgn:'Когнитивка', plan:'План занятия', mot:'Слежение', gng:'Стоп-сигнал' };
 var navStack = [];
 function go(page, back){
   if (page === 'plan' && !PLAN_CUR && PLANS.length){ openPlan(); return; }
@@ -1518,7 +1562,8 @@ function go(page, back){
   if (page === 'rad') renderRadar();
   if (page !== 'plan' && PL_TICK){ clearInterval(PL_TICK); PL_TICK = null; }
   if (page === 'mot') openMot(); else if (MOT.run) motStop();
-  if (page === 'prog'){ renderWork(); curveBlock('pg-chips','pg-curve',['rd','sl','fat','sch','svrt','stac','mot'],PCURVE,'pcv'); }
+  if (page === 'gng') openGng(); else if (GN.run) gnStop();
+  if (page === 'prog'){ renderWork(); curveBlock('pg-chips','pg-curve',['rd','sl','fat','sch','svrt','stac','mot','gng'],PCURVE,'pcv'); }
 }
 var CUR_PAGE = 'home';
 function goBack(){ go(navStack.length ? navStack.pop() : 'home', true); }
@@ -1650,6 +1695,8 @@ document.addEventListener('click', function(ev){
     else if (a[0] === 'radck') { RADSELC = a[1]; haptic(); renderRadCoach(); }
     else if (a[0] === 'selftest') selfTest();
     else if (a[0] === 'rmrec') rmRec(a[1], a[2]);
+    else if (a[0] === 'gnstart') gnStart();
+    else if (a[0] === 'gnl') { GN.lvl = parseInt(a[1], 10); haptic(); renderGnLvl(); }
     else if (a[0] === 'motstart') motStart();
     else if (a[0] === 'moto') { MOT[a[1]] = parseInt(a[2], 10); haptic(); renderMotOpts();
                                 if (!MOT.run){ MOT.balls = []; motDraw(); } }
@@ -1732,6 +1779,7 @@ function metrics(){
     stac: ['Струп, точность %', DB.stroop || [],
            function(x){ return x.n ? x.ok / x.n * 100 : null; }, 'max'],
     mot:  ['Слежение, порог', DB.mot || [], function(x){ return x.sp * 100; }, 'max'],
+    gng:  ['Стоп-сигнал, мс', DB.gng || [], 'rt', 'min'],
     rd:   ['Готовность', DB.wb || [], function(x){ return (x.v || {}).rd; }, 'max'],
     sl:   ['Сон, ч', DB.wb || [], 'sl', 'max'],
     fat:  ['Усталость', DB.wb || [], function(x){ return (x.v || {}).f; }, 'min']
@@ -1753,8 +1801,8 @@ function secName(code){
   return '';
 }
 var HCURVE = 'sch', PCURVE = 'rd';
-function setHCurve(k){ HCURVE = k; haptic(); curveBlock('h-cchips', 'h-curve', ['sch','svrt','stac','mot'], HCURVE, 'hcv'); }
-function setPCurve(k){ PCURVE = k; haptic(); curveBlock('pg-chips', 'pg-curve', ['rd','sl','fat','sch','svrt','stac','mot'], PCURVE, 'pcv'); }
+function setHCurve(k){ HCURVE = k; haptic(); curveBlock('h-cchips', 'h-curve', ['sch','svrt','stac','mot','gng'], HCURVE, 'hcv'); }
+function setPCurve(k){ PCURVE = k; haptic(); curveBlock('pg-chips', 'pg-curve', ['rd','sl','fat','sch','svrt','stac','mot','gng'], PCURVE, 'pcv'); }
 
 /* ---------- дашборд главной ---------- */
 function renderDash(){
@@ -1773,7 +1821,7 @@ function renderDash(){
   var st = (DB.stroop || []).filter(function(x){ return x.n; });
   setTxt('h-cg3', st.length ? Math.round(Math.max.apply(null, st.map(function(x){ return x.ok / x.n * 100; }))) + ' %' : '—');
 
-  curveBlock('h-cchips', 'h-curve', ['sch','svrt','stac','mot'], HCURVE, 'hcv');
+  curveBlock('h-cchips', 'h-curve', ['sch','svrt','stac','mot','gng'], HCURVE, 'hcv');
   renderHomeRadar();
 
   /* карточка вратаря */
@@ -3514,6 +3562,10 @@ function render(){
   if (DB.svet && DB.svet.length) cg.push('реакция ' + (DB.svet[0].rt || '—') + ' мс');
   if (sp.length) cg.push('Струп ' + (sp[0].n ? Math.round(sp[0].ok / sp[0].n * 100) : 0) + '%');
   if (DB.mot && DB.mot.length) cg.push('слежение ' + Math.round(DB.mot[0].sp * 100));
+  if (DB.gng && DB.gng.length) cg.push('стоп-сигнал ' + (DB.gng[0].rt || '—') + ' мс');
+  var gg = (DB.gng && DB.gng.length) ? gradeGng(DB.gng[0]) : null;
+  setTxt('t-gng', gg ? gg.name + ' · ' + (DB.gng[0].rt || '—') + ' мс · красный ' + DB.gng[0].stop
+                     : 'зелёный жми, красный пропусти');
   setTxt('t-cgn', cg.length ? cg.join(' · ') : 'Шульте · реакция выбора · Струп');
   var gs = sp.length ? gradeStroop(sp[0]) : null;
   setTxt('t-str', gs ? gs.name + ' · ' + gs.ok + ' верных, ' + gs.e + ' ошиб.' : 'цвет букв, не слово');
@@ -3682,7 +3734,7 @@ function selfTest(){
 }
 
 /* ---------- удаление одной записи ---------- */
-var RM_NAME = { schulte: 'Шульте', svet: '«Светофон»', stroop: 'Струп', mot: 'Слежение' };
+var RM_NAME = { schulte: 'Шульте', svet: '«Светофон»', stroop: 'Струп', mot: 'Слежение', gng: 'Стоп-сигнал' };
 function rmRec(key, i){
   i = parseInt(i, 10);
   var l = DB[key] || [];
@@ -3691,7 +3743,206 @@ function rmRec(key, i){
   l.splice(i, 1);
   DB[key] = l;
   haptic('medium');
-  save(key, DB[key], function(){ render(); if (key === 'mot') renderMotList(); });
+  save(key, DB[key], function(){ render(); if (key === 'mot') renderMotList(); if (key === 'gng') renderGnList(); });
+}
+
+/* ══════════════════ СТОП-СИГНАЛ ══════════════════ */
+/* зелёный — закрывай, красный — не трогай. Минута. */
+
+var GN = {
+  lvl: 600, dur: 60,
+  run: false, t0: 0, raf: null,
+  cur: null, next: 0,
+  green: 0, ok: 0, miss: 0, stop: 0, aim: 0, rts: []
+};
+var GN_LVL = [[800, '800 мс'], [600, '600 мс'], [500, '500 мс']];
+var GN_RED = 0.25;              /* доля красных */
+
+function gngList(){ return DB.gng || (DB.gng = []); }
+
+function gnSize(){
+  var box = document.getElementById('gn-box'), cv = document.getElementById('gn-cv');
+  if (!box || !cv) return;
+  var w = box.clientWidth || 320, h = Math.round(w * 0.9);
+  var dpr = Math.min(2, window.devicePixelRatio || 1);
+  cv.style.height = h + 'px';
+  cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr);
+  GN.w = w; GN.h = h; GN.dpr = dpr;
+  GN.r = Math.max(22, Math.round(Math.min(w, h) / 9));
+}
+
+function gnOv(show, t, sub){
+  var ov = document.getElementById('gn-ov');
+  if (!ov) return;
+  ov.className = show ? 'ov' : 'ov hide';
+  if (t !== undefined) setTxt('gn-ovt', t);
+  if (sub !== undefined) setTxt('gn-ovs', sub);
+}
+
+function gnDraw(){
+  var cv = document.getElementById('gn-cv');
+  if (!cv) return;
+  var g = cv.getContext('2d'), d = GN.dpr;
+  g.setTransform(d, 0, 0, d, 0, 0);
+  g.clearRect(0, 0, GN.w, GN.h);
+  if (!GN.cur) return;
+  var c = GN.cur;
+  g.beginPath();
+  g.arc(c.x, c.y, GN.r, 0, Math.PI * 2);
+  g.fillStyle = c.red ? '#D6112E' : '#2FA84F';
+  g.fill();
+  if (c.bad){ g.lineWidth = 4; g.strokeStyle = '#FFFFFF'; g.stroke(); }
+}
+
+/* новый кружок далеко от прошлого — иначе выскочит под пальцем */
+function gnSpawn(){
+  var r = GN.r, pad = r + 6, tries = 0, x, y;
+  var far = Math.min(GN.w, GN.h) / 3;
+  do {
+    x = pad + Math.random() * (GN.w - 2 * pad);
+    y = pad + Math.random() * (GN.h - 2 * pad);
+    tries++;
+  } while (GN.last && tries < 60 &&
+           Math.hypot(x - GN.last.x, y - GN.last.y) < far);
+  GN.cur = { x: x, y: y, red: Math.random() < GN_RED, t: Date.now(), bad: false };
+  GN.last = { x: x, y: y };
+  if (!GN.cur.red) GN.green++;
+  gnDraw();
+}
+
+function gnLoop(){
+  if (!GN.run) return;
+  var now = Date.now(), left = GN.dur - Math.floor((now - GN.t0) / 1000);
+  setTxt('gn-left', String(Math.max(0, left)));
+  if (left <= 0){ gnFinish(); return; }
+
+  if (GN.cur && now - GN.cur.t >= GN.lvl){
+    if (!GN.cur.red) GN.miss++;          /* зелёный не успел — пропуск */
+    GN.cur = null;
+    GN.next = now + 220 + Math.random() * 280;
+    gnDraw();
+  }
+  if (!GN.cur && now >= GN.next) gnSpawn();
+  GN.raf = requestAnimationFrame(gnLoop);
+}
+
+function gnStart(){
+  if (GN.run){ gnStop(); return; }
+  gnSize();
+  GN.run = true; GN.t0 = Date.now();
+  GN.green = 0; GN.ok = 0; GN.miss = 0; GN.stop = 0; GN.aim = 0; GN.rts = [];
+  GN.cur = null; GN.last = null; GN.next = Date.now() + 500;
+  setTxt('gn-btn', 'Прервать');
+  setTxt('gn-ok', '0'); setTxt('gn-rt', '—');
+  setTxt('gn-res', '');
+  gnOv(false);
+  GN.raf = requestAnimationFrame(gnLoop);
+}
+
+function gnStop(){
+  GN.run = false;
+  if (GN.raf) cancelAnimationFrame(GN.raf);
+  GN.cur = null; gnDraw();
+  setTxt('gn-btn', 'Начать');
+  gnOv(true, 'Готов?', 'Зелёный закрывай, красный пропускай.');
+}
+
+function gnTap(ev){
+  if (!GN.run) return;
+  var cv = document.getElementById('gn-cv'), rect = cv.getBoundingClientRect();
+  var t = (ev.touches && ev.touches[0]) || ev;
+  var x = t.clientX - rect.left, y = t.clientY - rect.top;
+  var c = GN.cur;
+  if (c && Math.hypot(x - c.x, y - c.y) <= GN.r){
+    if (c.red){
+      GN.stop++; haptic('medium');
+      c.bad = true; gnDraw();
+      setTimeout(function(){ if (GN.cur === c){ GN.cur = null; GN.next = Date.now() + 260; gnDraw(); } }, 160);
+    } else {
+      GN.ok++; GN.rts.push(Date.now() - c.t);
+      haptic();
+      setTxt('gn-ok', String(GN.ok));
+      var m = Math.round(GN.rts.reduce(function(a, b){ return a + b; }, 0) / GN.rts.length);
+      setTxt('gn-rt', String(m));
+      GN.cur = null; GN.next = Date.now() + 200 + Math.random() * 250;
+      gnDraw();
+    }
+    return;
+  }
+  /* мимо: ошибка прицела, кружок остаётся */
+  GN.aim++;
+  haptic('medium');
+}
+
+function gnFinish(){
+  GN.run = false;
+  if (GN.raf) cancelAnimationFrame(GN.raf);
+  GN.cur = null; gnDraw();
+  setTxt('gn-btn', 'Пройти ещё раз');
+
+  var n = GN.rts.length;
+  var rt = n ? Math.round(GN.rts.reduce(function(a, b){ return a + b; }, 0) / n) : null;
+  var sd = null;
+  if (n > 1){
+    var m = rt, v = GN.rts.reduce(function(a, b){ return a + (b - m) * (b - m); }, 0) / (n - 1);
+    sd = Math.round(Math.sqrt(v));
+  }
+  var rec = { d: today, lvl: GN.lvl, n: GN.green, ok: GN.ok, miss: GN.miss,
+              stop: GN.stop, aim: GN.aim, rt: rt, sd: sd };
+  var g = gradeGng(rec);
+
+  gnOv(true, g.name, 'Ошибок на красный ' + GN.stop + ' · пропусков ' + GN.miss +
+       (rt ? ' · среднее ' + rt + ' мс' : ''));
+  document.getElementById('gn-res').innerHTML =
+    '<b style="color:' + g.col + ';font-size:16px">' + g.name + '</b><br>' +
+    'Закрыто <b style="color:var(--w)">' + GN.ok + '</b> из ' + GN.green +
+    ' · на красный <b style="color:var(--w)">' + GN.stop + '</b>' +
+    ' · пропусков <b style="color:var(--w)">' + GN.miss + '</b>' +
+    ' · мимо <b style="color:var(--w)">' + GN.aim + '</b>' +
+    (rt ? '<br>среднее ' + rt + ' мс' + (sd !== null ? ' · разброс ' + sd + ' мс' : '') : '');
+
+  gngList().unshift(rec);
+  DB.gng = gngList().slice(0, 60);
+  ckAuto(1);
+  save('gng', DB.gng, function(){ haptic('medium'); renderGnList(); render(); });
+}
+
+/* оценка: по худшему из двух — тормоз и пропуски */
+function gradeGng(x){
+  if (!x) return null;
+  var byStop = x.stop <= 1 ? 3 : (x.stop <= 3 ? 2 : (x.stop <= 6 ? 1 : 0));
+  var byMiss = x.miss <= 2 ? 3 : (x.miss <= 5 ? 2 : (x.miss <= 9 ? 1 : 0));
+  var lv = Math.min(byStop, byMiss);
+  return { lv: lv, name: LV[lv][0], col: LV[lv][1] };
+}
+
+function renderGnLvl(){
+  var el = document.getElementById('gn-lvl');
+  if (el) el.innerHTML = GN_LVL.map(function(l){
+    return '<button data-act="gnl:' + l[0] + '"' + (GN.lvl === l[0] ? ' class="on"' : '') + '>' + l[1] + '</button>';
+  }).join('');
+}
+
+function renderGnList(){
+  var box = document.getElementById('gn-list');
+  if (!box) return;
+  var l = gngList();
+  box.innerHTML = l.length ? l.slice(0, 10).map(function(x, i){
+    var g = gradeGng(x);
+    return '<div><span>' + dm(x.d) + ' · ' + x.lvl + ' мс · <b style="color:' + g.col + '">' + g.name +
+           '</b></span><b>' + (x.rt || '—') + ' мс <i>красный ' + x.stop + ' · проп. ' + x.miss + '</i></b>' +
+           '<span class="rm" data-act="rmrec:gng:' + i + '">×</span></div>';
+  }).join('') : '<div>Попыток пока нет.</div>';
+}
+
+function openGng(){
+  renderGnLvl(); renderGnList();
+  gnSize(); GN.cur = null; gnDraw();
+  gnOv(true, 'Готов?', 'Держи палец над центром. Зелёный закрывай, красный пропускай — ' +
+       'на него тянет сильнее всего.');
+  setTxt('gn-left', String(GN.dur));
+  var cv = document.getElementById('gn-cv');
+  if (cv && !cv._g){ cv._g = true; cv.addEventListener('click', gnTap); }
 }
 
 /* ══════════════════ СЛЕЖЕНИЕ ЗА ШАРИКАМИ ══════════════════ */
