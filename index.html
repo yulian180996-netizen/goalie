@@ -1137,8 +1137,11 @@
     <div class="card">
       <h2>Последние серии</h2>
       <div class="list" id="mot-list"></div>
-      <div class="sub" style="margin:12px 0 0">Порог скорости — главное число. Процент верных держится
-        около 70–80 %, потому что скорость всё время подстраивается под тебя.</div>
+      <div class="sub" style="margin:12px 0 0">Главное число — порог скорости, рядом уровень.
+        Ошибок всегда примерно четверть: скорость сама подстраивается так, чтобы держать тебя на пределе.
+        Поэтому расти должен порог, а не точность.<br><br>
+        <b style="color:var(--w)">20</b> базовый · <b style="color:var(--w)">30</b> уверенный ·
+        <b style="color:var(--w)">45</b> высокий · <b style="color:var(--w)">60</b> профи</div>
     </div>
   </section>
 
@@ -2813,10 +2816,13 @@ function stopStroop(){
   var acc = total ? Math.round(stOk / total * 100) : 0;
   stIdle('Пройти ещё раз');
 
+  var gr = gradeStroop({ n: total, ok: stOk, e: stErr, sk: stSkip });
   document.getElementById('st-res').innerHTML =
-    'Проб: <b style="color:var(--w)">' + total + '</b> · точность <b style="color:var(--w)">' + acc + '%</b>' +
-    (rt ? ' · среднее <b style="color:var(--w)">' + rt + ' мс</b>' : '') +
-    (eff !== null ? ' · помеха <b style="color:var(--w)">' + eff + ' мс</b>' : '');
+    (gr ? '<b style="color:' + gr.col + ';font-size:16px">' + gr.name + '</b><br>' : '') +
+    'Верных <b style="color:var(--w)">' + stOk + '</b> · ошибок и пропусков <b style="color:var(--w)">' +
+    (stErr + stSkip) + '</b> · точность <b style="color:var(--w)">' + acc + '%</b>' +
+    (rt ? '<br>среднее ' + rt + ' мс' : '') +
+    (eff !== null ? ' · помеха ' + eff + ' мс' : '');
 
   DB.stroop.unshift({ d: today, ok: stOk, e: stErr, sk: stSkip, n: total,
                       ms: ST_LVL[stLvl][1], rt: rt, rc: rc, ri: ri, eff: eff });
@@ -3497,9 +3503,10 @@ function render(){
     return { d: dm(x.d), v: x.n ? Math.round(x.ok / x.n * 100) : 0 };
   }), { min: 0, max: 100, last: sser2.length ? (sser2[sser2.length-1].n ? Math.round(sser2[sser2.length-1].ok / sser2[sser2.length-1].n * 100) + '%' : '') : '' });
   document.getElementById('sr-list').innerHTML = sp.slice(0, 8).map(function(x, i){
-    var a = x.n ? Math.round(x.ok / x.n * 100) : 0;
-    return '<div><span>' + dm(x.d) + '</span><b>' + a + '% · ' + (x.rt || '—') + ' мс' +
-           (x.eff !== null && x.eff !== undefined ? ' · помеха ' + x.eff : '') + '</b>' +
+    var g = gradeStroop(x);
+    return '<div><span>' + dm(x.d) + (g ? ' · <b style="color:' + g.col + '">' + g.name + '</b>' : '') +
+           '</span><b>' + (x.ok || 0) + ' верных · ' + ((x.e || 0) + (x.sk || 0)) + ' ошиб.' +
+           (x.eff !== null && x.eff !== undefined ? ' <i>помеха ' + x.eff + '</i>' : '') + '</b>' +
            '<span class="rm" data-act="rmrec:stroop:' + i + '">×</span></div>';
   }).join('') || '<div>Попыток пока нет.</div>';
   var cg = [];
@@ -3508,10 +3515,12 @@ function render(){
   if (sp.length) cg.push('Струп ' + (sp[0].n ? Math.round(sp[0].ok / sp[0].n * 100) : 0) + '%');
   if (DB.mot && DB.mot.length) cg.push('слежение ' + Math.round(DB.mot[0].sp * 100));
   setTxt('t-cgn', cg.length ? cg.join(' · ') : 'Шульте · реакция выбора · Струп');
-  setTxt('t-str', sp.length ? 'последний: ' + (sp[0].n ? Math.round(sp[0].ok / sp[0].n * 100) : 0) + '% верно' : 'цвет букв, не слово');
+  var gs = sp.length ? gradeStroop(sp[0]) : null;
+  setTxt('t-str', gs ? gs.name + ' · ' + gs.ok + ' верных, ' + gs.e + ' ошиб.' : 'цвет букв, не слово');
   var mt = DB.mot || [];
-  setTxt('t-mot', mt.length ? 'порог ' + Math.round(mt[0].sp * 100) + ' · ' + mt[0].tg + ' из ' + mt[0].bl
-                            : 'держать своих боковым зрением');
+  var gm = mt.length ? gradeMot(mt[0]) : null;
+  setTxt('t-mot', gm ? gm.name + ' · ' + gm.v + ' · ' + mt[0].tg + ' из ' + mt[0].bl
+                     : 'держать своих боковым зрением');
 
   document.getElementById('sv-cnt').textContent = String(DB.svet.length);
   var miss = function(x){ return (x.e || 0) + (x.sk || 0); };
@@ -3606,6 +3615,34 @@ function renderAnalytics(){
   }).join('') : '<div class="sub" style="margin:0">Игр пока нет.</div>';
 }
 
+/* ---------- понятные оценки ---------- */
+/* уровень · цвет */
+var LV = [['Слабо','var(--rose)'], ['Норма','var(--tx2)'],
+          ['Хорошо','var(--okTx)'], ['Отлично','var(--okTx)']];
+
+/* Струп: минута. Два критерия, итог — по худшему.
+   нельзя гнать с ошибками и нельзя быть аккуратным, но медленным */
+function gradeStroop(x){
+  if (!x || !x.n) return null;
+  var e = (x.e || 0) + (x.sk || 0), ok = x.ok || 0;
+  var byErr = e <= 2 ? 3 : (e <= 5 ? 2 : (e <= 9 ? 1 : 0));
+  var bySpd = ok >= 45 ? 3 : (ok >= 35 ? 2 : (ok >= 25 ? 1 : 0));
+  var lv = Math.min(byErr, bySpd);
+  return { lv: lv, name: LV[lv][0], col: LV[lv][1], e: e, ok: ok,
+           why: (byErr < bySpd ? 'держит ошибки' : (bySpd < byErr ? 'держит темп' : '')) };
+}
+
+/* Слежение: порог скорости. Ошибки тут не показатель —
+   скорость подстраивается так, чтобы их всегда было около четверти */
+var MOT_LV = [[60,'Профи'], [45,'Высокий'], [30,'Уверенный'], [20,'Базовый'], [0,'Начальный']];
+function gradeMot(x){
+  if (!x) return null;
+  var v = Math.round(x.sp * 100), nm = 'Начальный';
+  for (var i = 0; i < MOT_LV.length; i++) if (v >= MOT_LV[i][0]){ nm = MOT_LV[i][1]; break; }
+  var col = v >= 45 ? 'var(--okTx)' : (v >= 30 ? 'var(--tx)' : 'var(--tx2)');
+  return { v: v, name: nm, col: col, miss: (x.n || 0) - (x.ok || 0) };
+}
+
 /* ---------- самопроверка связи ---------- */
 function selfTest(){
   var out = document.getElementById('st-out');
@@ -3661,7 +3698,7 @@ function rmRec(key, i){
 
 var MOT = {
   tg: 2, bl: 12, du: 6, tr: 20,         /* целей · всего · секунд · попыток */
-  sp: 0.17,                              /* доля поля в секунду */
+  sp: 0.26,                              /* доля поля в секунду */
   i: 0, ok: 0, run: false, phase: 'idle',
   balls: [], pick: [], log: [], raf: null, t0: 0
 };
@@ -3690,9 +3727,11 @@ function renderMotList(){
   if (!box) return;
   var l = motList();
   box.innerHTML = l.length ? l.slice(0, 12).map(function(x, i){
-    return '<div><span>' + dm(x.d) + ' · ' + x.tg + ' из ' + x.bl + ' · ' + x.du + ' с</span><b>' +
-           Math.round(x.sp * 100) + ' <span style="color:var(--tx2);font-size:11px">порог</span> · ' +
-           x.acc + '%</b><span class="rm" data-act="rmrec:mot:' + i + '">×</span></div>';
+    var g = gradeMot(x);
+    return '<div><span>' + dm(x.d) + ' · ' + x.tg + ' из ' + x.bl +
+           ' · <b style="color:' + g.col + '">' + g.name + '</b></span><b>' + g.v +
+           ' <i>ошибок ' + g.miss + ' из ' + (x.n || 0) + '</i></b>' +
+           '<span class="rm" data-act="rmrec:mot:' + i + '">×</span></div>';
   }).join('') : '<div>Серий пока нет.</div>';
 }
 
@@ -3820,7 +3859,9 @@ function motStart(){
   if (MOT.run){ motStop(); return; }
   motSize();
   MOT.run = true; MOT.i = 0; MOT.ok = 0; MOT.log = [];
-  MOT.sp = 0.17;
+  /* стартуем от прошлого порога — не теряем время на разгон */
+  var last = motList()[0];
+  MOT.sp = (last && last.sp) ? Math.max(0.12, last.sp * 0.85) : 0.26;
   setTxt('mot-btn', 'Прервать');
   motTrial();
 }
@@ -3885,8 +3926,8 @@ function motJudge(){
   var win = right === MOT.tg;
   if (win){ MOT.ok++; MOT.sp *= 1.12; }
   else MOT.sp /= 1.12;
-  if (MOT.sp < 0.05) MOT.sp = 0.05;
-  if (MOT.sp > 0.80) MOT.sp = 0.80;
+  if (MOT.sp < 0.06) MOT.sp = 0.06;
+  if (MOT.sp > 1.40) MOT.sp = 1.40;
   MOT.log.push(MOT.sp);
   setTxt('mot-ok', String(MOT.ok));
   MOT.phase = 'done';
@@ -3906,8 +3947,10 @@ function motFinish(){
   motList().unshift({ d: today, tg: MOT.tg, bl: MOT.bl, du: MOT.du, n: MOT.tr,
                       ok: MOT.ok, acc: acc, sp: Math.round(thr * 1000) / 1000 });
   DB.mot = motList().slice(0, 60);
-  motOv(true, 'Порог ' + Math.round(thr * 100),
-        'Верно ' + MOT.ok + ' из ' + MOT.tr + ' · ' + acc + ' %. Это твоя рабочая скорость на сегодня.');
+  var g = gradeMot({ sp: thr, n: MOT.tr, ok: MOT.ok });
+  motOv(true, g.name + ' · ' + g.v,
+        'Ошибок ' + (MOT.tr - MOT.ok) + ' из ' + MOT.tr + '. Их всегда около четверти: ' +
+        'скорость сама держит тебя на пределе. Растёт не точность, а число слева.');
   ckAuto(1);
   save('mot', DB.mot, function(){ haptic('medium'); renderMotList(); render(); });
 }
