@@ -3768,7 +3768,7 @@ function gnSize(){
   cv.style.height = h + 'px';
   cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr);
   GN.w = w; GN.h = h; GN.dpr = dpr;
-  GN.r = Math.max(22, Math.round(Math.min(w, h) / 9));
+  GN.r = Math.max(16, Math.round(Math.min(w, h) / 14));
 }
 
 function gnOv(show, t, sub){
@@ -3819,7 +3819,7 @@ function gnLoop(){
   if (GN.cur && now - GN.cur.t >= GN.lvl){
     if (!GN.cur.red) GN.miss++;          /* зелёный не успел — пропуск */
     GN.cur = null;
-    GN.next = now + 220 + Math.random() * 280;
+    GN.next = now + 160;
     gnDraw();
   }
   if (!GN.cur && now >= GN.next) gnSpawn();
@@ -3857,15 +3857,15 @@ function gnTap(ev){
     if (c.red){
       GN.stop++; haptic('medium');
       c.bad = true; gnDraw();
-      setTimeout(function(){ if (GN.cur === c){ GN.cur = null; GN.next = Date.now() + 260; gnDraw(); } }, 160);
+      setTimeout(function(){ if (GN.cur === c && GN.run){ GN.cur = null; GN.next = 0; gnSpawn(); } }, 140);
     } else {
       GN.ok++; GN.rts.push(Date.now() - c.t);
       haptic();
       setTxt('gn-ok', String(GN.ok));
       var m = Math.round(GN.rts.reduce(function(a, b){ return a + b; }, 0) / GN.rts.length);
       setTxt('gn-rt', String(m));
-      GN.cur = null; GN.next = Date.now() + 200 + Math.random() * 250;
-      gnDraw();
+      GN.cur = null; GN.next = 0;
+      gnSpawn();
     }
     return;
   }
