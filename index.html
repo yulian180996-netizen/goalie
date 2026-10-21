@@ -43,6 +43,9 @@
   .btn{width:100%;background:var(--red);color:#fff;border:0;border-radius:11px;padding:14px;
        font-size:15px;font-weight:700;cursor:pointer;margin-top:14px}
   .btn.sec{background:var(--sec);color:var(--tx)}
+  .btn.edit{background:var(--roseBg);color:var(--rose);border:1.5px solid var(--roseLn);
+       font-weight:700;letter-spacing:.2px}
+  .btn.edit:active{background:var(--roseLn)}
   .row{display:flex;gap:10px}
   .row>*{flex:1}
   .stat{display:flex;gap:8px;margin-bottom:10px}
@@ -264,7 +267,21 @@
   .lib b{display:block;font-size:14.5px;font-weight:700;margin-bottom:3px}
   .lib i{display:block;font-size:12px;color:var(--tx2);font-style:normal;line-height:1.35}
   .matimg{width:100%;border-radius:12px;display:block;margin-bottom:12px}
-  .mattext{font-size:14.5px;line-height:1.55;white-space:pre-wrap}
+  .mattext{font-size:14.5px;line-height:1.55}
+  .mattext p{margin:0 0 12px}
+  .mattext h3{font-size:15.5px;font-weight:700;margin:20px 0 8px;color:var(--w);
+       display:flex;align-items:center;gap:8px}
+  .mattext h3:before{content:'';width:3px;height:15px;background:var(--red);border-radius:2px;flex:none}
+  .mattext h3:first-child{margin-top:0}
+  .mattext ul{margin:0 0 12px;padding:0;list-style:none}
+  .mattext li{position:relative;padding-left:16px;margin-bottom:6px}
+  .mattext li:before{content:'';position:absolute;left:3px;top:9px;width:5px;height:5px;
+       border-radius:50%;background:var(--red)}
+  .mattext b{color:var(--w)}
+  .mattext .box{background:var(--bg2);border:1px solid var(--line);border-left:3px solid var(--red);
+       border-radius:10px;padding:11px 13px;margin:0 0 12px;font-size:13.5px;line-height:1.5}
+  .mattext img{width:100%;border-radius:12px;display:block;margin:0 0 14px}
+  .mattext .cap{font-size:11.5px;color:var(--tx2);text-align:center;margin:-8px 0 14px;line-height:1.35}
   a.btn{display:block;text-align:center;text-decoration:none;box-sizing:border-box}
   /* площадка */
   .rink{position:relative;line-height:0}
@@ -285,6 +302,26 @@
   .ck.on .ckt{color:var(--okTx3)}
   .ckbar{height:6px;background:var(--bg2);border-radius:3px;overflow:hidden;margin-top:4px}
   .ckbar i{display:block;height:100%;background:var(--ok);border-radius:3px;transition:width .2s}
+  /* инструкция */
+  .hp{font-size:14px;line-height:1.55}
+  .hp p{margin:0 0 11px}
+  .hp b{color:var(--w)}
+  .hp .st{display:flex;gap:11px;margin-bottom:11px}
+  .hp .st u{flex:none;width:25px;height:25px;border-radius:8px;background:var(--roseBg);
+       border:1px solid var(--roseLn);color:var(--rose);font-size:12.5px;font-weight:700;
+       display:flex;align-items:center;justify-content:center;text-decoration:none;margin-top:1px}
+  .hp .st div{flex:1}
+  .hp .nt{background:var(--bg2);border:1px solid var(--line);border-left:3px solid var(--red);
+       border-radius:10px;padding:11px 13px;margin:0 0 12px;font-size:13.5px;line-height:1.5}
+  /* обратный отсчёт перед тестом */
+  .cdn{position:fixed;left:0;top:0;right:0;bottom:0;z-index:250;background:rgba(14,18,22,.9);
+       display:flex;align-items:center;justify-content:center;flex-direction:column;gap:10px}
+  body.lt .cdn{background:rgba(241,243,246,.94)}
+  .cdn.hide{display:none}
+  .cdn b{font-size:88px;font-weight:900;color:var(--red);line-height:1}
+  .cdn b.p{animation:cdp .55s ease-out}
+  .cdn span{font-size:14px;color:var(--tx2)}
+  @keyframes cdp{from{transform:scale(.55);opacity:.2}to{transform:scale(1);opacity:1}}
   /* слежение за шариками */
   .motbox{position:relative;background:var(--bg3);border:1px solid var(--line);
           border-radius:14px;overflow:hidden;margin-top:10px;touch-action:manipulation}
@@ -386,6 +423,140 @@
        font-size:42px;font-weight:800;color:var(--w)}
   .rxc.go{background:var(--red);border-color:var(--red)}
   #rx-pad.off{opacity:.45}
+
+/* ═══════════ ОФОРМЛЕНИЕ ═══════════ */
+:root{
+  --ink:#1B222C; --card:#262F3B; --bg2:#202833; --bg3:#1A222C;
+  --sec:#323D4B; --line:#3B4757; --tx:#F4F7FA; --tx2:#B6C3D1; --w:#FFFFFF;
+  --c-wb:#F05668; --c-cg:#4FA8F0; --c-rt:#3CC077; --c-ck:#F2B134; --c-pr:#B189F0; --c-pl:#F08A4B;
+}
+body.lt{
+  --ink:#EDF1F6; --card:#FFFFFF; --bg2:#F4F7FA; --bg3:#E8EEF4;
+  --sec:#E1E8F0; --line:#D3DCE6; --tx:#141A22; --tx2:#505D6C; --w:#0F141B;
+  --c-wb:#CE2338; --c-cg:#1C7FCC; --c-rt:#1C8F52; --c-ck:#C2860C; --c-pr:#7A50C9; --c-pl:#C06023;
+}
+body{font-size:14.5px;font-weight:400;padding-bottom:74px;
+     background:linear-gradient(180deg,#232C38 0,var(--ink) 320px) fixed}
+body.lt{background:linear-gradient(180deg,#FFFFFF 0,var(--ink) 320px) fixed}
+h1{font-size:22px}
+.sub{font-size:14px;font-weight:400;color:var(--tx2);line-height:1.45}
+label{font-size:13.5px;font-weight:400}
+.card h2{font-size:16px}
+.list div{font-size:13.5px;font-weight:400;padding:9px 0}
+.list b{font-size:14.5px;font-weight:700}
+.list b i{font-size:12px}
+.tile b{font-size:14.5px}
+.tile i{font-size:12.5px;font-weight:400;line-height:1.35}
+.strk .t{font-size:13.5px}
+.chips button{font-size:13.5px;font-weight:400}
+.chips button.on{font-weight:700}
+.seg button{font-size:14px;font-weight:400}
+.seg button.on{font-weight:700}
+.ck{font-size:14.5px}
+.goal .t{font-size:14.5px} .goal .c{font-size:13px}
+.lib b{font-size:15px} .lib i{font-size:13px}
+.mattext{font-size:15px}
+.prof .pi b{font-size:16px} .prof .pi span{font-size:12.5px}
+.motbar b{font-size:18px} .motbar span{font-size:11px;font-weight:500}
+.scl{font-size:12px;line-height:1.55}
+.awd .tx{font-size:13.5px} .awd .tx b{font-size:14.5px} .awd .d{font-size:12px}
+.memo .mb{font-size:13.5px} .memo .md{font-size:12.5px} .memo .mt{font-size:11.5px}
+.tsk .tt{font-size:13.5px} .tsk .tt small{font-size:11.5px}
+.recall div{font-size:13.5px} .recall b{font-size:12.5px}
+.rg .nm{font-size:13.5px;font-weight:400} .rg .rv{font-size:18px} .rg .rl{font-size:11.5px}
+.rsec{font-size:11.5px;letter-spacing:1px}
+.sw{font-size:13.5px} .sw b{font-size:15px}
+.cmp .n{font-size:13.5px} .cmp .n small{font-size:11.5px;font-weight:500}
+.cmp .p{font-size:16px} .cmp .dl{font-size:13px} .cmph{font-size:11.5px;font-weight:500}
+.wk .n{font-size:13.5px} .wk .v{font-size:16px}
+.mtab th{font-size:11.5px;font-weight:500} .mtab td.n{font-size:13px} .mtab td.v{font-size:14.5px}
+.mtab tr.sc td{font-size:11px;letter-spacing:1px} .mtab tr.av td{font-size:12.5px}
+.ctab th{font-size:11.5px;font-weight:500} .ctab td{font-size:14px} .ctab td:first-child{font-size:13.5px}
+.netgrid div{font-size:13.5px} .netgrid span{font-size:11px}
+.lg{font-size:12.5px} .cap{font-size:12px}
+
+.card{border-radius:17px;padding:15px;
+      background:linear-gradient(180deg,rgba(255,255,255,.055),rgba(255,255,255,0) 58%),var(--card);
+      border-color:rgba(255,255,255,.09)}
+body.lt .card{background:linear-gradient(180deg,#FFFFFF,#FAFCFE),var(--card);
+      border-color:var(--line);box-shadow:0 1px 3px rgba(20,30,45,.06)}
+.card h2:before{height:17px;width:4px}
+.k-wb h2:before{background:var(--c-wb)} .k-cg h2:before{background:var(--c-cg)}
+.k-rt h2:before{background:var(--c-rt)} .k-ck h2:before{background:var(--c-ck)}
+.k-pr h2:before{background:var(--c-pr)} .k-pl h2:before{background:var(--c-pl)}
+
+.dash .c{border-radius:13px;
+         background:linear-gradient(160deg,rgba(255,255,255,.07),rgba(255,255,255,.015));
+         border-color:rgba(255,255,255,.1)}
+body.lt .dash .c{background:linear-gradient(160deg,#FFFFFF,#F2F6FA);border-color:var(--line)}
+.dash .c b{font-size:25px;color:var(--w)}
+.dash .c span{font-size:12.5px;font-weight:500;color:var(--tx2);margin-top:5px}
+.k-wb .dash .c{background:linear-gradient(160deg,rgba(240,86,104,.14),rgba(240,86,104,.03));
+               border-color:rgba(240,86,104,.26)}
+.k-cg .dash .c{background:linear-gradient(160deg,rgba(79,168,240,.14),rgba(79,168,240,.03));
+               border-color:rgba(79,168,240,.26)}
+body.lt .k-wb .dash .c{background:linear-gradient(160deg,#FFF4F6,#FFEDF0);border-color:#F3CBD2}
+body.lt .k-cg .dash .c{background:linear-gradient(160deg,#F3F9FF,#E9F3FD);border-color:#C8DFF5}
+.mini{background:rgba(0,0,0,.22)}
+body.lt .mini{background:#E3EAF2}
+
+/* плитки: эмодзи всегда в красном квадрате */
+.tile{border-radius:17px;
+      background:linear-gradient(180deg,rgba(255,255,255,.06),rgba(255,255,255,0) 62%),var(--card);
+      box-shadow:0 3px 0 rgba(0,0,0,.22)}
+body.lt .tile{background:#FFFFFF;box-shadow:0 2px 0 var(--line)}
+.tile:active{transform:translateY(3px);box-shadow:none}
+.tile e{background:linear-gradient(145deg,rgba(214,17,46,.34),rgba(214,17,46,.12));
+        border-color:rgba(214,17,46,.55)}
+body.lt .tile e{background:linear-gradient(145deg,#FFE3E8,#FFF2F4);border-color:#F2BFC8}
+.tile:after{color:var(--red)}
+/* на вкладке «Профиль» плитки без иконок — там и так всё подписано */
+#p-home .tile e{display:none}
+#p-home .tile{padding-top:14px;padding-bottom:14px}
+
+.strk{background:linear-gradient(135deg,#C9122B,#7E0A1B);border-color:#C9122B}
+.strk .t{color:rgba(255,255,255,.88)} .strk .t b{color:#fff}
+.quote{background:var(--card);border-color:var(--line);border-left:4px solid var(--red)}
+body.lt .quote{background:#FFFFFF}
+.quote .qt{color:var(--tx)} .quote .qa{color:var(--rose)}
+
+/* ═══════════ НИЖНЯЯ ПАНЕЛЬ ═══════════ */
+.tabbar{position:fixed;left:0;right:0;bottom:0;z-index:150;display:flex;
+        background:rgba(27,34,44,.97);border-top:1px solid var(--line);
+        padding:6px 2px calc(6px + env(safe-area-inset-bottom))}
+body.lt .tabbar{background:rgba(255,255,255,.98)}
+.tabbar button{flex:1;background:none;border:0;color:var(--tx2);font-family:inherit;
+       padding:4px 1px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px}
+.tabbar e{font-size:18px;line-height:1;font-style:normal;filter:grayscale(.45);opacity:.75}
+.tabbar span{font-size:9px;font-weight:500;line-height:1.1;text-align:center;
+       white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.tabbar button.on{color:var(--red)}
+.tabbar button.on e{filter:none;opacity:1}
+
+/* ═══════════ ШТОРКА «ЕЩЁ» ═══════════ */
+.sheet{position:fixed;left:0;top:0;right:0;bottom:0;z-index:200;background:rgba(0,0,0,.55);
+       display:flex;align-items:flex-end}
+.sheet.hide{display:none}
+.sbox{width:100%;background:var(--card);border-radius:20px 20px 0 0;padding:16px 14px
+      calc(18px + env(safe-area-inset-bottom));border-top:1px solid var(--line)}
+.sbox .gr{width:38px;height:4px;border-radius:2px;background:var(--line);margin:0 auto 14px}
+.sbox h2{font-size:16px;margin:0 0 12px}
+.sbox .tiles{grid-template-columns:1fr 1fr}
+
+/* ═══════════ ФОТО ПРОФИЛЯ ═══════════ */
+.ava{display:flex;align-items:center;gap:13px;margin-top:4px}
+.ava .ph{flex:none;width:68px;height:68px;border-radius:20px;overflow:hidden;
+         background:var(--roseBg);border:1px solid var(--roseLn);
+         display:flex;align-items:center;justify-content:center;font-size:26px;
+         font-weight:800;color:var(--rose)}
+.ava .ph img{width:100%;height:100%;object-fit:cover;display:block}
+.ava .bt{flex:1;display:flex;flex-direction:column;gap:7px}
+.ava .bt button,.ava .bt label{margin:0;padding:10px;font-size:13.5px;text-align:center;
+       background:var(--sec);color:var(--tx);border:0;border-radius:10px;cursor:pointer;
+       font-family:inherit;display:block}
+.ava input[type=file]{display:none}
+.prof .av{overflow:hidden}
+.prof .av img{width:100%;height:100%;object-fit:cover;display:block}
 </style>
 </head>
 <body>
@@ -394,6 +565,8 @@
   <button id="back" data-act="back">‹</button>
   <span id="top-title"></span>
 </header>
+
+<div class="cdn hide" id="cdn"><b id="cdn-n" class="p">3</b><span id="cdn-t">Приготовься</span></div>
 
 <div class="wrap">
 
@@ -413,14 +586,30 @@
       <div class="qa" id="q-auth"></div>
     </div>
     <div class="card">
+      <h2>Чек-лист дня</h2>
+      <div class="sub" style="margin:0 0 10px">Выполнил — отметь.</div>
+      <div id="ck-list"></div>
+      <div class="sub" id="ck-sum" style="margin:10px 0 0"></div>
+      <div class="ckbar"><i id="ck-bar" style="width:0%"></i></div>
+      <button class="btn edit" data-act="ckedit">⚙️ <span id="ck-editbtn">Настроить список</span></button>
+      <div id="ck-edit" class="hide">
+        <div class="sub" style="margin:12px 0 8px">Свой список привычек. Стрелки меняют порядок,
+          крестик удаляет. Отметки за прошлые дни не теряются.</div>
+        <div id="ck-edl"></div>
+        <div class="edl"><input id="ck-new" placeholder="Новая привычка"></div>
+        <button class="btn" data-act="ckadd">Добавить</button>
+        <button class="btn sec" data-act="ckreset">Вернуть стандартный список</button>
+      </div>
+    </div>
+    <div class="card">
       <h2>Сегодня</h2>
       <div class="dash">
-        <div class="c"><b id="h-sleep">—</b><span>сон, ч</span></div>
-        <div class="c"><b id="h-ready">—</b><span>готовность</span></div>
-        <div class="c"><b id="h-pulse">—</b><span>пульс утром</span></div>
+        <div class="c"><b id="h-sleep">—</b><span>Сон, ч</span></div>
+        <div class="c"><b id="h-ready">—</b><span>Готовность</span></div>
+        <div class="c"><b id="h-pulse">—</b><span>Пульс утром</span></div>
         <div class="c"><b id="h-sch">—</b><span>Шульте, с</span></div>
         <div class="c w" data-act="go:prog">
-          <b id="h-ck">0 / 0</b><span>чек-лист дня</span>
+          <b id="h-ck">0 / 0</b><span>Чек-лист дня</span>
           <div class="mini"><u id="h-ckb" style="width:0%"></u></div>
         </div>
       </div>
@@ -443,22 +632,6 @@
         <span>Тренер их пока не видит. Нажми, чтобы отправить сейчас. Если не уходит, подключись к Wi-Fi и зайди снова.</span></div>
     </div>
     <div class="card">
-      <h2>Чек-лист дня</h2>
-      <div class="sub" style="margin:0 0 10px">Выполнил — отметь.</div>
-      <div id="ck-list"></div>
-      <div class="sub" id="ck-sum" style="margin:10px 0 0"></div>
-      <div class="ckbar"><i id="ck-bar" style="width:0%"></i></div>
-      <button class="btn sec" data-act="ckedit"><span id="ck-editbtn">Настроить список</span></button>
-      <div id="ck-edit" class="hide">
-        <div class="sub" style="margin:12px 0 8px">Свой список привычек. Стрелки меняют порядок,
-          крестик удаляет. Отметки за прошлые дни не теряются.</div>
-        <div id="ck-edl"></div>
-        <div class="edl"><input id="ck-new" placeholder="Новая привычка"></div>
-        <button class="btn" data-act="ckadd">Добавить</button>
-        <button class="btn sec" data-act="ckreset">Вернуть стандартный список</button>
-      </div>
-    </div>
-    <div class="card">
       <h2>Оценка</h2>
       <div class="seg" id="h-radtabs" style="margin-bottom:10px">
         <button data-act="hrt:sum">Сводная</button>
@@ -473,25 +646,6 @@
       <div id="h-radweak"></div>
       <button class="btn sec" data-act="go:rad">Открыть раздел оценки</button>
     </div>
-    <div class="tiles">
-      <button class="tile wide hide" id="coach-entry" data-act="roster"
-              style="background:var(--roseBg);border-color:var(--roseLn)">
-        <e>🧤</e><b>Кабинет тренера</b><i>все вратари, их данные и заметки</i></button>
-      <button class="tile wide hide" id="plan-entry" data-act="go:plan"
-              style="background:var(--roseBg);border-color:var(--roseLn)">
-        <e>📋</e><b>План занятия</b><i id="t-plan">—</i></button>
-      <button class="tile wide" data-act="go:prog"><e>📈</e><b>Мой прогресс</b><i id="t-prog">дисциплина и динамика показателей</i></button>
-      <button class="tile" data-act="go:wb"><e>☀️</e><b>Самочувствие</b><i id="t-wb">—</i></button>
-      <button class="tile" data-act="go:tr"><e>🏒</e><b>Дневник занятий</b><i id="t-tr">—</i></button>
-      <button class="tile wide" data-act="go:cgn"><e>🧠</e><b>Когнитивка</b><i id="t-cgn">Шульте · реакция выбора · Струп</i></button>
-      <button class="tile" data-act="go:goals"><e>🎯</e><b>Цели</b><i id="t-goals">—</i></button>
-      <button class="tile" data-act="go:an"><e>🥅</e><b>Разбор игр</b><i id="t-an">—</i></button>
-      <button class="tile" data-act="go:rad"><e>🕸</e><b>Оценка вратаря</b><i id="t-rad">—</i></button>
-      <button class="tile" data-act="lib:Психология"><e>🧩</e><b>Психология</b><i id="t-psy">—</i></button>
-      <button class="tile" data-act="lib:Теория"><e>📚</e><b>Теория</b><i id="t-th">—</i></button>
-      <button class="tile" data-act="go:notes"><e>📝</e><b>Заметки тренера</b><i id="t-notes">—</i></button>
-      <button class="tile" data-act="go:me"><e>👤</e><b>Профиль</b><i id="t-me">—</i></button>
-    </div>
     <div class="card" style="margin-top:12px" data-act="go:me">
       <h2>Вратарь</h2>
       <div class="prof">
@@ -499,6 +653,107 @@
         <div class="pi"><b id="pf-name">Имя не заполнено</b><span id="pf-sub"></span></div>
       </div>
       <div class="list" style="margin-top:11px" id="pf-list"></div>
+    </div>
+  </section>
+
+  <!-- ИНСТРУКЦИЯ -->
+  <section id="p-help" class="hide">
+    <h1>Как пользоваться</h1>
+    <div class="sub">Коротко: что заполнять каждый день, что раз в месяц и зачем это нужно.</div>
+
+    <div class="card">
+      <h2>Главное правило</h2>
+      <div class="hp">
+        <p>Приложение полезно ровно настолько, насколько регулярно ты его заполняешь.
+          Две минуты в день дают картину, по которой видно, что у тебя растёт, а что
+          просело. Пропустил неделю — считать нечего.</p>
+        <div class="nt">Если наверху горит красная плашка <b>«Записи не ушли в базу»</b> —
+          нажми на неё. Значит данные остались в телефоне и тренер их не видит.
+          Не уходит — подключись к Wi-Fi и зайди снова.</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Каждый день</h2>
+      <div class="hp">
+        <div class="st"><u>1</u><div><b>Утром — самочувствие.</b> Вкладка «Дневник».
+          Сон, пульс, вес и бегунки состояния. Заполняй честно: смысл не в красивых цифрах,
+          а в том, чтобы поймать, когда организм не тянет.</div></div>
+        <div class="st"><u>2</u><div><b>Когнитивка — любое упражнение.</b> Три-пять минут.
+          Лучший порядок: Шульте на разминку, потом Реакция, Струп последним — он самый
+          утомительный. Слежение и Помехи — через день, на свежую голову.</div></div>
+        <div class="st"><u>3</u><div><b>После льда — дневник занятия.</b> Какую задачу ставил,
+          что получилось, на что обратить внимание дальше. Три строки, но именно из них
+          потом собирается разбор.</div></div>
+        <div class="st"><u>4</u><div><b>Вечером — чек-лист.</b> Вкладка «Профиль», самый верх.
+          Отметил выполненное — серия дней растёт. Список можно настроить под себя кнопкой
+          «Настроить список».</div></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Раз в месяц</h2>
+      <div class="hp">
+        <p><b>Оценка вратаря.</b> В конце месяца заполняешь опросник на 33 пункта —
+          и то же самое делает тренер. Дальше вкладка «Сводная» показывает, где вы
+          сошлись, а где разошлись. Пункты с разницей в два балла и больше — то,
+          с чего начинается разговор.</p>
+        <p><b>Цели.</b> Там же ставится цель на следующий месяц, исходя из того,
+          что просело. Цель без критерия не работает: пиши, по чему поймёшь, что достиг.</p>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Что меряет каждое упражнение</h2>
+      <div class="list">
+        <div><span>Шульте</span><b>Объём и скорость сканирования</b></div>
+        <div><span>Реакция</span><b>Скорость решения под временем</b></div>
+        <div><span>Струп</span><b>Помехоустойчивость</b></div>
+        <div><span>Слежение</span><b>Распределённое внимание</b></div>
+        <div><span>Помехи</span><b>Умение не дёрнуться</b></div>
+      </div>
+      <div class="hp" style="margin-top:12px">
+        <p>Это разные качества, заменять одно другим не стоит. В Шульте и Реакции растёт
+          скорость. В Струпе и Помехах главное — <b>ошибки</b>, а не время.
+          В Слежении растёт порог скорости, а ошибок всегда около четверти: так и задумано,
+          поле само держит тебя на пределе.</p>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Где что лежит</h2>
+      <div class="list">
+        <div><span>Профиль</span><b>Чек-лист, показатели дня, когнитивка, оценка</b></div>
+        <div><span>Дневник</span><b>Самочувствие и дневник занятия</b></div>
+        <div><span>Когнитивка</span><b>Все пять упражнений</b></div>
+        <div><span>Цели</span><b>Сезон, месяц, занятие</b></div>
+        <div><span>Оценка</span><b>Опросник и сравнение с тренером</b></div>
+        <div><span>Игры</span><b>Разбор матчей, карта голов</b></div>
+        <div><span>Ещё</span><b>Теория, психология, заметки, прогресс</b></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Если что-то не так</h2>
+      <div class="hp">
+        <p><b>Данные не уходят.</b> Профиль и настройки → «Проверить связь с базой».
+          Покажет, где затык. Сфотографируй экран и отправь тренеру.</p>
+        <p><b>Случайно записал лишнее.</b> В истории любого упражнения справа есть крестик —
+          запись удалится, средние пересчитаются.</p>
+        <p><b>Приложение выглядит по-старому.</b> Закрой и открой заново. Не помогло —
+          в Telegram: Настройки → Данные и память → Очистить кэш. Твои записи при этом
+          не пропадут, они в базе.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ЕЖЕДНЕВНИК -->
+  <section id="p-diary" class="hide">
+    <h1>Ежедневник</h1>
+    <div class="sub">Самочувствие заполняй утром, дневник занятия — сразу после льда.</div>
+    <div class="tiles">
+      <button class="tile wide" data-act="go:wb"><e>☀️</e><b>Дневник самочувствия</b><i id="t-wb">—</i></button>
+      <button class="tile wide" data-act="go:tr"><e>🏒</e><b>Дневник занятия</b><i id="t-tr">—</i></button>
     </div>
   </section>
 
@@ -573,20 +828,20 @@
     <h1>Когнитивка</h1>
     <div class="sub">Внимание, реакция и помехоустойчивость. Мерим каждый день.</div>
     <div class="tiles">
-      <button class="tile wide" data-act="go:cog"><e>🔢</e><b>Таблица Шульте</b><i id="t-cog">—</i></button>
-      <button class="tile wide" data-act="go:rx"><e>🎯</e><b>Реакция выбора</b><i id="t-rx">—</i></button>
-      <button class="tile wide" data-act="go:str"><e>🎨</e><b>Тест Струпа</b><i id="t-str">цвет букв, не слово</i></button>
-      <button class="tile wide" data-act="go:mot"><e>🔴</e><b>Слежение</b><i id="t-mot">держать своих боковым зрением</i></button>
-      <button class="tile wide" data-act="go:gng"><e>🚦</e><b>Стоп-сигнал</b><i id="t-gng">зелёный жми, красный пропусти</i></button>
+      <button class="tile wide" data-act="go:cog"><e>🔢</e><b>Шульте</b><i id="t-cog">Внимание и скорость сканирования</i></button>
+      <button class="tile wide" data-act="go:rx"><e>🎯</e><b>Реакция</b><i id="t-rx">Скорость решения под временем</i></button>
+      <button class="tile wide" data-act="go:str"><e>🎨</e><b>Струп</b><i id="t-str">Цвет букв, а не слово</i></button>
+      <button class="tile wide" data-act="go:mot"><e>🔴</e><b>Слежение</b><i id="t-mot">Держать своих боковым зрением</i></button>
+      <button class="tile wide" data-act="go:gng"><e>🚦</e><b>Помехи</b><i id="t-gng">Зелёный нажимай, красный нельзя</i></button>
     </div>
     <div class="card" style="margin-top:12px">
       <h2>Что мерит каждый</h2>
       <div class="list">
-        <div><span>Шульте</span><b>объём и скорость сканирования</b></div>
-        <div><span>Реакция выбора</span><b>скорость решения под временем</b></div>
-        <div><span>Струп</span><b>помехоустойчивость</b></div>
-        <div><span>Слежение</span><b>распределённое внимание</b></div>
-        <div><span>Стоп-сигнал</span><b>скорость и умение не дёрнуться</b></div>
+        <div><span>Шульте</span><b>Объём и скорость сканирования</b></div>
+        <div><span>Реакция</span><b>Скорость решения под временем</b></div>
+        <div><span>Струп</span><b>Помехоустойчивость</b></div>
+        <div><span>Слежение</span><b>Распределённое внимание</b></div>
+        <div><span>Помехи</span><b>Умение не дёрнуться</b></div>
       </div>
       <div class="sub" style="margin:12px 0 0">Три разных качества — заменять одно другим не стоит.
         Лучший порядок: Шульте на разминку, потом реакция, Струп последним — он самый утомительный.</div>
@@ -1012,6 +1267,17 @@
     <div class="sub">Данные хранятся в твоём Telegram.</div>
     <div class="card">
       <h2>Вратарь</h2>
+      <label style="margin-top:0">Фото</label>
+      <div class="ava">
+        <div class="ph" id="m-ph">—</div>
+        <div class="bt">
+          <input id="m-file" type="file" accept="image/*">
+          <label for="m-file">Выбрать фото</label>
+          <button data-act="phdel">Убрать</button>
+        </div>
+      </div>
+      <div class="sub" style="margin:8px 0 0;font-size:12.5px">Фото хранится в базе вместе с профилем
+        и видно тренеру. Уменьшается автоматически.</div>
       <label>Имя и фамилия</label><input id="m-name" placeholder="Иванов Юрий">
       <label>Команда</label><input id="m-team" placeholder="Спартак-МАХ">
       <label>Год рождения</label><input id="m-year" type="number" inputmode="numeric" placeholder="2008">
@@ -1100,10 +1366,13 @@
 
   <!-- СТОП-СИГНАЛ -->
   <section id="p-gng" class="hide">
-    <h1>Стоп-сигнал</h1>
-    <div class="sub">Кружки загораются по одному в случайном месте. <b style="color:var(--w)">Зелёный —
-      закрывай</b>, <b style="color:var(--w)">красный — не трогай</b>. Кружок живёт недолго и гаснет сам.
-      Минута.</div>
+    <h1>Реакция с помехами</h1>
+    <div class="sub">Кружки загораются по одному в случайном месте.
+      <b style="color:var(--w)">Зелёный — нажимай</b>, <b style="color:var(--w)">красный — нельзя нажимать</b>.
+      Красных примерно каждый четвёртый, и именно на них тянет сильнее всего.<br><br>
+      Кружок живёт ограниченное время и гаснет сам — <b style="color:var(--w)">интервал смены
+      настраивается уровнем</b> ниже. Промах мимо кружка тоже считается ошибкой.
+      <b style="color:var(--w)">Время выполнения — минута.</b></div>
 
     <div class="card">
       <h2>Поле</h2>
@@ -1116,8 +1385,7 @@
         <canvas id="gn-cv"></canvas>
         <div class="ov" id="gn-ov">
           <b id="gn-ovt">Готов?</b>
-          <span id="gn-ovs">Держи палец над центром. Зелёный закрывай, красный пропускай —
-            на него тянет сильнее всего.</span>
+          <span id="gn-ovs">Держи палец над центром. Зелёный нажимай, красный не трогай.</span>
         </div>
       </div>
       <button class="btn" data-act="gnstart" id="gn-btn">Начать</button>
@@ -1126,15 +1394,22 @@
 
     <div class="card">
       <h2>Уровень</h2>
-      <div class="sub" style="margin:0 0 8px">Сколько кружок держится на экране.</div>
+      <div class="sub" style="margin:0 0 8px">Интервал смены — сколько кружок держится на экране,
+        прежде чем погаснуть. Чем меньше, тем меньше времени на решение.</div>
       <div class="chips" id="gn-lvl"></div>
     </div>
 
     <div class="card">
       <h2>Последние попытки</h2>
       <div class="list" id="gn-list"></div>
-      <div class="sub" style="margin:12px 0 0">Главное — <b style="color:var(--w)">ошибки на красный</b>:
-        это и есть умение не дёрнуться. Второе — <b style="color:var(--w)">пропуски</b>.
+      <div class="sub" style="margin:12px 0 0">Оценка считается в долях, а не в штуках — иначе уровни
+        с разным числом сигналов не сравнить.<br><br>
+        <b style="color:var(--w)">Ошибки на красный</b> — сколько раз нажал из всех показанных красных.
+        Это и есть умение не дёрнуться.<br>
+        <b style="color:var(--w)">Пропуски</b> — сколько зелёных не успел закрыть.<br>
+        Итог берётся по худшему из двух.<br><br>
+        <b style="color:var(--w)">Отлично</b> до 5 % · <b style="color:var(--w)">Хорошо</b> до 12 % ·
+        <b style="color:var(--w)">Норма</b> до 25 % · дальше слабо.<br><br>
         Разброс показывает ровность: чем он меньше, тем надёжнее.</div>
     </div>
   </section>
@@ -1275,6 +1550,37 @@
   </section>
 </div>
 
+<nav class="tabbar" id="tabbar">
+  <button data-act="tab:home"><e>👤</e><span>Профиль</span></button>
+  <button data-act="tab:diary"><e>📓</e><span>Дневник</span></button>
+  <button data-act="tab:cgn"><e>🧠</e><span>Когнитивка</span></button>
+  <button data-act="tab:goals"><e>🎯</e><span>Цели</span></button>
+  <button data-act="tab:rad"><e>📊</e><span>Оценка</span></button>
+  <button data-act="tab:an"><e>🥅</e><span>Игры</span></button>
+  <button data-act="more"><e>☰</e><span>Ещё</span></button>
+</nav>
+
+<div class="sheet hide" id="sheet">
+  <div class="sbox">
+    <div class="gr"></div>
+    <h2>Ещё</h2>
+    <div class="tiles">
+      <button class="tile wide hide" id="plan-entry" data-act="go:plan"
+              style="background:var(--roseBg);border-color:var(--roseLn)">
+        <e>📋</e><b>План занятия</b><i id="t-plan">—</i></button>
+      <button class="tile wide hide" id="coach-entry" data-act="roster"
+              style="background:var(--roseBg);border-color:var(--roseLn)">
+        <e>🧤</e><b>Кабинет тренера</b><i>Все вратари, их данные и заметки</i></button>
+      <button class="tile" data-act="lib:Теория"><e>📚</e><b>Теория</b><i id="t-th">—</i></button>
+      <button class="tile" data-act="lib:Психология"><e>🧩</e><b>Психология</b><i id="t-psy">—</i></button>
+      <button class="tile" data-act="go:notes"><e>📝</e><b>Заметки тренера</b><i id="t-notes">—</i></button>
+      <button class="tile" data-act="go:help"><e>📖</e><b>Инструкция</b><i>Что и когда заполнять</i></button>
+      <button class="tile" data-act="go:prog"><e>📈</e><b>Мой прогресс</b><i>Дисциплина и динамика</i></button>
+      <button class="tile" data-act="go:me"><e>⚙️</e><b>Профиль и настройки</b><i id="t-me">—</i></button>
+    </div>
+    <button class="btn sec" data-act="closesheet">Закрыть</button>
+  </div>
+</div>
 
 <script>
 var TG = (window.Telegram && window.Telegram.WebApp) ? window.Telegram.WebApp : null;
@@ -1360,7 +1666,7 @@ function save(key, obj, cb){
 var flushing = false;
 var QERR = {}, qIdx = 0;
 var SECT = { me:'профиль', wb:'самочувствие', tr:'дневник занятий', schulte:'Шульте',
-             svet:'«Светофон»', stroop:'Струп', mot:'слежение', gng:'стоп-сигнал',
+             svet:'«Светофон»', stroop:'Струп', mot:'слежение', gng:'реакция с помехами',
              goals:'цели и чек-лист',
              gls:'голы', games:'игры' };
 function sectName(k){ return SECT[k] || k; }
@@ -1439,6 +1745,18 @@ function setSync(s){
 
 function parse(v){ if(!v) return null; try { return JSON.parse(v); } catch(e){ return null; } }
 function haptic(t){ try { if(TG && TG.HapticFeedback) TG.HapticFeedback.impactOccurred(t || 'light'); } catch(e){} }
+/* ошибка ощущается иначе: короткая двойная отдача вместо одиночного толчка */
+function hapticBad(){
+  try {
+    if (TG && TG.HapticFeedback && TG.HapticFeedback.notificationOccurred){
+      TG.HapticFeedback.notificationOccurred('error'); return;
+    }
+  } catch(e){}
+  try {
+    if (TG && TG.HapticFeedback) TG.HapticFeedback.impactOccurred('heavy');
+  } catch(e){}
+  try { if (navigator.vibrate) navigator.vibrate([22, 55, 22]); } catch(e){}
+}
 function alertMsg(m){ if (TG && TG.showPopup) { try { TG.showPopup({message:m}); return; } catch(e){} } alert(m); }
 
 /* ---------- показатели ---------- */
@@ -1495,6 +1813,8 @@ function boot(){
   DB.rates = lget('rates') || [];
   buildForms();
   render();
+  markTabs(CUR_PAGE);
+  markCards();
 
   /* 2. подтягиваем актуальное с сервера */
   if (!apiReady()){ setSync('база не подключена'); return; }
@@ -1535,11 +1855,57 @@ function applyRole(){
 }
 
 /* ---------- навигация ---------- */
-var PAGES = ['home','wb','tr','cog','rx','goals','an','notes','me','coach','gk','lib','mat','game','rad','prog','str','cgn','plan','mot','gng'];
-var TITLES = { home:'', wb:'Самочувствие', tr:'Дневник занятий', cog:'Таблица Шульте',
-  rx:'Реакция выбора', goals:'Цели', an:'Разбор игр', notes:'Заметки тренера',
-  me:'Профиль', coach:'Кабинет тренера', gk:'Карточка вратаря', lib:'Материалы', mat:'Материал', game:'Игра', rad:'Оценка вратаря', prog:'Мой прогресс', str:'Тест Струпа', cgn:'Когнитивка', plan:'План занятия', mot:'Слежение', gng:'Стоп-сигнал' };
+var PAGES = ['home','wb','tr','cog','rx','goals','an','notes','me','coach','gk','lib','mat','game','rad','prog','str','cgn','plan','mot','gng','diary','help'];
+var TITLES = { home:'', wb:'Самочувствие', tr:'Дневник занятий', cog:'Шульте',
+  rx:'Реакция', goals:'Цели', an:'Разбор игр', notes:'Заметки тренера',
+  me:'Профиль', coach:'Кабинет тренера', gk:'Карточка вратаря', lib:'Материалы', mat:'Материал', game:'Игра', rad:'Оценка вратаря', prog:'Мой прогресс', str:'Струп', cgn:'Когнитивка', plan:'План занятия', mot:'Слежение', gng:'Помехи', diary:'Ежедневник', help:'Как пользоваться' };
 var navStack = [];
+
+/* ── нижняя панель ── */
+var TAB_OF = { home:'home', prog:'home', me:'home',
+               diary:'diary', wb:'diary', tr:'diary',
+               cgn:'cgn', cog:'cgn', rx:'cgn', str:'cgn', mot:'cgn', gng:'cgn',
+               goals:'goals', rad:'rad', an:'an', game:'an' };
+/* помечает карточки по смыслу — для цветной полоски у заголовка */
+var KMAP = [
+  [/самочувств|сегодня/i, 'k-wb'],
+  [/когнитив|шульте|струп|реакц|слежен|помех/i, 'k-cg'],
+  [/оценк|профил|сильные|расходим|все пункты/i, 'k-rt'],
+  [/чек-лист|привычк|дисциплин|наград/i, 'k-ck'],
+  [/прогресс|кривая|над чем|динамик|что изменилось/i, 'k-pr'],
+  [/план|занят|дневник|игр|цел/i, 'k-pl']
+];
+function markCards(){
+  var cs = document.querySelectorAll('.card');
+  for (var i = 0; i < cs.length; i++){
+    var h = cs[i].querySelector('h2');
+    if (!h) continue;
+    var t = h.textContent || '';
+    for (var j = 0; j < KMAP.length; j++){
+      if (KMAP[j][0].test(t)){ cs[i].classList.add(KMAP[j][1]); break; }
+    }
+  }
+}
+
+function markTabs(page){
+  var bar = document.getElementById('tabbar');
+  if (!bar) return;
+  var cur = TAB_OF[page] || '';
+  [].forEach.call(bar.children, function(b){
+    var a = (b.getAttribute('data-act') || '').split(':');
+    b.className = (a[0] === 'tab' && a[1] === cur) ? 'on' : '';
+  });
+}
+function openSheet(){
+  var sh = document.getElementById('sheet');
+  if (sh) sh.className = 'sheet';
+  haptic();
+}
+function closeSheet(){
+  var sh = document.getElementById('sheet');
+  if (sh) sh.className = 'sheet hide';
+}
+
 function go(page, back){
   if (page === 'plan' && !PLAN_CUR && PLANS.length){ openPlan(); return; }
   if (!back && CUR_PAGE && CUR_PAGE !== page) navStack.push(CUR_PAGE);
@@ -1555,6 +1921,9 @@ function go(page, back){
     setTxt('top-title', TITLES[page] || '');
   }
   window.scrollTo(0,0);
+  closeSheet();
+  markTabs(page);
+  setTimeout(markCards, 0);
   if (page !== 'rx') abortRx();
   if (page === 'cog' && !running) buildGrid(true);
   if (page === 'an') renderAnalytics();
@@ -1563,6 +1932,7 @@ function go(page, back){
   if (page !== 'plan' && PL_TICK){ clearInterval(PL_TICK); PL_TICK = null; }
   if (page === 'mot') openMot(); else if (MOT.run) motStop();
   if (page === 'gng') openGng(); else if (GN.run) gnStop();
+  cdnStop();
   if (page === 'prog'){ renderWork(); curveBlock('pg-chips','pg-curve',['rd','sl','fat','sch','svrt','stac','mot','gng'],PCURVE,'pcv'); }
 }
 var CUR_PAGE = 'home';
@@ -1628,7 +1998,14 @@ document.addEventListener('input', function(ev){
   var t = ev.target, id = t && t.getAttribute ? t.getAttribute('data-ckt') : null;
   if (id !== null) cklText(id, t.value);
 });
+document.addEventListener('change', function(ev){
+  if (ev.target && ev.target.id === 'm-file'){
+    photoPick(ev.target.files && ev.target.files[0]);
+    ev.target.value = '';
+  }
+});
 document.addEventListener('click', function(ev){
+  if (ev.target && ev.target.id === 'sheet'){ closeSheet(); return; }
   var el = ev.target;
   while (el && el.getAttribute && !el.getAttribute('data-act') && el !== document.body) el = el.parentNode;
   if (!el || !el.getAttribute) return;
@@ -1650,7 +2027,7 @@ document.addEventListener('click', function(ev){
     else if (a[0] === 'rxlvl') { rxLvl = parseInt(a[1],10);
       try { localStorage.setItem('rxlvl', String(rxLvl)); } catch(e){}
       buildRxLvl(); }
-    else if (a[0] === 'rxstart') startRx();
+    else if (a[0] === 'rxstart') { if (!rxRun) countdown(startRx); }
     else if (a[0] === 'rx') { if (Date.now() - rxTap > 400) rxPress(parseInt(a[1],10)); }
     else if (a[0] === 'noteadd') addNote();
     else if (a[0] === 'notedel') delNote(a[1]);
@@ -1662,7 +2039,7 @@ document.addEventListener('click', function(ev){
     else if (a[0] === 'ctog') toggleTask(a[1]);
     else if (a[0] === 'cdel') delMemo(a[1]);
     else if (a[0] === 'hit') { if (Date.now() - rxTap > 400) hit(parseInt(a[1],10)); }
-    else if (a[0] === 'schstart') startSchulte();
+    else if (a[0] === 'schstart') { if (!running) countdown(startSchulte, 'Ищи числа по порядку'); }
     else if (a[0] === 'season') saveSeason();
     else if (a[0] === 'month') saveMonth();
     else if (a[0] === 'dayadd') addDay();
@@ -1680,7 +2057,7 @@ document.addEventListener('click', function(ev){
     else if (a[0] === 'radsave') saveRating();
     else if (a[0] === 'radk') { RADSEL = a[1]; renderRadar(); }
     else if (a[0] === 'schn') setSchN(a[1]);
-    else if (a[0] === 'ststart') startStroop();
+    else if (a[0] === 'ststart') { if (!stRun) countdown(startStroop, 'Цвет букв, не слово'); }
     else if (a[0] === 'stlvl') { if (!stRun){ stLvl = parseInt(a[1], 10); stLevels(); } }
     else if (a[0] === 'st') stPress(a[1]);
     else if (a[0] === 'resync') retrySync();
@@ -1693,11 +2070,15 @@ document.addEventListener('click', function(ev){
     else if (a[0] === 'ckreset') cklReset();
     else if (a[0] === 'radtab') setRadTab(a[1]);
     else if (a[0] === 'radck') { RADSELC = a[1]; haptic(); renderRadCoach(); }
+    else if (a[0] === 'phdel') photoDel();
+    else if (a[0] === 'tab') go(a[1]);
+    else if (a[0] === 'more') openSheet();
+    else if (a[0] === 'closesheet') closeSheet();
     else if (a[0] === 'selftest') selfTest();
     else if (a[0] === 'rmrec') rmRec(a[1], a[2]);
-    else if (a[0] === 'gnstart') gnStart();
+    else if (a[0] === 'gnstart') { if (GN.run) gnStop(); else countdown(gnStart, 'Зелёный жми, красный не трогай'); }
     else if (a[0] === 'gnl') { GN.lvl = parseInt(a[1], 10); haptic(); renderGnLvl(); }
-    else if (a[0] === 'motstart') motStart();
+    else if (a[0] === 'motstart') { if (MOT.run) motStop(); else countdown(motStart, 'Запоминай красные'); }
     else if (a[0] === 'moto') { MOT[a[1]] = parseInt(a[2], 10); haptic(); renderMotOpts();
                                 if (!MOT.run){ MOT.balls = []; motDraw(); } }
     else if (a[0] === 'plput') putPlan();
@@ -1779,7 +2160,7 @@ function metrics(){
     stac: ['Струп, точность %', DB.stroop || [],
            function(x){ return x.n ? x.ok / x.n * 100 : null; }, 'max'],
     mot:  ['Слежение, порог', DB.mot || [], function(x){ return x.sp * 100; }, 'max'],
-    gng:  ['Стоп-сигнал, мс', DB.gng || [], 'rt', 'min'],
+    gng:  ['Реакция с помехами, мс', DB.gng || [], 'rt', 'min'],
     rd:   ['Готовность', DB.wb || [], function(x){ return (x.v || {}).rd; }, 'max'],
     sl:   ['Сон, ч', DB.wb || [], 'sl', 'max'],
     fat:  ['Усталость', DB.wb || [], function(x){ return (x.v || {}).f; }, 'min']
@@ -1826,7 +2207,10 @@ function renderDash(){
 
   /* карточка вратаря */
   var nm = DB.me.n || '';
-  setTxt('pf-av', nm ? nm.trim().charAt(0).toUpperCase() : '—');
+  var av = document.getElementById('pf-av');
+  if (av) av.innerHTML = DB.me.ph ? '<img src="' + DB.me.ph + '" alt="">'
+                                  : esc(nm ? nm.trim().charAt(0).toUpperCase() : '—');
+  renderPhoto();
   setTxt('pf-name', nm || 'Имя не заполнено');
   var sub = [];
   if (DB.me.t) sub.push(DB.me.t);
@@ -2468,13 +2852,63 @@ function renderLib(){
     : 'Материалы пока не добавлены.');
   box.innerHTML = items.map(function(x){
     var d = !!done[x.id];
-    var prev = String(x.x || '').replace(/\s+/g, ' ').slice(0, 90);
+    var prev = String(x.x || '').replace(/^\s*##\s+/gm, '').replace(/\*\*/g, '')
+                 .replace(/^\s*[>\-•]\s+/gm, '').replace(/\[\d+\][^\n]*/g, '')
+                 .replace(/\s+/g, ' ').trim().slice(0, 90);
     return '<button class="lib' + (d ? ' on' : '') + '" data-act="mat:' + x.id + '">' +
       '<span class="lc">✓</span><span><b>' + esc(x.t) + '</b>' +
       '<i>' + esc(prev) + (prev.length >= 90 ? '…' : '') +
       (x.u ? ' · видео' : '') + '</i></span></button>';
   }).join('');
 }
+/* Простая разметка материала:
+     ## Заголовок      — подзаголовок
+     - пункт           — список
+     > строка          — выделенный блок
+     [1]               — картинка номер 1 из списка
+     [1] подпись       — картинка с подписью
+     **жирный**        — внутри строки                                    */
+function matHTML(txt, imgs){
+  var lines = String(txt || '').replace(/\r/g, '').split('\n');
+  var out = [], ul = [], par = [];
+  var inline = function(t){
+    return esc(t).replace(/\*\*(.+?)\*\*/g, '<b>$1</b>');
+  };
+  var flushUl = function(){ if (ul.length){ out.push('<ul>' + ul.join('') + '</ul>'); ul = []; } };
+  var flushP  = function(){ if (par.length){ out.push('<p>' + par.join('<br>') + '</p>'); par = []; } };
+  var flush   = function(){ flushUl(); flushP(); };
+
+  lines.forEach(function(raw){
+    var l = raw.replace(/\s+$/, '');
+    if (!l.trim()){ flush(); return; }
+
+    var mImg = l.match(/^\s*\[(\d+)\]\s*(.*)$/);
+    if (mImg){
+      flush();
+      var src = (imgs || [])[Number(mImg[1]) - 1];
+      if (src){
+        out.push('<img src="' + esc(src) + '" alt="">');
+        if (mImg[2].trim()) out.push('<div class="cap">' + inline(mImg[2].trim()) + '</div>');
+      }
+      return;
+    }
+    if (/^\s*##\s+/.test(l)){ flush(); out.push('<h3>' + inline(l.replace(/^\s*##\s+/, '')) + '</h3>'); return; }
+    if (/^\s*>\s?/.test(l)){ flush(); out.push('<div class="box">' + inline(l.replace(/^\s*>\s?/, '')) + '</div>'); return; }
+    if (/^\s*[-•]\s+/.test(l)){ flushP(); ul.push('<li>' + inline(l.replace(/^\s*[-•]\s+/, '')) + '</li>'); return; }
+    flushUl();
+    par.push(inline(l));
+  });
+  flush();
+  return out.join('');
+}
+
+function matImgs(x){
+  var a = [];
+  if (x.imgs) a = String(x.imgs).split(/[\s,;\n]+/).filter(Boolean);
+  else if (x.img) a = [x.img];
+  return a;
+}
+
 function openMat(id){
   var x = (LIB.m || []).filter(function(m){ return m.id === id; })[0];
   if (!x) return;
@@ -2483,9 +2917,13 @@ function openMat(id){
   go('mat');
   setTxt('mat-h', x.t);
   setTxt('mat-sub', x.s);
-  document.getElementById('mat-text').textContent = x.x || '';
+  var imgs = matImgs(x);
+  var used = /\[\d+\]/.test(String(x.x || ''));
+  document.getElementById('mat-text').innerHTML = matHTML(x.x, imgs);
   var img = document.getElementById('mat-img');
-  if (x.img){ img.src = x.img; img.className = 'matimg'; } else { img.className = 'matimg hide'; img.removeAttribute('src'); }
+  /* если картинки расставлены в тексте — верхнюю не дублируем */
+  if (imgs.length && !used){ img.src = imgs[0]; img.className = 'matimg'; }
+  else { img.className = 'matimg hide'; img.removeAttribute('src'); }
   var lnk = document.getElementById('mat-link');
   if (x.u){ lnk.href = x.u; lnk.className = 'btn'; } else { lnk.className = 'btn hide'; }
   matBtn();
@@ -3562,10 +4000,10 @@ function render(){
   if (DB.svet && DB.svet.length) cg.push('реакция ' + (DB.svet[0].rt || '—') + ' мс');
   if (sp.length) cg.push('Струп ' + (sp[0].n ? Math.round(sp[0].ok / sp[0].n * 100) : 0) + '%');
   if (DB.mot && DB.mot.length) cg.push('слежение ' + Math.round(DB.mot[0].sp * 100));
-  if (DB.gng && DB.gng.length) cg.push('стоп-сигнал ' + (DB.gng[0].rt || '—') + ' мс');
+  if (DB.gng && DB.gng.length) cg.push('помехи ' + (DB.gng[0].rt || '—') + ' мс');
   var gg = (DB.gng && DB.gng.length) ? gradeGng(DB.gng[0]) : null;
-  setTxt('t-gng', gg ? gg.name + ' · ' + (DB.gng[0].rt || '—') + ' мс · красный ' + DB.gng[0].stop
-                     : 'зелёный жми, красный пропусти');
+  setTxt('t-gng', gg ? gg.name + ' · ' + (DB.gng[0].rt || '—') + ' мс · ошибок ' + DB.gng[0].stop
+                     : 'зелёный нажимай, красный нельзя');
   setTxt('t-cgn', cg.length ? cg.join(' · ') : 'Шульте · реакция выбора · Струп');
   var gs = sp.length ? gradeStroop(sp[0]) : null;
   setTxt('t-str', gs ? gs.name + ' · ' + gs.ok + ' верных, ' + gs.e + ' ошиб.' : 'цвет букв, не слово');
@@ -3667,6 +4105,44 @@ function renderAnalytics(){
   }).join('') : '<div class="sub" style="margin:0">Игр пока нет.</div>';
 }
 
+/* ---------- фото профиля ---------- */
+function renderPhoto(){
+  var box = document.getElementById('m-ph');
+  if (!box) return;
+  var ph = DB.me && DB.me.ph;
+  var nm = (DB.me && DB.me.n) ? DB.me.n.trim().charAt(0).toUpperCase() : '—';
+  box.innerHTML = ph ? '<img src="' + ph + '" alt="">' : esc(nm);
+}
+function photoPick(file){
+  if (!file) return;
+  var url = URL.createObjectURL(file);
+  var img = new Image();
+  img.onload = function(){
+    URL.revokeObjectURL(url);
+    var S = 320;
+    var side = Math.min(img.width, img.height);
+    var sx = (img.width - side) / 2, sy = (img.height - side) / 2;
+    var c = document.createElement('canvas');
+    c.width = S; c.height = S;
+    c.getContext('2d').drawImage(img, sx, sy, side, side, 0, 0, S, S);
+    var data = c.toDataURL('image/jpeg', 0.72);
+    if (data.length > 160000) data = c.toDataURL('image/jpeg', 0.55);
+    DB.me.ph = data;
+    renderPhoto();
+    haptic('medium');
+    save('me', DB.me, function(){ render(); });
+  };
+  img.onerror = function(){ URL.revokeObjectURL(url); alertMsg('Не удалось открыть это изображение.'); };
+  img.src = url;
+}
+function photoDel(){
+  if (!DB.me || !DB.me.ph) return;
+  if (!confirm('Убрать фото?')) return;
+  delete DB.me.ph;
+  renderPhoto();
+  save('me', DB.me, function(){ render(); });
+}
+
 /* ---------- понятные оценки ---------- */
 /* уровень · цвет */
 var LV = [['Слабо','var(--rose)'], ['Норма','var(--tx2)'],
@@ -3734,7 +4210,7 @@ function selfTest(){
 }
 
 /* ---------- удаление одной записи ---------- */
-var RM_NAME = { schulte: 'Шульте', svet: '«Светофон»', stroop: 'Струп', mot: 'Слежение', gng: 'Стоп-сигнал' };
+var RM_NAME = { schulte: 'Шульте', svet: '«Светофон»', stroop: 'Струп', mot: 'Слежение', gng: 'Реакция с помехами' };
 function rmRec(key, i){
   i = parseInt(i, 10);
   var l = DB[key] || [];
@@ -3746,14 +4222,46 @@ function rmRec(key, i){
   save(key, DB[key], function(){ render(); if (key === 'mot') renderMotList(); if (key === 'gng') renderGnList(); });
 }
 
-/* ══════════════════ СТОП-СИГНАЛ ══════════════════ */
+/* ---------- обратный отсчёт 3-2-1 ---------- */
+var CDN_T = null;
+function countdown(cb, note){
+  var box = document.getElementById('cdn');
+  if (!box){ cb(); return; }
+  if (CDN_T) clearInterval(CDN_T);
+  var n = 3, el = document.getElementById('cdn-n');
+  var put = function(v){
+    if (!el) return;
+    el.textContent = String(v);
+    el.className = ''; void el.offsetWidth; el.className = 'p';
+  };
+  put(n);
+  setTxt('cdn-t', note || 'Приготовься');
+  box.className = 'cdn';
+  CDN_T = setInterval(function(){
+    n--;
+    if (n <= 0){
+      clearInterval(CDN_T); CDN_T = null;
+      box.className = 'cdn hide';
+      cb();
+      return;
+    }
+    put(n);
+  }, 700);
+}
+function cdnStop(){
+  if (CDN_T){ clearInterval(CDN_T); CDN_T = null; }
+  var box = document.getElementById('cdn');
+  if (box) box.className = 'cdn hide';
+}
+
+/* ══════════════════ РЕАКЦИЯ С ПОМЕХАМИ ══════════════════ */
 /* зелёный — закрывай, красный — не трогай. Минута. */
 
 var GN = {
   lvl: 600, dur: 60,
   run: false, t0: 0, raf: null,
   cur: null, next: 0,
-  green: 0, ok: 0, miss: 0, stop: 0, aim: 0, rts: []
+  green: 0, red: 0, ok: 0, miss: 0, stop: 0, aim: 0, rts: []
 };
 var GN_LVL = [[800, '800 мс'], [600, '600 мс'], [500, '500 мс']];
 var GN_RED = 0.25;              /* доля красных */
@@ -3768,7 +4276,7 @@ function gnSize(){
   cv.style.height = h + 'px';
   cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr);
   GN.w = w; GN.h = h; GN.dpr = dpr;
-  GN.r = Math.max(16, Math.round(Math.min(w, h) / 14));
+  GN.r = Math.max(26, Math.round(Math.min(w, h) / 9.5));
 }
 
 function gnOv(show, t, sub){
@@ -3806,7 +4314,7 @@ function gnSpawn(){
            Math.hypot(x - GN.last.x, y - GN.last.y) < far);
   GN.cur = { x: x, y: y, red: Math.random() < GN_RED, t: Date.now(), bad: false };
   GN.last = { x: x, y: y };
-  if (!GN.cur.red) GN.green++;
+  if (GN.cur.red) GN.red++; else GN.green++;
   gnDraw();
 }
 
@@ -3830,7 +4338,7 @@ function gnStart(){
   if (GN.run){ gnStop(); return; }
   gnSize();
   GN.run = true; GN.t0 = Date.now();
-  GN.green = 0; GN.ok = 0; GN.miss = 0; GN.stop = 0; GN.aim = 0; GN.rts = [];
+  GN.green = 0; GN.red = 0; GN.ok = 0; GN.miss = 0; GN.stop = 0; GN.aim = 0; GN.rts = [];
   GN.cur = null; GN.last = null; GN.next = Date.now() + 500;
   setTxt('gn-btn', 'Прервать');
   setTxt('gn-ok', '0'); setTxt('gn-rt', '—');
@@ -3855,12 +4363,12 @@ function gnTap(ev){
   var c = GN.cur;
   if (c && Math.hypot(x - c.x, y - c.y) <= GN.r){
     if (c.red){
-      GN.stop++; haptic('medium');
+      GN.stop++; hapticBad();
       c.bad = true; gnDraw();
       setTimeout(function(){ if (GN.cur === c && GN.run){ GN.cur = null; GN.next = 0; gnSpawn(); } }, 140);
     } else {
       GN.ok++; GN.rts.push(Date.now() - c.t);
-      haptic();
+      haptic('light');
       setTxt('gn-ok', String(GN.ok));
       var m = Math.round(GN.rts.reduce(function(a, b){ return a + b; }, 0) / GN.rts.length);
       setTxt('gn-rt', String(m));
@@ -3871,7 +4379,7 @@ function gnTap(ev){
   }
   /* мимо: ошибка прицела, кружок остаётся */
   GN.aim++;
-  haptic('medium');
+  hapticBad();
 }
 
 function gnFinish(){
@@ -3887,18 +4395,20 @@ function gnFinish(){
     var m = rt, v = GN.rts.reduce(function(a, b){ return a + (b - m) * (b - m); }, 0) / (n - 1);
     sd = Math.round(Math.sqrt(v));
   }
-  var rec = { d: today, lvl: GN.lvl, n: GN.green, ok: GN.ok, miss: GN.miss,
+  var rec = { d: today, lvl: GN.lvl, n: GN.green, nr: GN.red, ok: GN.ok, miss: GN.miss,
               stop: GN.stop, aim: GN.aim, rt: rt, sd: sd };
   var g = gradeGng(rec);
 
-  gnOv(true, g.name, 'Ошибок на красный ' + GN.stop + ' · пропусков ' + GN.miss +
+  gnOv(true, g.name, 'На красный ' + GN.stop + ' из ' + GN.red + ' (' + g.ps + ' %) · ' +
+       'пропусков ' + GN.miss + ' из ' + GN.green + ' (' + g.pm + ' %)' +
        (rt ? ' · среднее ' + rt + ' мс' : ''));
   document.getElementById('gn-res').innerHTML =
     '<b style="color:' + g.col + ';font-size:16px">' + g.name + '</b><br>' +
-    'Закрыто <b style="color:var(--w)">' + GN.ok + '</b> из ' + GN.green +
-    ' · на красный <b style="color:var(--w)">' + GN.stop + '</b>' +
-    ' · пропусков <b style="color:var(--w)">' + GN.miss + '</b>' +
-    ' · мимо <b style="color:var(--w)">' + GN.aim + '</b>' +
+    'Нажал на красный <b style="color:var(--w)">' + GN.stop + '</b> из ' + GN.red +
+    ' · <b style="color:var(--w)">' + g.ps + ' %</b><br>' +
+    'Пропустил зелёных <b style="color:var(--w)">' + GN.miss + '</b> из ' + GN.green +
+    ' · <b style="color:var(--w)">' + g.pm + ' %</b><br>' +
+    'Закрыто ' + GN.ok + ' · мимо кружка ' + GN.aim +
     (rt ? '<br>среднее ' + rt + ' мс' + (sd !== null ? ' · разброс ' + sd + ' мс' : '') : '');
 
   gngList().unshift(rec);
@@ -3907,13 +4417,23 @@ function gnFinish(){
   save('gng', DB.gng, function(){ haptic('medium'); renderGnList(); render(); });
 }
 
-/* оценка: по худшему из двух — тормоз и пропуски */
+/* Оценка в долях, а не в штуках: при разных уровнях число сигналов
+   сильно отличается, и абсолютные пороги становятся бессмысленными.
+   Берём худшее из двух — доля нажатий на красный и доля пропущенных зелёных. */
+function gngPct(x){
+  var nr = x.nr, ng = x.n || 0;
+  /* в старых записях красные не считались — берём оценку по доле 25 % */
+  if (!ok(nr) || nr <= 0) nr = Math.max(1, Math.round(ng / 3));
+  return { stop: nr ? (x.stop || 0) / nr : 0,
+           miss: ng ? (x.miss || 0) / ng : 0 };
+}
+function gngLv(p){ return p <= 0.05 ? 3 : (p <= 0.12 ? 2 : (p <= 0.25 ? 1 : 0)); }
 function gradeGng(x){
   if (!x) return null;
-  var byStop = x.stop <= 1 ? 3 : (x.stop <= 3 ? 2 : (x.stop <= 6 ? 1 : 0));
-  var byMiss = x.miss <= 2 ? 3 : (x.miss <= 5 ? 2 : (x.miss <= 9 ? 1 : 0));
-  var lv = Math.min(byStop, byMiss);
-  return { lv: lv, name: LV[lv][0], col: LV[lv][1] };
+  var p = gngPct(x);
+  var lv = Math.min(gngLv(p.stop), gngLv(p.miss));
+  return { lv: lv, name: LV[lv][0], col: LV[lv][1],
+           ps: Math.round(p.stop * 100), pm: Math.round(p.miss * 100) };
 }
 
 function renderGnLvl(){
@@ -3930,7 +4450,7 @@ function renderGnList(){
   box.innerHTML = l.length ? l.slice(0, 10).map(function(x, i){
     var g = gradeGng(x);
     return '<div><span>' + dm(x.d) + ' · ' + x.lvl + ' мс · <b style="color:' + g.col + '">' + g.name +
-           '</b></span><b>' + (x.rt || '—') + ' мс <i>красный ' + x.stop + ' · проп. ' + x.miss + '</i></b>' +
+           '</b></span><b>' + (x.rt || '—') + ' мс <i>красный ' + g.ps + ' % · проп. ' + g.pm + ' %</i></b>' +
            '<span class="rm" data-act="rmrec:gng:' + i + '">×</span></div>';
   }).join('') : '<div>Попыток пока нет.</div>';
 }
