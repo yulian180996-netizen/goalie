@@ -280,7 +280,21 @@
   .mattext b{color:var(--w)}
   .mattext .box{background:var(--bg2);border:1px solid var(--line);border-left:3px solid var(--red);
        border-radius:10px;padding:11px 13px;margin:0 0 12px;font-size:13.5px;line-height:1.5}
-  .mattext img{width:100%;border-radius:12px;display:block;margin:0 0 14px}
+  .mattext img{width:100%;border-radius:12px;display:block;margin:0 0 4px;cursor:zoom-in}
+  .mattext .zoomhint{font-size:11px;color:var(--tx2);text-align:center;margin:0 0 14px}
+  /* просмотр картинки во весь экран */
+  .lb{position:fixed;inset:0;z-index:9999;background:#05050a;display:flex;flex-direction:column}
+  .lb.hide{display:none}
+  .lbbar{flex:none;display:flex;align-items:center;gap:8px;padding:10px 12px;
+         background:#0d0d12;border-bottom:1px solid rgba(255,255,255,.08)}
+  .lbbar .sp{flex:1}
+  .lbbar button{width:40px;height:40px;border-radius:10px;border:1px solid rgba(255,255,255,.14);
+         background:rgba(255,255,255,.06);color:#fff;font-size:19px;font-weight:700;line-height:1;
+         display:flex;align-items:center;justify-content:center;cursor:pointer}
+  .lbbar button:active{background:rgba(255,255,255,.16)}
+  .lbbar .lbz{color:#9a9aa6;font-size:12.5px;min-width:46px;text-align:center}
+  .lbwrap{flex:1;overflow:auto;-webkit-overflow-scrolling:touch;display:block}
+  .lbwrap img{display:block;margin:0 auto;max-width:none}
   .mattext .cap{font-size:11.5px;color:var(--tx2);text-align:center;margin:-8px 0 14px;line-height:1.35}
   a.btn{display:block;text-align:center;text-decoration:none;box-sizing:border-box}
   /* площадка */
@@ -302,6 +316,32 @@
   .ck.on .ckt{color:var(--okTx3)}
   .ckbar{height:6px;background:var(--bg2);border-radius:3px;overflow:hidden;margin-top:4px}
   .ckbar i{display:block;height:100%;background:var(--ok);border-radius:3px;transition:width .2s}
+  /* дашборд тренера */
+  .crow{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--line)}
+  .crow:last-child{border-bottom:0}
+  .crow .av{flex:none;width:32px;height:32px;border-radius:10px;overflow:hidden;background:var(--roseBg);
+       border:1px solid var(--roseLn);display:flex;align-items:center;justify-content:center;
+       font-size:13px;font-weight:700;color:var(--rose)}
+  .crow .av img{width:100%;height:100%;object-fit:cover;display:block}
+  .crow .nm{flex:1;font-size:13.5px;line-height:1.3}
+  .crow .nm small{display:block;color:var(--tx2);font-size:11.5px;margin-top:1px}
+  .crow .dot{flex:none;width:9px;height:9px;border-radius:50%;background:var(--ok)}
+  .crow .dot.no{background:var(--rose)}
+  .crow .dot.mid{background:#E9A400}
+  /* экран входа по коду */
+  .gate{position:fixed;left:0;top:0;right:0;bottom:0;z-index:220;background:var(--ink);
+        display:flex;align-items:center;justify-content:center;padding:22px;overflow:auto}
+  .gate.hide{display:none}
+  .gbox{width:100%;max-width:340px;text-align:center}
+  .gbox .em{width:74px;height:74px;border-radius:22px;background:var(--roseBg);
+            border:1px solid var(--roseLn);display:flex;align-items:center;justify-content:center;
+            font-size:34px;margin:0 auto 16px}
+  .gbox h2{font-size:20px;font-weight:800;margin:0 0 6px}
+  .gbox .gs{font-size:13.5px;color:var(--tx2);line-height:1.5;margin-bottom:18px}
+  .gbox input{text-align:center;font-size:19px;letter-spacing:3px;text-transform:uppercase;
+              padding:14px;font-weight:700}
+  .gbox .gerr{color:var(--rose);font-size:13px;margin-top:10px;min-height:18px;line-height:1.4}
+  .gbox .gh{font-size:12px;color:var(--tx2);line-height:1.5;margin-top:18px}
   /* инструкция */
   .hp{font-size:14px;line-height:1.55}
   .hp p{margin:0 0 11px}
@@ -574,6 +614,35 @@ body.lt .tabbar{background:rgba(255,255,255,.98)}
   <section id="p-home">
     <h1 id="hello">Привет!</h1>
     <div class="sub" id="today"></div>
+    <div id="coach-home" class="hide">
+      <div class="card">
+        <h2>Команда сегодня</h2>
+        <div class="sub" style="margin:0 0 10px" id="ch-sub">Загружаю…</div>
+        <div class="dash">
+          <div class="c"><b id="ch-today">—</b><span>Заполнили сегодня</span></div>
+          <div class="c"><b id="ch-idle">—</b><span>Не заходили 3 дня</span></div>
+          <div class="c"><b id="ch-ready">—</b><span>Готовность, среднее</span></div>
+          <div class="c"><b id="ch-sleep">—</b><span>Сон, среднее</span></div>
+        </div>
+      </div>
+      <div class="card">
+        <h2>Кто и как</h2>
+        <div class="sub" style="margin:0 0 6px">Зелёный — заполнил сегодня, жёлтый — вчера,
+          красный — давно.</div>
+        <div id="ch-list"></div>
+      </div>
+      <div class="card" id="ch-attn-card">
+        <h2>Требует внимания</h2>
+        <div id="ch-attn"></div>
+      </div>
+      <div class="tiles">
+        <button class="tile wide" data-act="roster"><e>🧤</e><b>Кабинет тренера</b>
+          <i>Карточки, оценки, заметки</i></button>
+        <button class="tile wide" data-act="csum"><e>📊</e><b>Сводная таблица</b>
+          <i>Все вратари в одной таблице</i></button>
+      </div>
+    </div>
+
     <div class="strk" id="h-streak" data-act="go:prog">
       <div class="fire">🔥</div>
       <div style="flex:1">
@@ -585,7 +654,7 @@ body.lt .tabbar{background:rgba(255,255,255,.98)}
       <div class="qt" id="q-text"></div>
       <div class="qa" id="q-auth"></div>
     </div>
-    <div class="card">
+    <div class="card" id="ck-card">
       <h2>Чек-лист дня</h2>
       <div class="sub" style="margin:0 0 10px">Выполнил — отметь.</div>
       <div id="ck-list"></div>
@@ -601,7 +670,7 @@ body.lt .tabbar{background:rgba(255,255,255,.98)}
         <button class="btn sec" data-act="ckreset">Вернуть стандартный список</button>
       </div>
     </div>
-    <div class="card">
+    <div class="card" id="today-card">
       <h2>Сегодня</h2>
       <div class="dash">
         <div class="c"><b id="h-sleep">—</b><span>Сон, ч</span></div>
@@ -615,7 +684,7 @@ body.lt .tabbar{background:rgba(255,255,255,.98)}
       </div>
       <div id="h-status" class="sub" style="margin:10px 0 0"></div>
     </div>
-    <div class="card">
+    <div class="card" id="cgn-card">
       <h2>Когнитивка</h2>
       <div class="sub" style="margin:0 0 9px">Лучшие результаты и динамика за 30 дней.</div>
       <div class="dash">
@@ -631,7 +700,7 @@ body.lt .tabbar{background:rgba(255,255,255,.98)}
       <div><b id="w-t">Записи не ушли в базу</b>
         <span>Тренер их пока не видит. Нажми, чтобы отправить сейчас. Если не уходит, подключись к Wi-Fi и зайди снова.</span></div>
     </div>
-    <div class="card">
+    <div class="card" id="rad-card">
       <h2>Оценка</h2>
       <div class="seg" id="h-radtabs" style="margin-bottom:10px">
         <button data-act="hrt:sum">Сводная</button>
@@ -646,7 +715,7 @@ body.lt .tabbar{background:rgba(255,255,255,.98)}
       <div id="h-radweak"></div>
       <button class="btn sec" data-act="go:rad">Открыть раздел оценки</button>
     </div>
-    <div class="card" style="margin-top:12px" data-act="go:me">
+    <div class="card" id="pf-card" style="margin-top:12px" data-act="go:me">
       <h2>Вратарь</h2>
       <div class="prof">
         <div class="av" id="pf-av">—</div>
@@ -1297,7 +1366,11 @@ body.lt .tabbar{background:rgba(255,255,255,.98)}
       <div class="sub" style="margin:0">Экспорт — на случай смены телефона.</div>
       <button class="btn sec" data-act="export">Скопировать все данные</button>
       <div class="sub" id="diag" style="margin:12px 0 0;font-size:11px"></div>
+      <div class="list" style="margin-bottom:4px">
+        <div><span>Способ входа</span><b id="how-in">—</b></div>
+      </div>
       <button class="btn sec" data-act="selftest">Проверить связь с базой</button>
+      <button class="btn sec" data-act="gateout" id="btn-out">Выйти из профиля</button>
       <div class="sub" id="st-out" style="margin:10px 0 0;font-size:11.5px;white-space:pre-wrap;line-height:1.45"></div>
     </div>
     <div class="card">
@@ -1486,6 +1559,14 @@ body.lt .tabbar{background:rgba(255,255,255,.98)}
     <div class="sub" id="gk-sub"></div>
     <button class="btn sec" data-act="go:coach" style="margin:0 0 10px">← К списку</button>
     <div class="chips" id="gk-switch" style="margin:0 0 12px"></div>
+    <div class="card">
+      <h2>Вход на сайте</h2>
+      <div class="sub" style="margin:0 0 8px">Если вратарь не пользуется Telegram — выдай код.
+        Вводится один раз в браузере, потом приложение помнит вход.</div>
+      <div class="big" id="gk-code" style="margin:4px 0 2px">— — — — — —</div>
+      <button class="btn sec" data-act="mkcode">Выдать код</button>
+      <button class="btn sec" data-act="revoke">Отозвать доступ</button>
+    </div>
     <div id="gk-recall" class="hide"></div>
     <div id="gk-body"></div>
     <div class="card">
@@ -1548,6 +1629,21 @@ body.lt .tabbar{background:rgba(255,255,255,.98)}
       <div id="gk-notes"></div>
     </div>
   </section>
+</div>
+
+<div class="gate hide" id="gate">
+  <div class="gbox">
+    <div class="em">🧤</div>
+    <h2>Вратарь · Спартак-МАХ</h2>
+    <div class="gs">Введи код, который дал тренер. Это делается один раз —
+      дальше приложение будет открываться сразу.</div>
+    <input id="gcode" placeholder="KP4QDW" autocomplete="off" autocapitalize="characters"
+           spellcheck="false" maxlength="8">
+    <button class="btn" data-act="gatein" id="gbtn">Войти</button>
+    <div class="gerr" id="gerr"></div>
+    <div class="gh">Открываешь из бота в Telegram — код не нужен, вход произойдёт сам.<br><br>
+      Код потеряли или он не подходит — напиши тренеру, он выдаст новый.</div>
+  </div>
 </div>
 
 <nav class="tabbar" id="tabbar">
@@ -1622,17 +1718,26 @@ try { window.matchMedia('(prefers-color-scheme: light)').addEventListener('chang
 var API_URL = 'https://script.google.com/macros/s/AKfycbySUUoLkv6qaywWfDZ9Qn1fob2Z2o4Md7npra59c_F24DreU8iSc9tzdsoedyC_6-tM/exec';
 
 var INIT = (TG && TG.initData) ? TG.initData : '';
+/* ключ входа с сайта — когда Telegram не используется */
+var SITE_KEY = '';
+try { SITE_KEY = localStorage.getItem('gk_site_key') || ''; } catch(e){}
+function viaTelegram(){ return !!INIT; }
+function authWay(){ return viaTelegram() ? 'через Telegram' : (SITE_KEY ? 'по коду' : 'нет входа'); }
 var TGU  = (TG && TG.initDataUnsafe && TG.initDataUnsafe.user) ? TG.initDataUnsafe.user : null;
 var UID  = TGU ? String(TGU.id) : 'local';
+/* при входе по коду кэш в браузере привязываем к тому же uid, что и в базе */
+try { if (!TGU){ var _su = localStorage.getItem('gk_site_uid'); if (_su) UID = _su; } } catch(e){}
 var IS_COACH = false;
 var SYNC = 'нет связи';          // что показываем в профиле
 var QUEUE = {};                  // что не успело уйти на сервер (переживает закрытие)
 
-function apiReady(){ return API_URL.indexOf('http') === 0; }
+function apiReady(){ return API_URL.indexOf('http') === 0 && (viaTelegram() || !!SITE_KEY); }
+function needGate(){ return API_URL.indexOf('http') === 0 && !viaTelegram() && !SITE_KEY; }
 
 function api(payload, cb){
-  if (!apiReady()) { if (cb) cb(null); return; }
+  if (!apiReady() && payload.a !== 'login') { if (cb) cb(null); return; }
   payload.initData = INIT;
+  if (SITE_KEY) payload.sk = SITE_KEY;
   var done = false;
   var t = setTimeout(function(){ if(!done){ done = true; if (cb) cb(null); } }, 15000);
   fetch(API_URL, { method: 'POST', body: JSON.stringify(payload) })
@@ -1800,8 +1905,13 @@ var trType = 0;
 var DATA_KEYS = ['wb','tr','schulte','svet','stroop','mot','gng','goals','gls','games','me'];
 
 function boot(){
+  if (needGate()){ showGate(true); return; }
+  showGate(false);
+  setTxt('how-in', authWay());
+
   /* 0. неотправленное с прошлого раза */
   qLoad();
+  try { lbInit(); } catch(e){}
 
   /* 1. поднимаем кэш — приложение открывается мгновенно и работает без сети */
   DATA_KEYS.forEach(function(k){
@@ -1811,6 +1921,7 @@ function boot(){
   DB.notes = lget('notes') || [];
   LIB = lget('lib') || { m:[], q:[] };
   DB.rates = lget('rates') || [];
+  fixGoals();
   buildForms();
   render();
   markTabs(CUR_PAGE);
@@ -1836,6 +1947,7 @@ function boot(){
     if (res.lib){ LIB = res.lib; lset('lib', LIB); }
     DB.rates = res.rates || [];
     lset('rates', DB.rates);
+    fixGoals();
     setSync(qCount() ? 'есть неотправленное: ' + qCount() : 'на связи');
     flushQueue();
     applyRole();
@@ -1843,6 +1955,7 @@ function boot(){
     render();
     if (IS_COACH) loadRoster();
     loadPlans();
+    applyHomeRole();
   });
 }
 
@@ -1998,6 +2111,9 @@ document.addEventListener('input', function(ev){
   var t = ev.target, id = t && t.getAttribute ? t.getAttribute('data-ckt') : null;
   if (id !== null) cklText(id, t.value);
 });
+document.addEventListener('keydown', function(ev){
+  if (ev.key === 'Enter' && ev.target && ev.target.id === 'gcode'){ ev.preventDefault(); gateIn(); }
+});
 document.addEventListener('change', function(ev){
   if (ev.target && ev.target.id === 'm-file'){
     photoPick(ev.target.files && ev.target.files[0]);
@@ -2070,6 +2186,11 @@ document.addEventListener('click', function(ev){
     else if (a[0] === 'ckreset') cklReset();
     else if (a[0] === 'radtab') setRadTab(a[1]);
     else if (a[0] === 'radck') { RADSELC = a[1]; haptic(); renderRadCoach(); }
+    else if (a[0] === 'csum') { go('coach'); setCTab('sum'); }
+    else if (a[0] === 'gatein') gateIn();
+    else if (a[0] === 'gateout') gateOut();
+    else if (a[0] === 'mkcode') mkCode();
+    else if (a[0] === 'revoke') revokeCode();
     else if (a[0] === 'phdel') photoDel();
     else if (a[0] === 'tab') go(a[1]);
     else if (a[0] === 'more') openSheet();
@@ -2888,6 +3009,7 @@ function matHTML(txt, imgs){
       var src = (imgs || [])[Number(mImg[1]) - 1];
       if (src){
         out.push('<img src="' + esc(src) + '" alt="">');
+        out.push('<div class="zoomhint">нажми на таблицу, чтобы увеличить</div>');
         if (mImg[2].trim()) out.push('<div class="cap">' + inline(mImg[2].trim()) + '</div>');
       }
       return;
@@ -2900,6 +3022,72 @@ function matHTML(txt, imgs){
   });
   flush();
   return out.join('');
+}
+
+/* ── просмотр картинки во весь экран ───────────────────────────── */
+var LBZ = 1, LB_STEPS = [1, 1.5, 2.2, 3, 4];
+
+function lbOpen(src){
+  var lb = document.getElementById('lb');
+  document.getElementById('lb-img').src = src;
+  lb.className = 'lb';
+  lbSet(1);
+  try { if (TG && TG.HapticFeedback) TG.HapticFeedback.impactOccurred('light'); } catch(e){}
+}
+function lbClose(){
+  var lb = document.getElementById('lb');
+  lb.className = 'lb hide';
+  document.getElementById('lb-img').removeAttribute('src');
+}
+function lbSet(z){
+  LBZ = Math.max(1, Math.min(4, z));
+  var img = document.getElementById('lb-img');
+  img.style.width = (LBZ * 100) + '%';
+  setTxt('lb-z', Math.round(LBZ * 100) + '%');
+}
+function lbStep(dir){
+  var i = 0;
+  for (var k = 0; k < LB_STEPS.length; k++) if (LB_STEPS[k] <= LBZ + 0.01) i = k;
+  lbSet(LB_STEPS[Math.max(0, Math.min(LB_STEPS.length - 1, i + dir))]);
+}
+function lbInit(){
+  var wrap = document.getElementById('lb-wrap');
+  document.getElementById('lb-in').onclick  = function(){ lbStep(1); };
+  document.getElementById('lb-out').onclick = function(){ lbStep(-1); };
+  document.getElementById('lb-x').onclick   = lbClose;
+
+  /* двойное касание по картинке — увеличить или вернуть */
+  var last = 0;
+  wrap.addEventListener('click', function(){
+    var now = Date.now();
+    if (now - last < 320) lbSet(LBZ > 1.2 ? 1 : 2.2);
+    last = now;
+  });
+
+  /* щипок двумя пальцами */
+  var base = 0, d0 = 0;
+  wrap.addEventListener('touchstart', function(e){
+    if (e.touches.length !== 2) return;
+    base = LBZ;
+    d0 = Math.hypot(e.touches[0].clientX - e.touches[1].clientX,
+                    e.touches[0].clientY - e.touches[1].clientY);
+  }, { passive: true });
+  wrap.addEventListener('touchmove', function(e){
+    if (e.touches.length !== 2 || !d0) return;
+    var d = Math.hypot(e.touches[0].clientX - e.touches[1].clientX,
+                       e.touches[0].clientY - e.touches[1].clientY);
+    lbSet(base * d / d0);
+  }, { passive: true });
+  wrap.addEventListener('touchend', function(){ d0 = 0; }, { passive: true });
+
+  /* клик по любой картинке внутри материала */
+  document.addEventListener('click', function(e){
+    var t = e.target;
+    if (!t || t.tagName !== 'IMG') return;
+    var box = document.getElementById('mat-text');
+    if (box && box.contains(t)) lbOpen(t.src);
+    else if (t.id === 'mat-img' && t.getAttribute('src')) lbOpen(t.src);
+  });
 }
 
 function matImgs(x){
@@ -3021,6 +3209,18 @@ function renderCkEdit(){
       '<button data-act="ckdn:' + x.i + '">↓</button>' +
       '<button class="del" data-act="ckdel:' + x.i + '">×</button></div>';
   }).join('');
+}
+
+/* в базе goals может быть неполным — достраиваем, иначе приложение падает */
+function fixGoals(){
+  if (!DB.goals || typeof DB.goals !== 'object') DB.goals = {};
+  if (DB.goals.season === undefined) DB.goals.season = null;
+  if (!DB.goals.months || typeof DB.goals.months !== 'object') DB.goals.months = {};
+  if (!Array.isArray(DB.goals.days)) DB.goals.days = [];
+  if (!DB.goals.chk || typeof DB.goals.chk !== 'object') DB.goals.chk = {};
+  if (!Array.isArray(DB.goals.rad)) DB.goals.rad = [];
+  if (!Array.isArray(DB.me ? [] : [])) {}
+  if (!DB.me || typeof DB.me !== 'object') DB.me = {};
 }
 
 function ckDay(){
@@ -4105,6 +4305,157 @@ function renderAnalytics(){
   }).join('') : '<div class="sub" style="margin:0">Игр пока нет.</div>';
 }
 
+/* ══════════════════ ДАШБОРД ТРЕНЕРА ══════════════════ */
+
+/* на вкладке «Профиль» тренер видит команду, вратарь — себя */
+var GK_BLOCKS = ['h-streak', 'q-card', 'ck-card', 'today-card', 'cgn-card', 'rad-card', 'pf-card'];
+function applyHomeRole(){
+  var ch = document.getElementById('coach-home');
+  if (ch) ch.className = IS_COACH ? '' : 'hide';
+  GK_BLOCKS.forEach(function(id){
+    var el = document.getElementById(id);
+    if (!el) return;
+    if (!IS_COACH) return;                 /* вратарю ничего не прячем */
+    el.className = (el.className || '').indexOf('hide') >= 0 ? el.className : el.className + ' hide';
+  });
+  if (IS_COACH) renderCoachHome();
+}
+
+function daysAgo(d){
+  if (!d) return 999;
+  var a = new Date(d + 'T00:00:00'), b = new Date(today + 'T00:00:00');
+  return Math.round((b - a) / 864e5);
+}
+
+function renderCoachHome(){
+  var box = document.getElementById('ch-list');
+  if (!box) return;
+  if (!ROSTER.length){ setTxt('ch-sub', 'Список вратарей пуст.'); box.innerHTML = ''; return; }
+
+  var today_n = 0, idle = 0, rd = [], sl = [], attn = [];
+  var rows = ROSTER.slice().sort(function(a, b){
+    return daysAgo(a.lastWbDate) - daysAgo(b.lastWbDate);
+  });
+
+  rows.forEach(function(g){
+    var ago = daysAgo(g.lastWbDate);
+    if (ago === 0) today_n++;
+    if (ago >= 3) idle++;
+    if (ok(g.ready)) rd.push(Number(g.ready));
+    var p = CDATA[String(g.uid)];
+    if (p){
+      var a = cAgg(p);
+      if (ok(a.sl)) sl.push(a.sl);
+      if (ok(a.sl) && a.sl < 6.5) attn.push([g, 'мало сна: ' + fmt(a.sl) + ' ч']);
+      if (ok(a.rd) && a.rd <= -1) attn.push([g, 'низкая готовность: ' + signed(Math.round(a.rd * 10) / 10)]);
+      if (a.days < 12) attn.push([g, 'заполняет редко: ' + a.days + ' дней из 30']);
+    }
+    if (ago >= 3) attn.push([g, 'не заходил ' + (ago > 90 ? 'очень давно' : ago + ' дн.')]);
+  });
+
+  setTxt('ch-today', today_n + ' из ' + ROSTER.length);
+  setTxt('ch-idle', String(idle));
+  setTxt('ch-ready', rd.length ? signed(Math.round(avg(rd) * 10) / 10) : '—');
+  setTxt('ch-sleep', sl.length ? fmt(avg(sl)) : '—');
+  setTxt('ch-sub', today_n === ROSTER.length ? 'Сегодня заполнили все. Хорошо.'
+        : 'Не заполнили сегодня: ' + (ROSTER.length - today_n) + '.');
+
+  var ava = function(g){
+    var p = CDATA[String(g.uid)];
+    var ph = p && p.d && p.d.me && p.d.me.ph;
+    var ltr = String(g.name || '?').trim().charAt(0).toUpperCase();
+    return '<span class="av">' + (ph ? '<img src="' + ph + '" alt="">' : esc(ltr)) + '</span>';
+  };
+
+  box.innerHTML = rows.map(function(g){
+    var ago = daysAgo(g.lastWbDate);
+    var cls = ago === 0 ? '' : (ago === 1 ? ' mid' : ' no');
+    var sub = ago === 0 ? 'сегодня' : (ago === 1 ? 'вчера'
+            : (ago > 90 ? 'давно не заходил' : ago + ' дн. назад'));
+    if (g.schulteBest) sub += ' · Шульте ' + fmt(g.schulteBest);
+    return '<button class="crow" data-act="gk:' + g.uid + '" style="width:100%;background:none;' +
+      'border:0;border-bottom:1px solid var(--line);text-align:left;font-family:inherit;color:var(--tx)">' +
+      ava(g) + '<span class="nm">' + esc(g.name) + '<small>' + esc(sub) + '</small></span>' +
+      '<span class="dot' + cls + '"></span></button>';
+  }).join('');
+
+  var card = document.getElementById('ch-attn-card');
+  var seen = {}, uniq = [];
+  attn.forEach(function(x){
+    var k = x[0].uid + '|' + x[1];
+    if (seen[k]) return;
+    seen[k] = 1; uniq.push(x);
+  });
+  if (card) card.className = uniq.length ? 'card' : 'card hide';
+  var ab = document.getElementById('ch-attn');
+  if (ab) ab.innerHTML = uniq.slice(0, 10).map(function(x){
+    return '<div class="wk"><span class="n">' + esc(x[0].name) +
+           ' <i style="color:var(--rose);font-style:normal">· ' + esc(x[1]) + '</i></span></div>';
+  }).join('');
+}
+
+/* ══════════════════ ВХОД ПО КОДУ С САЙТА ══════════════════ */
+
+function showGate(on){
+  var g = document.getElementById('gate');
+  if (g) g.className = on ? 'gate' : 'gate hide';
+  var bar = document.getElementById('tabbar');
+  if (bar) bar.style.display = on ? 'none' : '';
+  if (on) setTimeout(function(){
+    var i = document.getElementById('gcode');
+    if (i) i.focus();
+  }, 200);
+}
+
+function gateIn(){
+  var el = document.getElementById('gcode');
+  var code = (el ? el.value : '').trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
+  if (code.length < 4){ setTxt('gerr', 'Код короткий — проверь ещё раз.'); return; }
+  setTxt('gerr', '');
+  setTxt('gbtn', 'Проверяю…');
+  api({ a: 'login', code: code }, function(res){
+    setTxt('gbtn', 'Войти');
+    if (!res){ setTxt('gerr', 'Нет связи. Проверь интернет и попробуй ещё раз.'); return; }
+    if (!res.ok){ setTxt('gerr', res.err || 'Код не подошёл.'); return; }
+    SITE_KEY = res.key;
+    try { localStorage.setItem('gk_site_key', SITE_KEY); } catch(e){}
+    UID = String(res.uid || UID);
+    try { localStorage.setItem('gk_site_uid', UID); } catch(e){}
+    showGate(false);
+    setTxt('how-in', authWay());
+    boot();
+  });
+}
+
+function gateOut(){
+  if (!confirm('Выйти? Данные останутся в базе, но код придётся ввести заново.')) return;
+  SITE_KEY = '';
+  try { localStorage.removeItem('gk_site_key'); localStorage.removeItem('gk_site_uid'); } catch(e){}
+  location.reload();
+}
+
+/* выдача кода вратарю — только тренеру */
+function mkCode(){
+  if (!CUR) return;
+  setTxt('gk-code', 'создаю…');
+  api({ a: 'mkcode', uid: CUR }, function(res){
+    if (!res || !res.ok){ setTxt('gk-code', '— — — — — —'); alertMsg((res && res.err) || 'Не получилось.'); return; }
+    setTxt('gk-code', res.code);
+    haptic('medium');
+    alertMsg('Код ' + res.code + '\n\nОтправь вратарю. Он вводит его один раз на сайте. ' +
+             'Прежние коды этого вратаря перестали действовать.');
+  });
+}
+function revokeCode(){
+  if (!CUR) return;
+  if (!confirm('Отозвать доступ? Вратарь выйдет из приложения на сайте, данные останутся.')) return;
+  api({ a: 'revoke', uid: CUR }, function(res){
+    if (!res || !res.ok){ alertMsg('Не получилось.'); return; }
+    setTxt('gk-code', '— — — — — —');
+    alertMsg('Доступ отозван. Чтобы вернуть — выдай новый код.');
+  });
+}
+
 /* ---------- фото профиля ---------- */
 function renderPhoto(){
   var box = document.getElementById('m-ph');
@@ -5003,6 +5354,8 @@ function loadRoster(){
     ROSTER = res.list || [];
     renderRoster();
     setCTab(CTAB, true);
+    renderCoachHome();
+    if (!Object.keys(CDATA).length) loadAllGoalies();
   });
 }
 
@@ -5044,13 +5397,14 @@ function loadAllGoalies(){
       CLOADING = false;
       setTxt('c-sumsub', 'Таблица листается вбок. Фамилия закреплена слева.');
       renderCSum();
+      renderCoachHome();
       return;
     }
     var g = ROSTER[i++];
     api({ a: 'goalie', uid: g.uid }, function(res){
       if (res && res.ok) CDATA[String(g.uid)] = { d: res.data || {}, rates: res.rates || [] };
       setTxt('c-sumsub', 'Собираю данные: ' + i + ' из ' + n + '…');
-      if (i % 2 === 0) renderCSum();
+      if (i % 2 === 0){ renderCSum(); renderCoachHome(); }
       next();
     });
   };
@@ -5578,5 +5932,15 @@ function stat3(a, ta, b, tb, c2, tc){
 buildGrid(true);
 boot();
 </script>
+<div class="lb hide" id="lb">
+  <div class="lbbar">
+    <button id="lb-out" type="button">−</button>
+    <div class="lbz" id="lb-z">100%</div>
+    <button id="lb-in" type="button">+</button>
+    <div class="sp"></div>
+    <button id="lb-x" type="button">✕</button>
+  </div>
+  <div class="lbwrap" id="lb-wrap"><img id="lb-img" alt=""></div>
+</div>
 </body>
 </html>
