@@ -1678,6 +1678,16 @@ body.lt .tabbar{background:rgba(255,255,255,.98)}
   </div>
 </div>
 
+<div class="lb hide" id="lb">
+  <div class="lbbar">
+    <button id="lb-out" type="button">−</button>
+    <div class="lbz" id="lb-z">100%</div>
+    <button id="lb-in" type="button">+</button>
+    <div class="sp"></div>
+    <button id="lb-x" type="button">✕</button>
+  </div>
+  <div class="lbwrap" id="lb-wrap"><img id="lb-img" alt=""></div>
+</div>
 <script>
 var TG = (window.Telegram && window.Telegram.WebApp) ? window.Telegram.WebApp : null;
 if (TG) { TG.ready(); TG.expand(); }
@@ -5932,15 +5942,5 @@ function stat3(a, ta, b, tb, c2, tc){
 buildGrid(true);
 boot();
 </script>
-<div class="lb hide" id="lb">
-  <div class="lbbar">
-    <button id="lb-out" type="button">−</button>
-    <div class="lbz" id="lb-z">100%</div>
-    <button id="lb-in" type="button">+</button>
-    <div class="sp"></div>
-    <button id="lb-x" type="button">✕</button>
-  </div>
-  <div class="lbwrap" id="lb-wrap"><img id="lb-img" alt=""></div>
-</div>
 </body>
 </html>
