@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Кабинет тренера · Спартак-МАХ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0d0d12; --bg2:#15151c; --bg3:#1e1e27; --card:#14141b;
+    --line:#2a2a36; --tx:#e9e9f0; --tx2:#8d8d9c; --w:#ffffff;
+    --red:#e1142b; --roseBg:#2a1016; --roseLn:#5a1a24;
+    --ok:#3fb950; --warn:#d29922;
+    --mah:#ffd966; --mhk:#ea9999; --u17:#9fc5e8; --y10:#b6d7a8;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;height:100%}
+  body{background:var(--bg);color:var(--tx);
+       font-family:'Unbounded',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+       font-size:14px;line-height:1.45;-webkit-font-smoothing:antialiased}
+  button{font-family:inherit}
+
+  /* ── вход ── */
+  .gate{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;
+        background:var(--bg);z-index:50}
+  .gate.hide{display:none}
+  .gbox{width:340px;max-width:92vw;background:var(--card);border:1px solid var(--line);
+        border-radius:18px;padding:26px 24px}
+  .gbox h1{font-size:19px;font-weight:800;margin:0 0 6px}
+  .gbox p{font-size:13px;color:var(--tx2);margin:0 0 18px;line-height:1.5}
+  .gbox input{width:100%;height:48px;border-radius:12px;border:1px solid var(--line);
+        background:var(--bg2);color:var(--w);font-family:inherit;font-size:19px;font-weight:700;
+        text-align:center;letter-spacing:3px;text-transform:uppercase;outline:none}
+  .gbox input:focus{border-color:var(--red)}
+  .gerr{font-size:12.5px;color:var(--red);margin-top:10px;min-height:18px}
+
+  .btn{display:block;width:100%;height:46px;border-radius:12px;border:none;cursor:pointer;
+       background:var(--red);color:#fff;font-size:14px;font-weight:700;margin-top:14px}
+  .btn:active{opacity:.85}
+  .btn.sec{background:var(--bg3);color:var(--tx);border:1px solid var(--line)}
+  .btn.sm{height:38px;font-size:13px;width:auto;padding:0 16px;margin:0;display:inline-block}
+
+  /* ── каркас ── */
+  .app{display:flex;min-height:100vh}
+  .app.hide{display:none}
+  .side{width:232px;flex:none;background:var(--bg2);border-right:1px solid var(--line);
+        display:flex;flex-direction:column;position:sticky;top:0;height:100vh}
+  .logo{padding:20px 18px 14px;border-bottom:1px solid var(--line)}
+  .logo b{display:block;font-size:15px;font-weight:800;letter-spacing:.3px}
+  .logo i{display:block;font-size:11.5px;color:var(--tx2);font-style:normal;margin-top:3px}
+  .nav{flex:1;padding:10px 10px;overflow:auto}
+  .nav button{display:flex;align-items:center;gap:10px;width:100%;text-align:left;
+        background:none;border:none;color:var(--tx2);font-size:13.5px;padding:10px 12px;
+        border-radius:10px;cursor:pointer;margin-bottom:2px}
+  .nav button:hover{background:var(--bg3);color:var(--tx)}
+  .nav button.on{background:var(--roseBg);color:var(--w);font-weight:700}
+  .nav button em{font-style:normal;width:20px;text-align:center;flex:none;font-size:15px}
+  .nav .gr{font-size:10.5px;color:#5c5c6b;text-transform:uppercase;letter-spacing:.8px;
+        padding:14px 12px 6px;font-weight:700}
+  .me{padding:12px 14px;border-top:1px solid var(--line);font-size:12px;color:var(--tx2);
+      display:flex;align-items:center;gap:8px}
+  .me b{color:var(--tx);font-weight:600;font-size:12.5px}
+  .me a{margin-left:auto;color:var(--tx2);text-decoration:none;cursor:pointer;font-size:11.5px}
+  .me a:hover{color:var(--red)}
+
+  .main{flex:1;min-width:0;padding:26px 32px 60px}
+  .head{display:flex;align-items:flex-end;gap:14px;margin-bottom:20px;flex-wrap:wrap}
+  .head h1{font-size:22px;font-weight:800;margin:0}
+  .head .sub{font-size:12.5px;color:var(--tx2)}
+  .head .sp{flex:1}
+
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;
+        padding:18px 20px;margin-bottom:16px}
+  .card h2{font-size:14.5px;font-weight:700;margin:0 0 12px;display:flex;align-items:center;gap:8px}
+  .card h2:before{content:'';width:3px;height:14px;background:var(--red);border-radius:2px}
+  .muted{color:var(--tx2);font-size:13px}
+
+  /* ── расписание ── */
+  .wnav{display:flex;align-items:center;gap:10px;margin-bottom:16px}
+  .wnav .ttl{font-size:15px;font-weight:700;min-width:210px}
+  .arr{width:38px;height:38px;border-radius:10px;border:1px solid var(--line);background:var(--bg2);
+       color:var(--w);font-size:19px;line-height:1;cursor:pointer}
+  .arr:hover{background:var(--bg3)}
+
+  .week{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:10px}
+  .day{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 11px;
+       min-height:170px;display:flex;flex-direction:column}
+  .day.now{border-color:var(--red)}
+  .day.off{background:var(--bg2)}
+  .day .dt{font-size:13px;font-weight:700;margin-bottom:2px}
+  .day .wd{font-size:10.5px;color:var(--tx2);text-transform:uppercase;letter-spacing:.5px;
+       margin-bottom:9px}
+  .day.now .wd{color:var(--red)}
+  .g{border-radius:8px;padding:6px 8px;margin-bottom:6px;font-size:11.5px;line-height:1.35;color:#17171c}
+  .g b{display:block;font-weight:700;font-size:12px}
+  .g span{opacity:.75}
+  .g.mah{background:var(--mah)} .g.mhk{background:var(--mhk)}
+  .g.u17{background:var(--u17)} .g.y10{background:var(--y10)}
+  .it{font-size:11.5px;line-height:1.4;margin-bottom:6px;color:var(--tx)}
+  .it .lb{display:block;font-size:9.5px;color:var(--tx2);text-transform:uppercase;
+       letter-spacing:.5px;margin-bottom:1px}
+  .it.trip{color:var(--warn)}
+  .it.off{color:var(--tx2)}
+  .dash{color:#3a3a46;font-size:12px;margin-top:auto;text-align:center;padding-top:10px}
+
+  .soon{padding:40px 0;text-align:center;color:var(--tx2);font-size:13.5px}
+  .soon b{display:block;color:var(--tx);font-size:15px;margin-bottom:6px}
+
+  @media (max-width:1100px){
+    .week{grid-template-columns:repeat(2,minmax(0,1fr))}
+    .main{padding:20px}
+  }
+  @media (max-width:760px){
+    .app{flex-direction:column}
+    .side{width:100%;height:auto;position:static;flex-direction:row;overflow:auto}
+    .logo{border-bottom:none;border-right:1px solid var(--line)}
+    .nav{display:flex;gap:4px;padding:10px}
+    .nav .gr,.me{display:none}
+    .nav button{white-space:nowrap}
+    .week{grid-template-columns:1fr}
+  }
+</style>
+</head>
+<body>
+
+<!-- ── вход ── -->
+<div class="gate" id="gate">
+  <div class="gbox">
+    <h1>Кабинет тренера</h1>
+    <p>Введи код доступа. Он выдаётся один раз — дальше браузер помнит вход.</p>
+    <input id="g-code" maxlength="8" autocomplete="off" placeholder="КОД">
+    <div class="gerr" id="g-err"></div>
+    <button class="btn" id="g-in">Войти</button>
+  </div>
+</div>
+
+<!-- ── рабочее место ── -->
+<div class="app hide" id="app">
+  <aside class="side">
+    <div class="logo">
+      <b>Спартак-МАХ</b>
+      <i>вратарская система</i>
+    </div>
+    <nav class="nav" id="nav">
+      <div class="gr">Работа</div>
+      <button data-p="sched" class="on"><em>📅</em>Расписание</button>
+      <button data-p="micro"><em>🧩</em>Микроциклы</button>
+      <button data-p="games"><em>🏒</em>Игры</button>
+      <button data-p="goals"><em>🥅</em>Аналитика голов</button>
+      <div class="gr">Вратари</div>
+      <button data-p="roster"><em>🧤</em>Все вратари</button>
+      <button data-p="rates"><em>📊</em>Оценки</button>
+      <button data-p="cog"><em>🧠</em>Когнитивка</button>
+      <button data-p="ofp"><em>💪</em>ОФП</button>
+      <div class="gr">Материалы</div>
+      <button data-p="theory"><em>📚</em>Теория</button>
+      <button data-p="psy"><em>🧩</em>Психология</button>
+    </nav>
+    <div class="me">
+      <b id="me-name">—</b>
+      <a id="me-out">выйти</a>
+    </div>
+  </aside>
+
+  <main class="main" id="main">
+    <!-- расписание -->
+    <section data-pg="sched">
+      <div class="head">
+        <h1>Расписание</h1>
+        <div class="sub">из планера «Планер МХК Спартак»</div>
+        <div class="sp"></div>
+        <button class="btn sec sm" id="sch-refresh">Обновить из таблицы</button>
+      </div>
+      <div class="wnav">
+        <button class="arr" id="w-prev">‹</button>
+        <div class="ttl" id="w-ttl">—</div>
+        <button class="arr" id="w-next">›</button>
+        <button class="btn sec sm" id="w-now">Текущая неделя</button>
+      </div>
+      <div class="week" id="week"></div>
+    </section>
+
+    <section data-pg="micro" class="hide"></section>
+    <section data-pg="games" class="hide"></section>
+    <section data-pg="goals" class="hide"></section>
+    <section data-pg="roster" class="hide"></section>
+    <section data-pg="rates" class="hide"></section>
+    <section data-pg="cog" class="hide"></section>
+    <section data-pg="ofp" class="hide"></section>
+    <section data-pg="theory" class="hide"></section>
+    <section data-pg="psy" class="hide"></section>
+  </main>
+</div>
+
+<script>
+var API_URL = 'https://script.google.com/macros/s/AKfycbySUUoLkv6qaywWfDZ9Qn1fob2Z2o4Md7npra59c_F24DreU8iSc9tzdsoedyC_6-tM/exec';
+
+var KEY = '';
+try { KEY = localStorage.getItem('gk_site_key') || ''; } catch(e){}
+var ME = { name: '', coach: false };
+var ROSTER = [];
+
+function $(id){ return document.getElementById(id); }
+function esc(s){ return String(s == null ? '' : s)
+  .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+function api(payload, cb){
+  payload.sk = KEY;
+  var done = false;
+  var t = setTimeout(function(){ if(!done){ done = true; cb(null); } }, 20000);
+  fetch(API_URL, { method:'POST', body: JSON.stringify(payload) })
+    .then(function(r){ return r.json(); })
+    .then(function(j){ if(done) return; done = true; clearTimeout(t); cb(j); })
+    .catch(function(){ if(done) return; done = true; clearTimeout(t); cb(null); });
+}
+
+/* ───────── вход ───────── */
+function showGate(on){
+  $('gate').className = on ? 'gate' : 'gate hide';
+  $('app').className  = on ? 'app hide' : 'app';
+}
+function gateIn(){
+  var code = ($('g-code').value || '').trim().toUpperCase();
+  if (code.length < 4){ $('g-err').textContent = 'Код короткий.'; return; }
+  $('g-err').textContent = 'Проверяю…';
+  fetch(API_URL, { method:'POST', body: JSON.stringify({ a:'login', code: code }) })
+    .then(function(r){ return r.json(); })
+    .then(function(res){
+      if (!res || !res.ok){ $('g-err').textContent = (res && res.err) || 'Не получилось.'; return; }
+      if (!res.isCoach){ $('g-err').textContent = 'Этот код не тренерский. Вратарям — основное приложение.'; return; }
+      KEY = res.key;
+      try { localStorage.setItem('gk_site_key', KEY); } catch(e){}
+      ME.name = res.name || ''; ME.coach = true;
+      start();
+    })
+    .catch(function(){ $('g-err').textContent = 'Нет связи.'; });
+}
+function gateOut(){
+  try { localStorage.removeItem('gk_site_key'); } catch(e){}
+  KEY = ''; location.reload();
+}
+
+/* ───────── навигация ───────── */
+var PAGE = 'sched';
+function go(p){
+  PAGE = p;
+  var btns = $('nav').querySelectorAll('button');
+  for (var i = 0; i < btns.length; i++)
+    btns[i].className = (btns[i].getAttribute('data-p') === p) ? 'on' : '';
+  var secs = $('main').querySelectorAll('section');
+  for (var j = 0; j < secs.length; j++)
+    secs[j].className = (secs[j].getAttribute('data-pg') === p) ? '' : 'hide';
+  if (p === 'sched') schLoad();
+  else drawSoon(p);
+}
+var SOON = {
+  micro:  ['Микроциклы', 'Планирование по микроциклам: техника, тактика, психология, когнитивка и теория на каждый цикл.'],
+  games:  ['Игры', 'Отчёт об игре, статистика, оценка психологии и аналитика голов по каждому матчу.'],
+  goals:  ['Аналитика голов', 'Схема ворот с отметками и разбивка по ситуациям — по каждому вратарю и сводно.'],
+  roster: ['Все вратари', 'Список вратарей системы, их данные, дисциплина заполнения и заметки.'],
+  rates:  ['Оценки', 'Оценка вратаря по разделам, сравнение самооценки и оценки тренера, динамика по месяцам.'],
+  cog:    ['Когнитивка', 'Результаты Шульте, «Светофона», Струпа, слежения и реакции с помехами.'],
+  ofp:    ['ОФП', 'Две вкладки: результаты тестирования с динамикой и планирование по микроциклам.'],
+  theory: ['Теория', 'Материалы для вратарей: что уже выложено и что в плане.'],
+  psy:    ['Психология', 'Материалы и план работы по психологической подготовке.']
+};
+function drawSoon(p){
+  var sec = $('main').querySelector('[data-pg="' + p + '"]');
+  if (!sec || sec.getAttribute('data-done')) return;
+  var s = SOON[p] || ['Раздел', ''];
+  sec.innerHTML = '<div class="head"><h1>' + esc(s[0]) + '</h1></div>' +
+                  '<div class="card"><div class="soon"><b>Раздел в работе</b>' + esc(s[1]) + '</div></div>';
+}
+
+/* ───────── расписание ───────── */
+var WD = ['понедельник','вторник','среда','четверг','пятница','суббота','воскресенье'];
+var MN = ['января','февраля','марта','апреля','мая','июня',
+          'июля','августа','сентября','октября','ноября','декабря'];
+var SCH = { mon:null, cache:{} };
+var TODAY = fmt(new Date());
+
+function fmt(d){ return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2); }
+function shift(iso, n){ var d = new Date(iso+'T00:00:00'); d.setDate(d.getDate()+n); return fmt(d); }
+function monday(iso){ var d = new Date(iso+'T00:00:00'); d.setDate(d.getDate() - ((d.getDay()+6)%7)); return fmt(d); }
+function human(iso){ var d = new Date(iso+'T00:00:00'); return d.getDate()+' '+MN[d.getMonth()]; }
+
+function schLoad(fresh){
+  if (!SCH.mon) SCH.mon = monday(TODAY);
+  var from = SCH.mon, to = shift(from, 6);
+  $('w-ttl').textContent = human(from) + ' — ' + human(to);
+
+  if (!fresh && SCH.cache[from]){ schDraw(SCH.cache[from]); return; }
+  $('week').innerHTML = '<div class="muted">Загружаю…</div>';
+  var q = { a:'sched', from: from, to: to };
+  if (fresh) q.fresh = 1;
+  api(q, function(res){
+    if (!res || !res.ok){
+      $('week').innerHTML = '<div class="muted">' +
+        ((res && res.err === 'forbidden') ? 'Нет доступа: нужен тренерский код.' : 'Не удалось загрузить.') +
+        '</div>';
+      return;
+    }
+    SCH.cache[from] = res.days || [];
+    schDraw(SCH.cache[from]);
+  });
+}
+
+var TEAMCL = { 'МАХ':'mah', 'МХК':'mhk', 'Юниоры':'u17', '2010':'y10' };
+function schDraw(days){
+  var map = {};
+  (days||[]).forEach(function(d){ map[d.d] = d.it || []; });
+
+  var html = '';
+  for (var i = 0; i < 7; i++){
+    var iso = shift(SCH.mon, i), it = map[iso] || [];
+    var isOff = it.some(function(x){ return x.k === 'off'; });
+    html += '<div class="day' + (iso === TODAY ? ' now' : '') + (isOff ? ' off' : '') + '">' +
+            '<div class="dt">' + human(iso) + '</div><div class="wd">' + WD[i] + '</div>';
+
+    it.filter(function(x){ return x.k === 'game'; }).forEach(function(g){
+      html += '<div class="g ' + (TEAMCL[g.team] || 'mah') + '"><b>' + esc(g.opp) + '</b>' +
+              '<span>' + esc(g.team) + ' · ' + (g.home ? 'дома' : 'выезд') + '</span></div>';
+    });
+    it.filter(function(x){ return x.k !== 'game'; }).forEach(function(x){
+      var lb = x.k === 'who' ? 'состав' : x.k === 'plan' ? 'время'
+             : x.k === 'trip' ? 'дорога' : x.k === 'off' ? '' : 'заметка';
+      html += '<div class="it ' + x.k + '">' + (lb ? '<span class="lb">' + lb + '</span>' : '') +
+              esc(x.t).replace(/\n/g, '<br>') + '</div>';
+    });
+    if (!it.length) html += '<div class="dash">—</div>';
+    html += '</div>';
+  }
+  $('week').innerHTML = html;
+}
+
+/* ───────── запуск ───────── */
+function start(){
+  showGate(false);
+  $('me-name').textContent = ME.name || 'Тренер';
+  go('sched');
+}
+
+function boot(){
+  $('g-in').onclick = gateIn;
+  $('g-code').onkeydown = function(e){ if (e.key === 'Enter') gateIn(); };
+  $('me-out').onclick = gateOut;
+  $('w-prev').onclick = function(){ SCH.mon = shift(SCH.mon, -7); schLoad(); };
+  $('w-next').onclick = function(){ SCH.mon = shift(SCH.mon,  7); schLoad(); };
+  $('w-now').onclick  = function(){ SCH.mon = monday(TODAY);      schLoad(); };
+  $('sch-refresh').onclick = function(){ SCH.cache = {}; schLoad(true); };
+  var nav = $('nav');
+  nav.onclick = function(e){
+    var b = e.target.closest ? e.target.closest('button[data-p]') : null;
+    if (b) go(b.getAttribute('data-p'));
+  };
+
+  if (!KEY){ showGate(true); $('g-code').focus(); return; }
+  /* ключ есть — проверяем, что он тренерский */
+  /* roster отдаётся только тренеру — заодно проверка доступа */
+  api({ a:'roster' }, function(res){
+    if (!res || !res.ok){
+      showGate(true);
+      if (res && res.err === 'forbidden') $('g-err').textContent = 'Этот вход не тренерский.';
+      return;
+    }
+    ME.coach = true;
+    ROSTER = res.list || [];
+    start();
+  });
+}
+boot();
+</script>
+</body>
+</html>
