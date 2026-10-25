@@ -123,6 +123,40 @@
   .it.off{color:var(--tx2)}
   .dash{color:#c3c8d0;font-size:12px;margin-top:auto;text-align:center;padding-top:10px}
 
+  /* игры */
+  .tbl{width:100%;border-collapse:collapse;font-size:13.5px}
+  .tbl th{text-align:left;font-size:11px;font-weight:700;color:var(--tx2);text-transform:uppercase;
+       letter-spacing:.5px;padding:0 10px 9px;border-bottom:1px solid var(--line);white-space:nowrap}
+  .tbl td{padding:11px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+  .tbl tr:last-child td{border-bottom:none}
+  .tbl tbody tr{cursor:pointer}
+  .tbl tbody tr:hover{background:var(--bg3)}
+  .tbl .num{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
+  .tbl .gk{font-weight:600}
+  .wl{display:inline-block;min-width:22px;text-align:center;font-weight:700;font-size:12px;
+      padding:2px 6px;border-radius:6px}
+  .wl.w{background:#e6f5ea;color:#1f7a3d}
+  .wl.l{background:#fdeaea;color:#b4232d}
+  body.dk .wl.w{background:#16351f;color:#6ad08a}
+  body.dk .wl.l{background:#3a1419;color:#f08b8b}
+  .ld{display:inline-block;width:22px;height:22px;line-height:22px;text-align:center;border-radius:6px;
+      font-weight:700;font-size:11.5px}
+  .ld.H{background:#fdeaea;color:#b4232d} .ld.S{background:#e6f5ea;color:#1f7a3d}
+  .ld.O{background:#eef1f5;color:#5b6474} .ld.B{background:#3a1419;color:#fff}
+  body.dk .ld.H{background:#3a1419;color:#f08b8b} body.dk .ld.S{background:#16351f;color:#6ad08a}
+  body.dk .ld.O{background:#262a33;color:#aeb6c4}
+  .kpi{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:16px}
+  .kp{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px;
+      box-shadow:var(--shadow)}
+  .kp b{display:block;font-family:'Unbounded',sans-serif;font-size:22px;font-weight:800;line-height:1.1}
+  .kp i{display:block;font-style:normal;font-size:12px;color:var(--tx2);margin-top:4px}
+  .gl{display:flex;gap:8px;align-items:center;margin-bottom:8px}
+  .gl select{flex:1}
+  .gl .z{width:62px;flex:none}
+  .net{display:grid;grid-template-columns:repeat(3,44px);gap:4px;margin-top:4px}
+  .net button{height:36px;border:1px solid var(--line);background:var(--bg3);border-radius:7px;
+      cursor:pointer;font-size:12px;color:var(--tx2)}
+  .net button.on{background:var(--red);border-color:var(--red);color:#fff;font-weight:700}
   /* редактирование */
   .modal{position:fixed;inset:0;background:rgba(10,12,18,.55);z-index:60;display:flex;
          align-items:flex-start;justify-content:center;padding:40px 16px;overflow:auto}
@@ -347,10 +381,10 @@ function go(p){
     secs[j].className = (secs[j].getAttribute('data-pg') === p) ? '' : 'hide';
   if (p === 'sched') schLoad();
   else if (p === 'micro') mcLoad();
+  else if (p === 'games') gmLoad();
   else drawSoon(p);
 }
 var SOON = {
-  games:  ['Игры', 'Отчёт об игре, статистика, оценка психологии и аналитика голов по каждому матчу.'],
   goals:  ['Аналитика голов', 'Схема ворот с отметками и разбивка по ситуациям — по каждому вратарю и сводно.'],
   roster: ['Все вратари', 'Список вратарей системы, их данные, дисциплина заполнения и заметки.'],
   rates:  ['Оценки', 'Оценка вратаря по разделам, сравнение самооценки и оценки тренера, динамика по месяцам.'],
@@ -655,6 +689,227 @@ function mcEdit(n){
       mClose(); MC.list = null; MC.sel = c.n; mcLoad(true);
     });
   };
+}
+
+/* ───────── игры ───────── */
+var GM = { list: null, sit: [], gk: '' };
+var LOADS = [['H','тяжёлая'], ['S','солидная'], ['O','нормальная'], ['B','плохая']];
+var RESS  = ['В', 'ВО', 'ВБ', 'П', 'ПО', 'ПБ'];
+
+function gmLoad(fresh){
+  var sec = $('main').querySelector('[data-pg="games"]');
+  if (GM.list && !fresh){ gmDraw(); return; }
+  sec.innerHTML = '<div class="head"><h1>Игры</h1></div><div class="card"><div class="muted">Загружаю…</div></div>';
+  api({ a:'games2' }, function(res){
+    if (!res || !res.ok){
+      sec.innerHTML = '<div class="head"><h1>Игры</h1></div>' +
+        '<div class="card"><div class="muted">Не удалось загрузить.</div></div>';
+      return;
+    }
+    GM.list = res.list || [];
+    GM.sit  = res.sit  || [];
+    gmDraw();
+  });
+}
+
+function gmDraw(){
+  var sec = $('main').querySelector('[data-pg="games"]');
+  var list = GM.gk ? GM.list.filter(function(g){ return g.gk === GM.gk; }) : GM.list;
+
+  /* сводка по отфильтрованному */
+  var n = list.length, sh = 0, ga = 0, w = 0, l = 0, psy = 0, psyN = 0, gmp = 0, gmm = 0;
+  list.forEach(function(g){
+    sh += g.sh; ga += g.ga; gmp += g.gmp; gmm += g.gmm;
+    if (/^В/.test(g.res)) w++; else if (/^П/.test(g.res)) l++;
+    if (g.psy){ psy += g.psy; psyN++; }
+  });
+  var pct = sh ? Math.round((sh - ga) / sh * 1000) / 10 : null;
+  var gmPct = (gmp + gmm) ? Math.round(gmp / (gmp + gmm) * 1000) / 10 : null;
+
+  var names = {};
+  GM.list.forEach(function(g){ if (g.gk) names[g.gk] = 1; });
+  var opts = '<option value="">Все вратари</option>' + Object.keys(names).sort().map(function(x){
+    return '<option' + (x === GM.gk ? ' selected' : '') + '>' + esc(x) + '</option>';
+  }).join('');
+
+  var rows = list.map(function(g){
+    return '<tr data-gid="' + esc(g.id) + '">' +
+      '<td>' + esc(g.d.slice(8) + '.' + g.d.slice(5,7)) + '</td>' +
+      '<td class="gk">' + esc(g.gk) + '</td>' +
+      '<td>' + esc(g.opp) + '<div class="muted" style="font-size:11.5px">' +
+        (g.home ? 'дома' : 'выезд') + '</div></td>' +
+      '<td>' + (g.res ? '<span class="wl ' + (/^В/.test(g.res) ? 'w' : 'l') + '">' + esc(g.res) + '</span>' : '') + '</td>' +
+      '<td class="num">' + g.sh + '</td>' +
+      '<td class="num">' + g.ga + '</td>' +
+      '<td class="num"><b>' + (g.pct === null ? '—' : g.pct + '%') + '</b></td>' +
+      '<td class="num">' + (g.gmp || g.gmm ? g.gmp + '/' + (g.gmp + g.gmm) : '—') + '</td>' +
+      '<td>' + (g.load ? '<span class="ld ' + esc(g.load) + '">' + esc(g.load) + '</span>' : '') + '</td>' +
+      '<td class="num">' + (g.psy || '—') + '</td>' +
+      '<td class="num">' + ((g.gls || []).length || '') + '</td>' +
+      '</tr>';
+  }).join('');
+
+  sec.innerHTML =
+    '<div class="head"><h1>Игры</h1>' +
+    '<div class="sub">отчёт, статистика, психология и голы</div>' +
+    '<div class="sp"></div>' +
+    '<select id="gm-gk" style="height:38px;border:1px solid var(--line);border-radius:10px;' +
+      'background:var(--bg2);color:var(--tx);font-family:inherit;font-size:13.5px;padding:0 10px">' + opts + '</select>' +
+    '<button class="btn sec sm" id="gm-new" style="margin-left:8px">+ Добавить игру</button></div>' +
+
+    '<div class="kpi">' +
+      '<div class="kp"><b>' + n + '</b><i>игр' + (GM.gk ? ' · ' + esc(GM.gk) : '') + '</i></div>' +
+      '<div class="kp"><b>' + w + ' : ' + l + '</b><i>победы и поражения</i></div>' +
+      '<div class="kp"><b>' + (pct === null ? '—' : pct + '%') + '</b><i>отражено, ' + (sh - ga) + ' из ' + sh + '</i></div>' +
+      '<div class="kp"><b>' + (gmPct === null ? '—' : gmPct + '%') + '</b><i>голевые моменты</i></div>' +
+      '<div class="kp"><b>' + (psyN ? Math.round(psy / psyN * 10) / 10 : '—') + '</b><i>психология, средний балл</i></div>' +
+    '</div>' +
+
+    '<div class="card">' + (n
+      ? '<table class="tbl"><thead><tr>' +
+          '<th>Дата</th><th>Вратарь</th><th>Соперник</th><th>Рез.</th>' +
+          '<th class="num">БВ</th><th class="num">ПШ</th><th class="num">Отр.</th>' +
+          '<th class="num">ГМ</th><th>Нагр.</th><th class="num">Псих.</th><th class="num">Голы</th>' +
+        '</tr></thead><tbody>' + rows + '</tbody></table>'
+      : '<div class="soon"><b>Игр пока нет</b>Нажми «Добавить игру», чтобы занести первый матч.</div>') +
+    '</div>';
+
+  $('gm-gk').onchange = function(){ GM.gk = this.value; gmDraw(); };
+  $('gm-new').onclick = function(){ gmEdit(''); };
+  var tb = sec.querySelector('tbody');
+  if (tb) tb.onclick = function(e){
+    var tr = e.target.closest ? e.target.closest('[data-gid]') : null;
+    if (tr) gmEdit(tr.getAttribute('data-gid'));
+  };
+}
+
+/* ── карточка игры ── */
+var GME = null;
+
+function gmEdit(id){
+  GME = null;
+  (GM.list || []).forEach(function(g){ if (g.id === id) GME = JSON.parse(JSON.stringify(g)); });
+  if (!GME) GME = { id:'', d: TODAY, gk:'', uid:'', opp:'', home:1, res:'',
+                    sh:0, ga:0, gmp:0, gmm:0, load:'', psy:0, cm:'', gls:[] };
+  gmForm();
+}
+
+function gmForm(){
+  var g = GME;
+  var gkOpts = ROSTER.map(function(r){
+    var nm = r.name || '';
+    return '<option value="' + esc(nm) + '" data-uid="' + esc(r.uid) + '"' +
+           (nm === g.gk ? ' selected' : '') + '>' + esc(nm) + '</option>';
+  }).join('');
+  if (g.gk && ROSTER.every(function(r){ return r.name !== g.gk; }))
+    gkOpts = '<option selected>' + esc(g.gk) + '</option>' + gkOpts;
+
+  var glRows = (g.gls || []).map(function(x, i){
+    return '<div class="gl" data-gl="' + i + '">' +
+      '<select data-gf="s">' + GM.sit.map(function(sit){
+        return '<option' + (sit === x.s ? ' selected' : '') + '>' + esc(sit) + '</option>';
+      }).join('') + '</select>' +
+      '<input data-gf="d" placeholder="деталь" value="' + esc(x.d || '') + '">' +
+      '<input class="z" data-gf="z" placeholder="зона" value="' + (x.z || '') + '">' +
+      '<button class="x" data-glx="' + i + '">×</button></div>';
+  }).join('');
+
+  mOpen(
+    '<h2>' + (g.id ? 'Игра' : 'Новая игра') + '</h2>' +
+    '<div class="ms">Отражённые броски и процент считаются сами.</div>' +
+
+    '<div class="row2">' +
+      '<div class="fld"><label>Дата</label><input id="f-d" type="date" value="' + esc(g.d) + '"></div>' +
+      '<div class="fld"><label>Вратарь</label><select id="f-gk">' + gkOpts + '</select></div>' +
+    '</div>' +
+    '<div class="row2">' +
+      '<div class="fld"><label>Соперник</label><input id="f-opp" value="' + esc(g.opp) + '"></div>' +
+      '<div class="fld"><label>Где</label><select id="f-home">' +
+        '<option value="1"' + (g.home ? ' selected' : '') + '>Дома</option>' +
+        '<option value="0"' + (g.home ? '' : ' selected') + '>Выезд</option></select></div>' +
+    '</div>' +
+    '<div class="row2">' +
+      '<div class="fld"><label>Результат</label><select id="f-res">' +
+        '<option value=""></option>' + RESS.map(function(r){
+          return '<option' + (r === g.res ? ' selected' : '') + '>' + r + '</option>'; }).join('') +
+      '</select></div>' +
+      '<div class="fld"><label>Нагрузка и качество</label><select id="f-load">' +
+        '<option value=""></option>' + LOADS.map(function(x){
+          return '<option value="' + x[0] + '"' + (x[0] === g.load ? ' selected' : '') + '>' +
+                 x[0] + ' — ' + x[1] + '</option>'; }).join('') +
+      '</select></div>' +
+    '</div>' +
+    '<div class="row2">' +
+      '<div class="fld"><label>Броски в створ</label><input id="f-sh" type="number" min="0" value="' + g.sh + '"></div>' +
+      '<div class="fld"><label>Пропущено</label><input id="f-ga" type="number" min="0" value="' + g.ga + '"></div>' +
+    '</div>' +
+    '<div class="row2">' +
+      '<div class="fld"><label>Голевых выручил</label><input id="f-gmp" type="number" min="0" value="' + g.gmp + '"></div>' +
+      '<div class="fld"><label>Голевых пропустил</label><input id="f-gmm" type="number" min="0" value="' + g.gmm + '"></div>' +
+    '</div>' +
+    '<div class="fld"><label>Психология, балл 1–10 · 9–10 ключевая роль · 7–8 уверенно · 5–6 качели · 3–4 срыв</label>' +
+      '<input id="f-psy" type="number" min="0" max="10" value="' + (g.psy || '') + '"></div>' +
+    '<div class="fld"><label>Комментарий</label><textarea id="f-cm">' + esc(g.cm) + '</textarea></div>' +
+
+    '<div class="fld"><label>Голы — ситуация, деталь, зона ворот 1–9</label>' + glRows +
+      '<button class="addbtn" id="gl-add">+ добавить гол</button></div>' +
+
+    '<div class="mact">' +
+      '<button class="btn" id="gm-save">Сохранить</button>' +
+      '<button class="btn sec" id="gm-cancel">Отмена</button>' +
+      '<div class="sp"></div>' +
+      (g.id ? '<button class="del" id="gm-del">Удалить игру</button>' : '') +
+    '</div>');
+
+  $('gm-cancel').onclick = mClose;
+  $('gl-add').onclick = function(){ gmSync(); GME.gls.push({ s: GM.sit[0], d:'', z:'' }); gmForm(); };
+  $('mbody').onclick = function(e){
+    var b = e.target.closest ? e.target.closest('[data-glx]') : null;
+    if (!b) return;
+    gmSync();
+    GME.gls.splice(Number(b.getAttribute('data-glx')), 1);
+    gmForm();
+  };
+  if ($('gm-del')) $('gm-del').onclick = function(){
+    if (!confirm('Удалить эту игру?')) return;
+    api({ a:'game2del', id: g.id }, function(){ mClose(); GM.list = null; gmLoad(true); });
+  };
+  $('gm-save').onclick = function(){
+    gmSync();
+    if (!GME.gk){ alert('Выбери вратаря.'); return; }
+    $('gm-save').textContent = 'Сохраняю…';
+    api({ a:'game2save', id: GME.id, d: GME.d, gk: GME.gk, uid: GME.uid, opp: GME.opp,
+          home: GME.home, res: GME.res, sh: GME.sh, ga: GME.ga, gmp: GME.gmp, gmm: GME.gmm,
+          load: GME.load, psy: GME.psy, cm: GME.cm, gls: GME.gls }, function(res){
+      if (!res || !res.ok){ $('gm-save').textContent = 'Не вышло, ещё раз'; return; }
+      mClose(); GM.list = null; gmLoad(true);
+    });
+  };
+}
+
+function gmSync(){
+  var v = function(id){ var el = $('f-' + id); return el ? el.value : ''; };
+  var sel = $('f-gk'), opt = sel ? sel.options[sel.selectedIndex] : null;
+  GME.d    = v('d');
+  GME.gk   = sel ? sel.value : '';
+  GME.uid  = opt ? (opt.getAttribute('data-uid') || '') : '';
+  GME.opp  = v('opp').trim();
+  GME.home = Number(v('home'));
+  GME.res  = v('res');
+  GME.load = v('load');
+  GME.sh   = Number(v('sh'))  || 0;
+  GME.ga   = Number(v('ga'))  || 0;
+  GME.gmp  = Number(v('gmp')) || 0;
+  GME.gmm  = Number(v('gmm')) || 0;
+  GME.psy  = Number(v('psy')) || 0;
+  GME.cm   = v('cm');
+  var gls = [];
+  $('mbody').querySelectorAll('[data-gl]').forEach(function(row){
+    gls.push({ s: row.querySelector('[data-gf="s"]').value,
+               d: row.querySelector('[data-gf="d"]').value.trim(),
+               z: Number(row.querySelector('[data-gf="z"]').value) || '' });
+  });
+  GME.gls = gls;
 }
 
 /* ───────── запуск ───────── */
