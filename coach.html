@@ -410,6 +410,7 @@ function go(p){
   else if (p === 'roster') rsLoad();
   else if (p === 'rates') rtLoad();
   else if (p === 'cog') cgLoad();
+  else if (p === 'ofp') ofLoad();
   else drawSoon(p);
 }
 var SOON = {
@@ -537,6 +538,7 @@ function mcDraw(){
     ['Тактика · лёд',   cur.tac],
     ['Психология',      cur.psy],
     ['Когнитивка',      cur.cog],
+    ['ОФП',            cur.ofp],
     ['Теория',          cur.theory],
     ['Дополнительно',   cur.extra]
   ].map(function(b){
@@ -677,7 +679,7 @@ function mcEdit(n){
   if (!c) {
     var nums = (MC.list || []).map(function(x){ return Number(x.n) || 0; });
     c = { n: String(Math.max.apply(null, nums.concat([0])) + 1), dates:'', from:'', to:'',
-          stage:'', tech:'', tac:'', psy:'', cog:'', theory:'', extra:'' };
+          stage:'', tech:'', tac:'', psy:'', cog:'', theory:'', extra:'', ofp:'' };
   }
   var f = function(id, lab, val, ta){
     return '<div class="fld"><label>' + lab + '</label>' +
@@ -693,6 +695,7 @@ function mcEdit(n){
     f('tac','Тактика · лёд', c.tac, 1) +
     f('psy','Психология', c.psy, 1) +
     f('cog','Когнитивка', c.cog, 1) +
+    f('ofp','ОФП', c.ofp, 1) +
     f('theory','Теория', c.theory, 1) +
     f('extra','Дополнительно', c.extra, 1) +
     '<div class="mact">' +
@@ -711,9 +714,9 @@ function mcEdit(n){
     $('mc-save').textContent = 'Сохраняю…';
     api({ a:'pmicrosave', n: c.n, dates: v('dates'), from: v('from'), to: v('to'),
           stage: v('stage'), tech: v('tech'), tac: v('tac'), psy: v('psy'),
-          cog: v('cog'), theory: v('theory'), extra: v('extra') }, function(res){
+          cog: v('cog'), theory: v('theory'), extra: v('extra'), ofp: v('ofp') }, function(res){
       if (!res || !res.ok){ $('mc-save').textContent = 'Не вышло, ещё раз'; return; }
-      mClose(); MC.list = null; MC.sel = c.n; mcLoad(true);
+      mClose(); MC.list = null; MC.sel = c.n; OF.mc = c.n; mcLoad(true);
     });
   };
 }
@@ -1450,6 +1453,404 @@ function cgDraw(){
       CG.gk = (CG.gk === u) ? '' : u;
       cgDraw();
     }
+  };
+}
+
+/* ───────── ОФП ───────── */
+
+var OF = { tests:null, list:null, tab:'test', t:'', gk:'', mc:'' };
+
+function ofLoad(fresh){
+  var sec = $('main').querySelector('[data-pg="ofp"]');
+  if (OF.tests && !fresh){ ofDraw(); return; }
+  sec.innerHTML = '<div class="head"><h1>ОФП</h1></div>' +
+                  '<div class="card"><div class="muted">Загружаю…</div></div>';
+  api({ a:'ofp' }, function(res){
+    if (!res || !res.ok){
+      sec.innerHTML = '<div class="head"><h1>ОФП</h1></div>' +
+        '<div class="card"><div class="muted">Не удалось загрузить. Проверь, что в базе есть листы «офп» и «офп_тесты».</div></div>';
+      return;
+    }
+    OF.tests = res.tests || [];
+    OF.list  = res.list  || [];
+    ofDraw();
+  });
+}
+
+/** Все, у кого есть замеры, плюс все из состава. */
+function ofNames(){
+  var by = {};
+  (ROSTER || []).forEach(function(r){ if (r.name) by[r.name] = r.uid || ''; });
+  (OF.list || []).forEach(function(x){ if (x.gk && by[x.gk] === undefined) by[x.gk] = x.uid || ''; });
+  return Object.keys(by).sort().map(function(n){ return { name:n, uid:by[n] }; });
+}
+function ofTest(code){ var r = null; (OF.tests || []).forEach(function(t){ if (t.code === code) r = t; }); return r; }
+
+/** Замеры вратаря по тесту, новые вперёд. */
+function ofOf(name, code){
+  return (OF.list || []).filter(function(x){ return x.gk === name && x.t === code; })
+    .sort(function(a, b){ return a.d < b.d ? 1 : -1; });
+}
+/** Выполнен ли норматив. */
+function ofOk(t, v){
+  if (!t || !t.norm || v === null || v === undefined || isNaN(v)) return null;
+  return t.dir === 'min' ? (v <= t.norm) : (v >= t.norm);
+}
+
+function ofDraw(){
+  var sec = $('main').querySelector('[data-pg="ofp"]');
+  sec.innerHTML =
+    '<div class="head"><h1>ОФП</h1>' +
+    '<div class="sub">' + (OF.tab === 'test' ? 'результаты тестирования и нормативы'
+                                             : 'что делаем по ОФП в каждом микроцикле') + '</div>' +
+    '<div class="sp"></div>' +
+    (OF.tab === 'test'
+      ? '<button class="btn sec sm" id="of-add">+ Внести замеры</button>' +
+        '<button class="btn sec sm" id="of-cfg" style="margin-left:8px">Тесты и нормативы</button>'
+      : '') +
+    '</div>' +
+    '<div class="mcbar">' +
+      '<button class="mcb' + (OF.tab === 'test' ? ' on' : '') + '" data-ot="test">Тестирование</button>' +
+      '<button class="mcb' + (OF.tab === 'plan' ? ' on' : '') + '" data-ot="plan">План по микроциклам</button>' +
+    '</div>' +
+    '<div id="of-body"></div>';
+
+  sec.querySelector('.mcbar').onclick = function(e){
+    var b = e.target.closest ? e.target.closest('[data-ot]') : null;
+    if (b){ OF.tab = b.getAttribute('data-ot'); ofDraw(); }
+  };
+  var ab = $('of-add'); if (ab) ab.onclick = function(){ ofDayEdit('', ''); };
+  var cb = $('of-cfg'); if (cb) cb.onclick = ofCfg;
+
+  if (OF.tab === 'test') ofTestsDraw(); else ofPlanDraw();
+}
+
+/* ── вкладка «Тестирование» ── */
+
+function ofTestsDraw(){
+  var box = $('of-body');
+  var tests = OF.tests || [], names = ofNames();
+
+  if (!tests.length){
+    box.innerHTML = '<div class="card"><div class="muted">Справочник тестов пуст. ' +
+      'Нажми «Тесты и нормативы» и добавь первый.</div></div>';
+    return;
+  }
+
+  /* матрица: вратари × тесты, последний результат */
+  var head = '<tr><th>Вратарь</th>' + tests.map(function(t){
+    return '<th class="num" data-ot="' + esc(t.code) + '" style="cursor:pointer' +
+      (t.code === OF.t ? ';color:var(--red)' : '') + '" title="' + esc(t.note) + '">' +
+      esc(t.name) + '<br><span style="font-weight:400;text-transform:none">' +
+      (t.norm ? (t.dir === 'min' ? '≤ ' : '≥ ') + t.norm + ' ' : '') + esc(t.unit) + '</span></th>';
+  }).join('') + '</tr>';
+
+  var body = names.map(function(p){
+    var cells = tests.map(function(t){
+      var arr = ofOf(p.name, t.code);
+      if (!arr.length) return '<td class="num muted">—</td>';
+      var v = arr[0].v, ok = ofOk(t, v);
+      var col = ok === null ? '' : (ok ? ';color:var(--ok);font-weight:700' : ';color:var(--red)');
+      return '<td class="num" style="cursor:pointer' + col + '" data-cell="' + esc(p.name) +
+        '|' + esc(t.code) + '" title="' + dsh(arr[0].d) + (arr[0].cm ? ' · ' + esc(arr[0].cm) : '') +
+        '">' + v + '</td>';
+    }).join('');
+    return '<tr><td class="gk" data-row="' + esc(p.name) + '" style="cursor:pointer">' +
+      esc(p.name) + '</td>' + cells + '</tr>';
+  }).join('');
+
+  var det = '';
+  if (OF.t){
+    var t = ofTest(OF.t);
+    if (t){
+      var rows = names.map(function(p){
+        var arr = ofOf(p.name, t.code);
+        if (!arr.length) return null;
+        var v = arr[0].v, pv = arr[1] ? arr[1].v : null;
+        return { n:p.name, v:v, d:arr[0].d, pv:pv, all:arr };
+      }).filter(Boolean);
+      rows.sort(function(a, b){ return t.dir === 'min' ? a.v - b.v : b.v - a.v; });
+
+      var vals = rows.map(function(r){ return r.v; });
+      var mx = vals.length ? Math.max.apply(null, vals) : 1;
+      var bars = rows.map(function(r){
+        var ok = ofOk(t, r.v);
+        var dlt = '';
+        if (r.pv !== null){
+          var df = Math.round((r.v - r.pv) * 100) / 100;
+          var good = t.dir === 'min' ? df < 0 : df > 0;
+          if (df) dlt = ' <span style="color:' + (good ? 'var(--ok)' : 'var(--red)') + '">' +
+            (df > 0 ? '+' : '') + df + '</span>';
+        }
+        return '<div class="bar" style="grid-template-columns:160px 1fr 120px">' +
+          '<div class="nm">' + esc(r.n) + '</div>' +
+          '<div class="ln"><u style="width:' + Math.round(r.v / mx * 100) + '%' +
+            (ok ? ';background:var(--ok)' : '') + '"></u></div>' +
+          '<div class="vl"><b>' + r.v + '</b> ' + esc(t.unit) + dlt + '</div></div>';
+      }).join('');
+
+      var hist = '';
+      if (OF.gk){
+        var arr = ofOf(OF.gk, t.code);
+        hist = '<div class="card"><h2>' + esc(OF.gk) + ' · ' + esc(t.name) + '</h2>' +
+          (arr.length ? '<table class="tbl"><thead><tr><th class="num">Дата</th>' +
+            '<th class="num">Результат</th><th class="num">Норматив</th><th>Комментарий</th>' +
+            '<th></th></tr></thead><tbody>' +
+            arr.map(function(r){
+              var ok = ofOk(t, r.v);
+              return '<tr><td class="num">' + dsh(r.d) + '</td>' +
+                '<td class="num"><b>' + r.v + '</b> ' + esc(t.unit) + '</td>' +
+                '<td class="num">' + (ok === null ? '—' : (ok ? '<span style="color:var(--ok)">есть</span>'
+                                                             : '<span style="color:var(--red)">нет</span>')) + '</td>' +
+                '<td class="muted">' + esc(r.cm || '') + '</td>' +
+                '<td class="num"><button class="del" data-oed="' + esc(r.gk) + '|' + r.d +
+                  '">править день</button></td></tr>';
+            }).join('') + '</tbody></table>' : '<div class="muted">Замеров нет.</div>') + '</div>';
+      }
+
+      det =
+        '<div class="card"><h2>' + esc(t.name) + '</h2>' +
+          (t.note ? '<div class="mcstage" style="margin-bottom:14px">' + esc(t.note) + '</div>' : '') +
+          '<div class="dets" style="margin:0 0 12px">' +
+            (t.norm ? 'Норматив: ' + (t.dir === 'min' ? 'не больше ' : 'не меньше ') + t.norm + ' ' +
+                      esc(t.unit) + ' · ' : '') +
+            (t.dir === 'min' ? 'меньше - лучше' : 'больше - лучше') +
+            (t.teams ? ' · ' + esc(t.teams) : '') + '</div>' +
+          (bars ? '<div class="bars">' + bars + '</div>'
+                : '<div class="muted">По этому тесту замеров нет.</div>') +
+        '</div>' + hist;
+    }
+  }
+
+  box.innerHTML =
+    '<div class="card"><h2>Последние результаты</h2>' +
+      '<table class="tbl"><thead>' + head + '</thead><tbody>' +
+      (body || '<tr><td class="muted">Вратарей нет.</td></tr>') + '</tbody></table>' +
+      '<div class="ice">зелёным - норматив выполнен · нажми на название теста, чтобы раскрыть</div>' +
+    '</div>' + det;
+
+  box.onclick = function(e){
+    var el = e.target.closest ? e.target : null;
+    if (!el) return;
+    var th = el.closest('[data-ot]');
+    if (th){ OF.t = (OF.t === th.getAttribute('data-ot')) ? '' : th.getAttribute('data-ot');
+             ofTestsDraw(); return; }
+    var ed = el.closest('[data-oed]');
+    if (ed){ var q = ed.getAttribute('data-oed').split('|'); ofDayEdit(q[0], q[1]); return; }
+    var cell = el.closest('[data-cell]');
+    if (cell){ var c = cell.getAttribute('data-cell').split('|');
+               OF.gk = c[0]; OF.t = c[1]; ofTestsDraw(); return; }
+    var row = el.closest('[data-row]');
+    if (row){ ofDayEdit(row.getAttribute('data-row'), ''); return; }
+  };
+}
+
+/* ── внесение замеров за день ── */
+
+var OD = { gk:'', d:'' };
+
+function ofDayEdit(gk, d){
+  OD.gk = gk || '';
+  OD.d  = d  || TODAY;
+  var names = ofNames();
+  var have = {};
+  if (OD.gk && d) (OF.list || []).forEach(function(x){
+    if (x.gk === OD.gk && x.d === d) have[x.t] = x.v;
+  });
+
+  var opts = '<option value="">— выбери —</option>' + names.map(function(p){
+    return '<option' + (p.name === OD.gk ? ' selected' : '') + '>' + esc(p.name) + '</option>';
+  }).join('');
+
+  var fields = (OF.tests || []).map(function(t){
+    return '<div class="row3" style="grid-template-columns:1fr 110px 70px">' +
+      '<div class="fld" style="margin:0"><label>' + esc(t.name) +
+        (t.norm ? ' · ' + (t.dir === 'min' ? '≤ ' : '≥ ') + t.norm : '') + '</label>' +
+        '<div class="muted" style="font-size:12px">' + esc(t.note).slice(0, 90) + '</div></div>' +
+      '<div class="fld" style="margin:0"><input id="of-' + esc(t.code) + '" inputmode="decimal" value="' +
+        (have[t.code] !== undefined ? have[t.code] : '') + '"></div>' +
+      '<div class="fld" style="margin:0"><div class="muted" style="padding-top:9px">' +
+        esc(t.unit) + '</div></div>' +
+    '</div>';
+  }).join('');
+
+  mOpen(
+    '<h2>Замеры ОФП</h2>' +
+    '<div class="ms">Заполняй только те тесты, что сдавали. Пустое поле - теста не было. ' +
+    'Сохранение заменяет все замеры этого вратаря за эту дату.</div>' +
+    '<div class="row2">' +
+      '<div class="fld"><label>Вратарь</label><select id="of-gk">' + opts + '</select></div>' +
+      '<div class="fld"><label>Дата</label><input id="of-d" type="date" value="' + OD.d + '"></div>' +
+    '</div>' +
+    fields +
+    '<div class="fld"><label>Комментарий</label><input id="of-cm" value=""></div>' +
+    '<div class="mact">' +
+      '<button class="btn" id="of-save">Сохранить</button>' +
+      '<button class="btn sec" id="of-cancel">Отмена</button>' +
+    '</div>');
+
+  $('of-cancel').onclick = mClose;
+  $('of-save').onclick = function(){
+    var gkv = $('of-gk').value, dv = $('of-d').value;
+    if (!gkv){ alert('Выбери вратаря.'); return; }
+    if (!dv){ alert('Поставь дату.'); return; }
+    var uid = '';
+    ofNames().forEach(function(p){ if (p.name === gkv) uid = p.uid; });
+    var v = {};
+    (OF.tests || []).forEach(function(t){
+      var s = ($('of-' + t.code).value || '').trim();
+      if (s !== '') v[t.code] = s;
+    });
+    $('of-save').textContent = 'Сохраняю…';
+    api({ a:'ofpday', d: dv, gk: gkv, uid: uid, v: v, cm: ($('of-cm').value || '').trim() },
+      function(res){
+        if (!res || !res.ok){ $('of-save').textContent = 'Не вышло, ещё раз'; return; }
+        mClose(); ofLoad(1);
+      });
+  };
+}
+
+/* ── справочник тестов ── */
+
+function ofCfg(){
+  var rows = (OF.tests || []).map(function(t){
+    return '<tr><td class="gk" data-oc="' + esc(t.code) + '" style="cursor:pointer">' + esc(t.name) + '</td>' +
+      '<td>' + esc(t.unit) + '</td>' +
+      '<td>' + (t.dir === 'min' ? 'меньше' : 'больше') + '</td>' +
+      '<td class="num">' + (t.norm || '—') + '</td>' +
+      '<td class="muted">' + esc(t.teams) + '</td></tr>';
+  }).join('');
+
+  mOpen(
+    '<h2>Тесты и нормативы</h2>' +
+    '<div class="ms">Нажми на тест, чтобы изменить. Порядок задаётся числом в карточке теста.</div>' +
+    '<table class="tbl"><thead><tr><th>Тест</th><th>Ед.</th><th>Лучше</th>' +
+    '<th class="num">Норматив</th><th>Команды</th></tr></thead><tbody>' + rows + '</tbody></table>' +
+    '<div class="mact"><button class="btn" id="oc-new">+ Новый тест</button>' +
+    '<button class="btn sec" id="oc-close">Закрыть</button></div>');
+
+  $('oc-close').onclick = mClose;
+  $('oc-new').onclick = function(){ ofCfgEdit(''); };
+  $('mbody').querySelector('tbody').onclick = function(e){
+    var td = e.target.closest ? e.target.closest('[data-oc]') : null;
+    if (td) ofCfgEdit(td.getAttribute('data-oc'));
+  };
+}
+
+function ofCfgEdit(code){
+  var t = ofTest(code) || { code:'', name:'', unit:'', dir:'max', norm:'', note:'', teams:'МХК, МАХ',
+                            ord:(OF.tests || []).length + 1 };
+  mOpen(
+    '<h2>' + (code ? 'Тест' : 'Новый тест') + '</h2>' +
+    '<div class="ms">Код - короткое латинское имя, по нему хранятся замеры. У готового теста его менять не нужно.</div>' +
+    '<div class="row2">' +
+      '<div class="fld"><label>Название</label><input id="oc-name" value="' + esc(t.name) + '"></div>' +
+      '<div class="fld"><label>Код</label><input id="oc-code" value="' + esc(t.code) + '"' +
+        (code ? ' readonly' : '') + '></div>' +
+    '</div>' +
+    '<div class="row3" style="grid-template-columns:1fr 1fr 1fr 90px">' +
+      '<div class="fld"><label>Единица</label><input id="oc-unit" value="' + esc(t.unit) + '"></div>' +
+      '<div class="fld"><label>Лучше</label><select id="oc-dir">' +
+        '<option value="max"' + (t.dir === 'max' ? ' selected' : '') + '>больше</option>' +
+        '<option value="min"' + (t.dir === 'min' ? ' selected' : '') + '>меньше</option></select></div>' +
+      '<div class="fld"><label>Норматив</label><input id="oc-norm" value="' + (t.norm || '') + '"></div>' +
+      '<div class="fld"><label>Порядок</label><input id="oc-ord" value="' + (t.ord || '') + '"></div>' +
+    '</div>' +
+    '<div class="fld"><label>Команды</label><input id="oc-teams" value="' + esc(t.teams) + '"></div>' +
+    '<div class="fld"><label>Описание</label><textarea id="oc-note">' + esc(t.note) + '</textarea></div>' +
+    '<div class="mact">' +
+      '<button class="btn" id="oc-save">Сохранить</button>' +
+      '<button class="btn sec" id="oc-back">Назад</button>' +
+      '<div class="sp"></div>' +
+      (code ? '<button class="del" id="oc-del">Удалить тест</button>' : '') +
+    '</div>');
+
+  $('oc-back').onclick = ofCfg;
+  var db2 = $('oc-del');
+  if (db2) db2.onclick = function(){
+    if (!confirm('Удалить тест «' + t.name + '»? Замеры в базе останутся.')) return;
+    api({ a:'ofptdel', code: t.code }, function(){ mClose(); ofLoad(1); });
+  };
+  $('oc-save').onclick = function(){
+    var v = function(id){ return ($('oc-' + id).value || '').trim(); };
+    if (!v('name')){ alert('Нужно название.'); return; }
+    if (!v('code')){ alert('Нужен код.'); return; }
+    $('oc-save').textContent = 'Сохраняю…';
+    api({ a:'ofptsave', code: v('code'), name: v('name'), unit: v('unit'),
+          dir: $('oc-dir').value, norm: v('norm'), note: v('note'),
+          teams: v('teams'), ord: v('ord') }, function(res){
+      if (!res || !res.ok){ $('oc-save').textContent = 'Не вышло, ещё раз'; return; }
+      mClose(); ofLoad(1);
+    });
+  };
+}
+
+/* ── вкладка «План по микроциклам» ── */
+
+function ofPlanDraw(){
+  var box = $('of-body');
+  if (!MC.list){
+    box.innerHTML = '<div class="card"><div class="muted">Загружаю микроциклы…</div></div>';
+    api({ a:'pmicro' }, function(res){
+      if (!res || !res.ok){
+        box.innerHTML = '<div class="card"><div class="muted">Микроциклы не загрузились.</div></div>';
+        return;
+      }
+      MC.list = res.list || []; MC.cur = res.cur || '';
+      ofPlanDraw();
+    });
+    return;
+  }
+  if (!MC.list.length){
+    box.innerHTML = '<div class="card"><div class="muted">Циклов пока нет. ' +
+      'Заведи их в разделе «Микроциклы».</div></div>';
+    return;
+  }
+
+  if (!OF.mc) OF.mc = MC.cur || MC.list[MC.list.length - 1].n;
+  var cur = null;
+  MC.list.forEach(function(x){ if (x.n === OF.mc) cur = x; });
+  if (!cur) cur = MC.list[MC.list.length - 1];
+
+  var bar = MC.list.map(function(x){
+    var has = !!String(x.ofp || '').trim();
+    return '<button class="mcb' + (x.n === OF.mc ? ' on' : '') + (x.n === MC.cur ? ' cur' : '') +
+      '" data-om="' + esc(x.n) + '"' + (has ? '' : ' style="opacity:.55"') + '>' + esc(x.n) + '</button>';
+  }).join('');
+
+  var all = MC.list.filter(function(x){ return String(x.ofp || '').trim(); }).length;
+
+  box.innerHTML =
+    '<div class="mcbar">' + bar + '</div>' +
+    '<div class="card">' +
+      '<div class="mchead"><b>Микроцикл ' + esc(cur.n) + '</b><i>' +
+        esc(String(cur.dates).replace(/\n/g, ' · ')) + '</i>' +
+        (cur.n === MC.cur ? '<u>текущий</u>' : '') + '</div>' +
+      (cur.stage ? '<div class="mcstage">' + esc(cur.stage) + '</div>' : '') +
+      '<div class="fld" style="margin:10px 0 0"><label>ОФП в этом цикле</label>' +
+        '<textarea id="of-mc" style="min-height:200px">' + esc(cur.ofp || '') + '</textarea></div>' +
+      '<div class="mact"><button class="btn" id="of-mcsave" style="width:auto;padding:0 22px">Сохранить</button>' +
+        '<div class="muted" id="of-mcst" style="margin-left:12px"></div></div>' +
+    '</div>' +
+    '<div class="card"><h2>Заполнено</h2>' +
+      '<div class="muted">ОФП расписан в ' + all + ' циклах из ' + MC.list.length + '. ' +
+      'Бледные номера - пустые.</div></div>';
+
+  box.querySelector('.mcbar').onclick = function(e){
+    var b = e.target.closest ? e.target.closest('[data-om]') : null;
+    if (b){ OF.mc = b.getAttribute('data-om'); ofPlanDraw(); }
+  };
+  $('of-mcsave').onclick = function(){
+    var txt = ($('of-mc').value || '').trim();
+    $('of-mcst').textContent = 'Сохраняю…';
+    api({ a:'pmicrosave', n: cur.n, dates: cur.dates, from: cur.from, to: cur.to,
+          stage: cur.stage, tech: cur.tech, tac: cur.tac, psy: cur.psy, cog: cur.cog,
+          theory: cur.theory, extra: cur.extra, ofp: txt }, function(res){
+      if (!res || !res.ok){ $('of-mcst').textContent = 'Не вышло, ещё раз'; return; }
+      cur.ofp = txt;
+      $('of-mcst').textContent = 'Сохранено';
+      ofPlanDraw();
+    });
   };
 }
 
