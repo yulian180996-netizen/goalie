@@ -157,6 +157,29 @@
   .net button{height:36px;border:1px solid var(--line);background:var(--bg3);border-radius:7px;
       cursor:pointer;font-size:12px;color:var(--tx2)}
   .net button.on{background:var(--red);border-color:var(--red);color:#fff;font-weight:700}
+  /* аналитика голов */
+  .anwrap{display:grid;grid-template-columns:300px 1fr;gap:16px;align-items:start}
+  @media (max-width:900px){ .anwrap{grid-template-columns:1fr} }
+  .goal{background:var(--bg3);border:2px solid var(--line);border-radius:10px;padding:10px;
+        display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+  .goal .z{height:62px;border-radius:8px;display:flex;flex-direction:column;align-items:center;
+       justify-content:center;background:var(--bg2);border:1px solid var(--line)}
+  .goal .z b{font-family:'Unbounded',sans-serif;font-size:19px;font-weight:800;line-height:1}
+  .goal .z i{font-style:normal;font-size:10.5px;color:var(--tx2);margin-top:3px}
+  .goal .z.hot{color:#fff;border-color:transparent}
+  .ice{font-size:11.5px;color:var(--tx2);text-align:center;margin-top:8px}
+  .bars{display:flex;flex-direction:column;gap:9px}
+  .bar{display:grid;grid-template-columns:150px 1fr 74px;gap:10px;align-items:center;font-size:13.5px}
+  .bar .nm{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .bar .ln{height:22px;background:var(--bg3);border-radius:6px;overflow:hidden}
+  .bar .ln u{display:block;height:100%;background:var(--red);border-radius:6px}
+  .bar .vl{text-align:right;color:var(--tx2);font-size:12.5px;white-space:nowrap}
+  .bar .vl b{color:var(--tx);font-size:13.5px}
+  .dets{font-size:12.5px;color:var(--tx2);margin-top:6px;line-height:1.5}
+  .zpick{display:grid;grid-template-columns:repeat(3,38px);gap:4px}
+  .zpick button{height:32px;border:1px solid var(--line);background:var(--bg3);border-radius:6px;
+       cursor:pointer;font-size:11.5px;color:var(--tx2)}
+  .zpick button.on{background:var(--red);border-color:var(--red);color:#fff;font-weight:700}
   /* редактирование */
   .modal{position:fixed;inset:0;background:rgba(10,12,18,.55);z-index:60;display:flex;
          align-items:flex-start;justify-content:center;padding:40px 16px;overflow:auto}
@@ -382,10 +405,10 @@ function go(p){
   if (p === 'sched') schLoad();
   else if (p === 'micro') mcLoad();
   else if (p === 'games') gmLoad();
+  else if (p === 'goals') anLoad();
   else drawSoon(p);
 }
 var SOON = {
-  goals:  ['Аналитика голов', 'Схема ворот с отметками и разбивка по ситуациям — по каждому вратарю и сводно.'],
   roster: ['Все вратари', 'Список вратарей системы, их данные, дисциплина заполнения и заметки.'],
   rates:  ['Оценки', 'Оценка вратаря по разделам, сравнение самооценки и оценки тренера, динамика по месяцам.'],
   cog:    ['Когнитивка', 'Результаты Шульте, «Светофона», Струпа, слежения и реакции с помехами.'],
@@ -810,7 +833,11 @@ function gmForm(){
         return '<option' + (sit === x.s ? ' selected' : '') + '>' + esc(sit) + '</option>';
       }).join('') + '</select>' +
       '<input data-gf="d" placeholder="деталь" value="' + esc(x.d || '') + '">' +
-      '<input class="z" data-gf="z" placeholder="зона" value="' + (x.z || '') + '">' +
+      '<select class="z" data-gf="z">' +
+        '<option value=""></option>' +
+        [1,2,3,4,5,6,7,8,9].map(function(z){
+          return '<option value="' + z + '"' + (Number(x.z) === z ? ' selected' : '') + '>' + z + '</option>';
+        }).join('') + '</select>' +
       '<button class="x" data-glx="' + i + '">×</button></div>';
   }).join('');
 
@@ -851,7 +878,8 @@ function gmForm(){
       '<input id="f-psy" type="number" min="0" max="10" value="' + (g.psy || '') + '"></div>' +
     '<div class="fld"><label>Комментарий</label><textarea id="f-cm">' + esc(g.cm) + '</textarea></div>' +
 
-    '<div class="fld"><label>Голы — ситуация, деталь, зона ворот 1–9</label>' + glRows +
+    '<div class="fld"><label>Голы — ситуация, деталь, зона ворот</label>' +
+      '<div class="dets" style="margin:-2px 0 8px">зоны: 1 2 3 — верх, 4 5 6 — середина, 7 8 9 — низ; слева направо со стороны броска</div>' + glRows +
       '<button class="addbtn" id="gl-add">+ добавить гол</button></div>' +
 
     '<div class="mact">' +
@@ -910,6 +938,128 @@ function gmSync(){
                z: Number(row.querySelector('[data-gf="z"]').value) || '' });
   });
   GME.gls = gls;
+}
+
+/* ───────── аналитика голов ───────── */
+var AN = { gk: '', from: '', to: '' };
+var ZNAMES = ['верх левый','верх центр','верх правый',
+              'средн левый','средн центр','средн правый',
+              'низ левый','низ центр','низ правый'];
+
+function anLoad(){
+  if (!GM.list){
+    var sec = $('main').querySelector('[data-pg="goals"]');
+    sec.innerHTML = '<div class="head"><h1>Аналитика голов</h1></div>' +
+                    '<div class="card"><div class="muted">Загружаю…</div></div>';
+    api({ a:'games2' }, function(res){
+      if (!res || !res.ok){
+        sec.innerHTML = '<div class="head"><h1>Аналитика голов</h1></div>' +
+          '<div class="card"><div class="muted">Не удалось загрузить.</div></div>';
+        return;
+      }
+      GM.list = res.list || []; GM.sit = res.sit || [];
+      anDraw();
+    });
+    return;
+  }
+  anDraw();
+}
+
+function anDraw(){
+  var sec = $('main').querySelector('[data-pg="goals"]');
+  var list = (GM.list || []).filter(function(g){
+    if (AN.gk && g.gk !== AN.gk) return false;
+    if (AN.from && g.d < AN.from) return false;
+    if (AN.to   && g.d > AN.to)   return false;
+    return true;
+  });
+
+  var zones = [0,0,0,0,0,0,0,0,0], sits = {}, dets = {}, total = 0, shots = 0;
+  list.forEach(function(g){
+    shots += g.sh;
+    (g.gls || []).forEach(function(x){
+      total++;
+      var z = Number(x.z) || 0;
+      if (z >= 1 && z <= 9) zones[z - 1]++;
+      var sname = x.s || 'Другое';
+      sits[sname] = (sits[sname] || 0) + 1;
+      if (x.d){
+        if (!dets[sname]) dets[sname] = {};
+        dets[sname][x.d] = (dets[sname][x.d] || 0) + 1;
+      }
+    });
+  });
+
+  var zmax = Math.max.apply(null, zones) || 1;
+  var net = zones.map(function(n, i){
+    var k = n / zmax;
+    var style = n ? ' style="background:rgba(214,17,46,' + (0.18 + k * 0.72).toFixed(2) + ')"' : '';
+    return '<div class="z' + (n && k > 0.55 ? ' hot' : '') + '"' + style + '>' +
+           '<b>' + (n || '') + '</b><i>' + ZNAMES[i] + '</i></div>';
+  }).join('');
+
+  var arr = Object.keys(sits).map(function(k){ return { s:k, n:sits[k] }; })
+                  .sort(function(a,b){ return b.n - a.n; });
+  var smax = arr.length ? arr[0].n : 1;
+  var bars = arr.map(function(x){
+    var d = dets[x.s] ? Object.keys(dets[x.s]).sort(function(a,b){ return dets[x.s][b] - dets[x.s][a]; })
+              .map(function(k){ return esc(k) + ' ' + dets[x.s][k]; }).join(' · ') : '';
+    return '<div class="bar"><div class="nm">' + esc(x.s) + '</div>' +
+           '<div class="ln"><u style="width:' + Math.round(x.n / smax * 100) + '%"></u></div>' +
+           '<div class="vl"><b>' + x.n + '</b> · ' + (total ? Math.round(x.n / total * 1000) / 10 : 0) + '%</div></div>' +
+           (d ? '<div class="dets" style="margin:-4px 0 2px 160px">' + d + '</div>' : '');
+  }).join('');
+
+  var names = {};
+  (GM.list || []).forEach(function(g){ if (g.gk) names[g.gk] = 1; });
+  var opts = '<option value="">Все вратари</option>' + Object.keys(names).sort().map(function(x){
+    return '<option' + (x === AN.gk ? ' selected' : '') + '>' + esc(x) + '</option>'; }).join('');
+
+  var byGk = {};
+  list.forEach(function(g){
+    var k = g.gk || '—';
+    if (!byGk[k]) byGk[k] = { n:0, sh:0, ga:0 };
+    byGk[k].n++; byGk[k].sh += g.sh; byGk[k].ga += g.ga;
+  });
+  var gkRows = Object.keys(byGk).sort().map(function(k){
+    var b = byGk[k], pct = b.sh ? Math.round((b.sh - b.ga) / b.sh * 1000) / 10 : null;
+    return '<tr><td class="gk">' + esc(k) + '</td><td class="num">' + b.n + '</td>' +
+           '<td class="num">' + b.sh + '</td><td class="num">' + b.ga + '</td>' +
+           '<td class="num"><b>' + (pct === null ? '—' : pct + '%') + '</b></td></tr>';
+  }).join('');
+
+  sec.innerHTML =
+    '<div class="head"><h1>Аналитика голов</h1>' +
+    '<div class="sub">собирается из голов, записанных в карточках игр</div>' +
+    '<div class="sp"></div>' +
+    '<select id="an-gk" style="height:38px;border:1px solid var(--line);border-radius:10px;' +
+      'background:var(--bg2);color:var(--tx);font-family:inherit;font-size:13.5px;padding:0 10px">' + opts + '</select>' +
+    '</div>' +
+
+    '<div class="kpi">' +
+      '<div class="kp"><b>' + list.length + '</b><i>игр в выборке</i></div>' +
+      '<div class="kp"><b>' + total + '</b><i>голов записано</i></div>' +
+      '<div class="kp"><b>' + (shots ? Math.round((shots - total) / shots * 1000) / 10 + '%' : '—') +
+        '</b><i>отражено от ' + shots + ' бросков</i></div>' +
+      '<div class="kp"><b>' + (list.length ? Math.round(total / list.length * 10) / 10 : '—') +
+        '</b><i>голов за игру</i></div>' +
+    '</div>' +
+
+    '<div class="anwrap">' +
+      '<div class="card"><h2>Куда забивают</h2>' +
+        '<div class="goal">' + net + '</div>' +
+        '<div class="ice">вид со стороны броска · чем темнее, тем чаще</div></div>' +
+      '<div class="card"><h2>Ситуации</h2>' +
+        (arr.length ? '<div class="bars">' + bars + '</div>'
+                    : '<div class="muted">Голы пока не записаны. Заноси их в карточке игры.</div>') +
+      '</div>' +
+    '</div>' +
+
+    (gkRows ? '<div class="card"><h2>По вратарям</h2><table class="tbl"><thead><tr>' +
+      '<th>Вратарь</th><th class="num">Игр</th><th class="num">БВ</th><th class="num">ПШ</th>' +
+      '<th class="num">Отражено</th></tr></thead><tbody>' + gkRows + '</tbody></table></div>' : '');
+
+  $('an-gk').onchange = function(){ AN.gk = this.value; anDraw(); };
 }
 
 /* ───────── запуск ───────── */
