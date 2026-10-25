@@ -93,6 +93,7 @@
   .card h2{font-family:'Unbounded',sans-serif;font-size:15px;font-weight:700;margin:0 0 12px;display:flex;align-items:center;gap:8px}
   .card h2:before{content:'';width:3px;height:14px;background:var(--red);border-radius:2px}
   .muted{color:var(--tx2);font-size:14px}
+  .card{overflow-x:auto}
 
   /* ── расписание ── */
   .wnav{display:flex;align-items:center;gap:10px;margin-bottom:16px}
@@ -406,6 +407,9 @@ function go(p){
   else if (p === 'micro') mcLoad();
   else if (p === 'games') gmLoad();
   else if (p === 'goals') anLoad();
+  else if (p === 'roster') rsLoad();
+  else if (p === 'rates') rtLoad();
+  else if (p === 'cog') cgLoad();
   else drawSoon(p);
 }
 var SOON = {
@@ -1060,6 +1064,393 @@ function anDraw(){
       '<th class="num">Отражено</th></tr></thead><tbody>' + gkRows + '</tbody></table></div>' : '');
 
   $('an-gk').onchange = function(){ AN.gk = this.value; anDraw(); };
+}
+
+/* ───────── команда: один срез на три раздела ───────── */
+var SQ = { list:null, bad:0, busy:0, wait:[] };
+
+function sqLoad(cb){
+  if (SQ.list && !SQ.bad){ cb(); return; }
+  SQ.wait.push(cb);
+  if (SQ.busy) return;
+  SQ.busy = 1;
+  api({ a:'squad' }, function(res){
+    SQ.busy = 0;
+    var ok = res && res.ok;
+    SQ.list = ok ? (res.list || []) : [];
+    SQ.bad  = ok ? 0 : 1;
+    var w = SQ.wait; SQ.wait = [];
+    w.forEach(function(f){ f(); });
+  });
+}
+function pgWait(p, title){
+  var sec = $('main').querySelector('[data-pg="' + p + '"]');
+  if (sec && !sec.getAttribute('data-l')){
+    sec.setAttribute('data-l', '1');
+    sec.innerHTML = '<div class="head"><h1>' + esc(title) + '</h1></div>' +
+                    '<div class="card"><div class="muted">Собираю данные по вратарям…</div></div>';
+  }
+}
+function sqFail(p, title){
+  var sec = $('main').querySelector('[data-pg="' + p + '"]');
+  sec.innerHTML = '<div class="head"><h1>' + esc(title) + '</h1></div>' +
+    '<div class="card"><div class="muted">Данные не пришли. Обнови страницу - первый запрос иногда не успевает.</div></div>';
+}
+function dsh(iso){ if (!iso) return '—'; var d = new Date(iso + 'T00:00:00');
+  return d.getDate() + '.' + ('0' + (d.getMonth() + 1)).slice(-2); }
+function nz(v, d){ return (v === null || v === undefined || v === '' || isNaN(v)) ? (d || '—') : v; }
+function sqBy(uid){ var r = null; (SQ.list || []).forEach(function(x){ if (x.uid === uid) r = x; }); return r; }
+
+var SECN = [['skat','Катание'],['catch','Ловля'],['tac','Тактика'],['psy','Психология'],['phys','Физика']];
+var SECO = { tech:'Техника', tac:'Тактика', mind:'Мышление', psy:'Психология', phys:'Физика' };
+
+var COG = [
+  { k:'schulte', t:'Шульте', u:'сек', dir:'min',
+    v:function(x){ return x.t; },
+    ex:function(x){ return (x.n ? x.n + ' чисел' : '') + (x.e ? ' · ошибок ' + x.e : ''); } },
+  { k:'svet', t:'Светофон', u:'мс', dir:'min',
+    v:function(x){ return x.rt; },
+    ex:function(x){ return (x.n ? 'точность ' + Math.round(x.ok / x.n * 100) + '%' : '') +
+                           (x.e ? ' · ошибок ' + x.e : '') + (x.sk ? ' · пропусков ' + x.sk : '') +
+                           (x.ms ? ' · окно ' + x.ms + ' мс' : ''); } },
+  { k:'stroop', t:'Струп', u:'%', dir:'max',
+    v:function(x){ return x.n ? Math.round(x.ok / x.n * 1000) / 10 : null; },
+    ex:function(x){ return (x.n ? x.ok + ' из ' + x.n : '') + (x.e ? ' · ошибок ' + x.e : '') +
+                           (x.sk ? ' · пропусков ' + x.sk : ''); } },
+  { k:'mot', t:'Слежение', u:'порог', dir:'max',
+    v:function(x){ return x.sp ? Math.round(x.sp * 100) : null; },
+    ex:function(x){ return (x.n ? 'попаданий ' + x.ok + ' из ' + x.n : '') +
+                           (x.tg ? ' · целей ' + x.tg : '') + (x.bl ? ' · помех ' + x.bl : ''); } },
+  { k:'gng', t:'Реакция с помехами', u:'%', dir:'max',
+    v:function(x){ return x.n ? Math.round(x.ok / x.n * 1000) / 10 : null; },
+    ex:function(x){ return (x.n ? x.ok + ' из ' + x.n : '') + (x.e ? ' · ошибок ' + x.e : '') +
+                           (x.lv ? ' · уровень ' + x.lv : ''); } }
+];
+function cogCfg(k){ var r = COG[0]; COG.forEach(function(c){ if (c.k === k) r = c; }); return r; }
+function cogN(c){
+  if (!c) return 0;
+  var n = 0;
+  COG.forEach(function(x){ n += (c[x.k] || []).length; });
+  return n;
+}
+
+/* ───────── все вратари ───────── */
+
+function rsLoad(){ pgWait('roster', 'Все вратари'); sqLoad(rsDraw); }
+
+function rsDraw(){
+  if (SQ.bad) return sqFail('roster', 'Все вратари');
+  var sec = $('main').querySelector('[data-pg="roster"]');
+  var list = SQ.list || [], wk = shift(TODAY, -7);
+
+  var act = 0, cogAll = 0, wbAll = 0;
+  list.forEach(function(x){
+    if (x.lastWb && x.lastWb >= wk) act++;
+    cogAll += cogN(x.cog); wbAll += x.wbN;
+  });
+
+  var rows = list.map(function(x){
+    var rad = (x.rad || [])[0], old = x.lastWb && x.lastWb < wk;
+    return '<tr data-uid="' + esc(x.uid) + '">' +
+      '<td class="gk">' + esc(x.name) + '</td>' +
+      '<td>' + esc(x.team || '—') + '</td>' +
+      '<td class="num">' + esc(x.year || '—') + '</td>' +
+      '<td class="num">' + x.wbN + '</td>' +
+      '<td class="num"' + (old ? ' style="color:var(--warn)"' : '') + '>' + dsh(x.lastWb) + '</td>' +
+      '<td class="num">' + x.trN + '</td>' +
+      '<td class="num">' + (x.rad || []).length + '</td>' +
+      '<td class="num"><b>' + (rad ? rad.avg : '—') + '</b></td>' +
+      '<td class="num">' + cogN(x.cog) + '</td></tr>';
+  }).join('');
+
+  sec.innerHTML =
+    '<div class="head"><h1>Все вратари</h1>' +
+    '<div class="sub">нажми на вратаря, чтобы открыть карточку</div></div>' +
+    '<div class="kpi">' +
+      '<div class="kp"><b>' + list.length + '</b><i>вратарей в системе</i></div>' +
+      '<div class="kp"><b>' + act + '</b><i>писали дневник за 7 дней</i></div>' +
+      '<div class="kp"><b>' + wbAll + '</b><i>записей самочувствия</i></div>' +
+      '<div class="kp"><b>' + cogAll + '</b><i>замеров когнитивки</i></div>' +
+    '</div>' +
+    '<div class="card"><table class="tbl"><thead><tr>' +
+      '<th>Вратарь</th><th>Команда</th><th class="num">Год</th><th class="num">Дневник</th>' +
+      '<th class="num">Посл. запись</th><th class="num">Тренировок</th><th class="num">Оценок</th>' +
+      '<th class="num">Средняя</th><th class="num">Когнитивка</th>' +
+      '</tr></thead><tbody>' + (rows || '<tr><td colspan="9" class="muted">Пусто.</td></tr>') +
+      '</tbody></table></div>';
+
+  sec.querySelector('tbody').onclick = function(e){
+    var tr = e.target.closest ? e.target.closest('tr[data-uid]') : null;
+    if (tr) rsCard(tr.getAttribute('data-uid'));
+  };
+}
+
+function rsCard(uid){
+  var x = sqBy(uid);
+  if (!x) return;
+
+  var wb = (x.wb || []).slice(0, 10).map(function(r){
+    return '<tr><td class="num">' + dsh(r.d) + '</td>' +
+      '<td class="num">' + nz(r.sl) + '</td><td class="num">' + nz(r.rd) + '</td>' +
+      '<td class="num">' + nz(r.f) + '</td><td class="num">' + nz(r.sor) + '</td>' +
+      '<td class="num">' + nz(r.mo) + '</td><td class="num">' + nz(r.pf) + '</td>' +
+      '<td class="num">' + nz(r.p) + '</td><td class="num">' + nz(r.w) + '</td></tr>';
+  }).join('');
+
+  var rad = (x.rad || [])[0];
+  var radHtml = rad ? radBars(rad) : '<div class="muted">Оценок пока нет.</div>';
+
+  var cg = COG.map(function(c){
+    var arr = (x.cog && x.cog[c.k]) || [];
+    if (!arr.length) return '';
+    var l = arr[0], v = c.v(l);
+    return '<div class="bar" style="grid-template-columns:170px 1fr 90px">' +
+      '<div class="nm">' + c.t + '</div>' +
+      '<div class="ln" style="background:none;color:var(--tx2);font-size:12.5px;height:auto">' +
+        esc(c.ex(l)) + '</div>' +
+      '<div class="vl"><b>' + nz(v) + '</b> ' + c.u + '</div></div>';
+  }).join('');
+
+  mOpen(
+    '<h2>' + esc(x.name) + '</h2>' +
+    '<div class="ms">' + esc(x.team || '—') + (x.year ? ' · ' + esc(x.year) : '') +
+      ' · записей дневника ' + x.wbN + ' · заходил ' + esc(x.seen || '—') + '</div>' +
+    (x.goal ? '<div class="fld"><label>Цель сезона</label><div style="font-size:14px;line-height:1.55">' +
+       esc(x.goal) + '</div></div>' : '') +
+    '<div class="card" style="margin:0 0 14px"><h2>Оценка</h2>' + radHtml +
+      (rad ? '<div class="dets">' + dsh(rad.d) + ' · ' +
+        (rad.by === 'coach' ? 'тренер' : 'самооценка') + (rad.cm ? ' · ' + esc(rad.cm) : '') + '</div>' : '') +
+    '</div>' +
+    (cg ? '<div class="card" style="margin:0 0 14px"><h2>Когнитивка, последние замеры</h2>' +
+       '<div class="bars">' + cg + '</div></div>' : '') +
+    '<div class="card" style="margin:0"><h2>Самочувствие</h2>' +
+      (wb ? '<table class="tbl"><thead><tr><th class="num">Дата</th><th class="num">Сон</th>' +
+        '<th class="num">Готов</th><th class="num">Устал</th><th class="num">Крепат</th>' +
+        '<th class="num">Настр</th><th class="num">Психол</th><th class="num">Пульс</th>' +
+        '<th class="num">Вес</th></tr></thead><tbody>' + wb + '</tbody></table>'
+         : '<div class="muted">Записей нет.</div>') +
+    '</div>' +
+    '<div class="mact"><div class="sp"></div><button class="btn sec sm" id="rc-x">Закрыть</button></div>'
+  );
+  $('rc-x').onclick = mClose;
+}
+
+function radBars(rad){
+  var pairs = rad.old ? Object.keys(rad.sec).map(function(k){ return [k, SECO[k] || k]; })
+                      : SECN;
+  var out = pairs.map(function(p){
+    var v = rad.sec[p[0]];
+    if (v === undefined) return '';
+    return '<div class="bar" style="grid-template-columns:120px 1fr 54px">' +
+      '<div class="nm">' + p[1] + '</div>' +
+      '<div class="ln"><u style="width:' + Math.round(v / 10 * 100) + '%"></u></div>' +
+      '<div class="vl"><b>' + v + '</b></div></div>';
+  }).join('');
+  return '<div class="bars">' + out + '</div>';
+}
+
+/* ───────── оценки ───────── */
+
+var RT = { gk:'' };
+
+function rtLoad(){ pgWait('rates', 'Оценки'); sqLoad(rtDraw); }
+
+function rtDraw(){
+  if (SQ.bad) return sqFail('rates', 'Оценки');
+  var sec = $('main').querySelector('[data-pg="rates"]');
+  var list = SQ.list || [];
+
+  var opts = '<option value="">Все вратари</option>' + list.map(function(x){
+    return '<option value="' + esc(x.uid) + '"' + (x.uid === RT.gk ? ' selected' : '') + '>' +
+      esc(x.name) + '</option>'; }).join('');
+
+  var body;
+  if (RT.gk){
+    var x = sqBy(RT.gk) || { rad:[] };
+    var rad = x.rad || [];
+    var hist = rad.map(function(r){
+      return '<tr><td class="num">' + dsh(r.d) + '</td>' +
+        '<td>' + (r.by === 'coach' ? 'тренер' : 'сам') + '</td>' +
+        SECN.map(function(p){ return '<td class="num">' + nz(r.sec[p[0]]) + '</td>'; }).join('') +
+        '<td class="num"><b>' + r.avg + '</b></td>' +
+        '<td class="muted">' + esc(r.cm || '') + '</td></tr>';
+    }).join('');
+    body =
+      '<div class="card"><h2>Последняя оценка</h2>' +
+        (rad[0] ? radBars(rad[0]) + '<div class="dets">' + dsh(rad[0].d) + ' · ' +
+           (rad[0].by === 'coach' ? 'тренер' : 'самооценка') + ' · средняя ' + rad[0].avg + '</div>'
+                : '<div class="muted">Оценок нет.</div>') +
+      '</div>' +
+      (hist ? '<div class="card"><h2>История</h2><table class="tbl"><thead><tr>' +
+        '<th class="num">Дата</th><th>Кто</th>' +
+        SECN.map(function(p){ return '<th class="num">' + p[1] + '</th>'; }).join('') +
+        '<th class="num">Средняя</th><th>Комментарий</th></tr></thead><tbody>' + hist +
+        '</tbody></table></div>' : '');
+  } else {
+    var rows = list.map(function(x){
+      var r = (x.rad || [])[0];
+      if (!r) return '<tr data-uid="' + esc(x.uid) + '"><td class="gk">' + esc(x.name) + '</td>' +
+        '<td class="num">—</td><td></td>' + SECN.map(function(){ return '<td class="num">—</td>'; }).join('') +
+        '<td class="num">—</td></tr>';
+      return '<tr data-uid="' + esc(x.uid) + '"><td class="gk">' + esc(x.name) + '</td>' +
+        '<td class="num">' + dsh(r.d) + '</td>' +
+        '<td>' + (r.by === 'coach' ? 'тренер' : 'сам') + '</td>' +
+        SECN.map(function(p){ return '<td class="num">' + nz(r.sec[p[0]]) + '</td>'; }).join('') +
+        '<td class="num"><b>' + r.avg + '</b></td></tr>';
+    }).join('');
+
+    var sum = {}, cnt = {};
+    list.forEach(function(x){
+      var r = (x.rad || [])[0];
+      if (!r) return;
+      SECN.forEach(function(p){
+        var v = r.sec[p[0]];
+        if (v === undefined) return;
+        sum[p[0]] = (sum[p[0]] || 0) + v; cnt[p[0]] = (cnt[p[0]] || 0) + 1;
+      });
+    });
+    var team = SECN.map(function(p){
+      if (!cnt[p[0]]) return '';
+      var v = Math.round(sum[p[0]] / cnt[p[0]] * 10) / 10;
+      return '<div class="bar" style="grid-template-columns:120px 1fr 54px">' +
+        '<div class="nm">' + p[1] + '</div>' +
+        '<div class="ln"><u style="width:' + Math.round(v / 10 * 100) + '%"></u></div>' +
+        '<div class="vl"><b>' + v + '</b></div></div>';
+    }).join('');
+
+    body =
+      '<div class="anwrap" style="grid-template-columns:1fr 340px">' +
+        '<div class="card"><h2>По вратарям</h2><table class="tbl"><thead><tr>' +
+          '<th>Вратарь</th><th class="num">Дата</th><th>Кто</th>' +
+          SECN.map(function(p){ return '<th class="num">' + p[1] + '</th>'; }).join('') +
+          '<th class="num">Средняя</th></tr></thead><tbody>' + rows + '</tbody></table></div>' +
+        '<div class="card"><h2>Средняя по команде</h2>' +
+          (team ? '<div class="bars">' + team + '</div>' : '<div class="muted">Оценок нет.</div>') +
+          '<div class="ice">по последней оценке каждого вратаря</div></div>' +
+      '</div>';
+  }
+
+  sec.innerHTML =
+    '<div class="head"><h1>Оценки</h1>' +
+    '<div class="sub">33 пункта, сведённые в пять разделов</div><div class="sp"></div>' +
+    '<select id="rt-gk" style="height:38px;border:1px solid var(--line);border-radius:10px;' +
+      'background:var(--bg2);color:var(--tx);font-family:inherit;font-size:13.5px;padding:0 10px">' +
+      opts + '</select></div>' + body;
+
+  $('rt-gk').onchange = function(){ RT.gk = this.value; rtDraw(); };
+  var tb = sec.querySelector('tbody');
+  if (tb && !RT.gk) tb.onclick = function(e){
+    var tr = e.target.closest ? e.target.closest('tr[data-uid]') : null;
+    if (tr){ RT.gk = tr.getAttribute('data-uid'); rtDraw(); }
+  };
+}
+
+/* ───────── когнитивка ───────── */
+
+var CG = { k:'schulte', gk:'' };
+
+function cgLoad(){ pgWait('cog', 'Когнитивка'); sqLoad(cgDraw); }
+
+function cgDraw(){
+  if (SQ.bad) return sqFail('cog', 'Когнитивка');
+  var sec = $('main').querySelector('[data-pg="cog"]');
+  var list = SQ.list || [], c = cogCfg(CG.k);
+
+  var chips = COG.map(function(x){
+    var n = 0;
+    list.forEach(function(g){ n += ((g.cog && g.cog[x.k]) || []).length; });
+    return '<button class="mcb' + (x.k === CG.k ? ' on' : '') + '" data-ck="' + x.k + '">' +
+      x.t + ' <span style="opacity:.6">' + n + '</span></button>';
+  }).join('');
+
+  var best = null, worst = null;
+  var rows = list.map(function(g){
+    var arr = ((g.cog && g.cog[c.k]) || []).slice().sort(function(a, b){ return a.d < b.d ? 1 : -1; });
+    if (!arr.length) return '';
+    var last = arr[0], prev = arr[1];
+    var v = c.v(last), pv = prev ? c.v(prev) : null;
+    var vals = arr.map(c.v).filter(function(z){ return z !== null && z !== undefined && !isNaN(z); });
+    var rec = vals.length ? (c.dir === 'min' ? Math.min.apply(null, vals) : Math.max.apply(null, vals)) : null;
+
+    var dlt = '';
+    if (pv !== null && pv !== undefined && v !== null && v !== undefined){
+      var df = Math.round((v - pv) * 10) / 10;
+      var good = c.dir === 'min' ? df < 0 : df > 0;
+      if (df) dlt = '<span style="color:' + (good ? 'var(--ok)' : 'var(--red)') + '">' +
+        (df > 0 ? '+' : '') + df + '</span>';
+      else dlt = '<span class="muted">0</span>';
+    }
+    if (v !== null && v !== undefined){
+      if (!best  || (c.dir === 'min' ? v < best.v  : v > best.v))  best  = { n:g.name, v:v };
+      if (!worst || (c.dir === 'min' ? v > worst.v : v < worst.v)) worst = { n:g.name, v:v };
+    }
+    return '<tr data-uid="' + esc(g.uid) + '"' + (g.uid === CG.gk ? ' style="background:var(--bg3)"' : '') + '>' +
+      '<td class="gk">' + esc(g.name) + '</td>' +
+      '<td class="num">' + arr.length + '</td>' +
+      '<td class="num">' + dsh(last.d) + '</td>' +
+      '<td class="num"><b>' + nz(v) + '</b></td>' +
+      '<td class="num">' + (dlt || '—') + '</td>' +
+      '<td class="num">' + nz(rec) + '</td>' +
+      '<td class="muted">' + esc(c.ex(last)) + '</td></tr>';
+  }).join('');
+
+  var det = '';
+  if (CG.gk){
+    var g = sqBy(CG.gk);
+    if (g){
+      var arr = ((g.cog && g.cog[c.k]) || []).slice().sort(function(a, b){ return a.d < b.d ? 1 : -1; });
+      var hv = arr.map(c.v).filter(function(z){ return z !== null && z !== undefined && !isNaN(z); });
+      var hmax = hv.length ? Math.max.apply(null, hv) : 1;
+      var hmin = hv.length ? Math.min.apply(null, hv) : 0;
+      det = '<div class="card"><h2>' + esc(g.name) + ' · ' + c.t + '</h2>' +
+        (arr.length ? '<div class="bars">' + arr.slice(0, 20).map(function(r){
+          var v = c.v(r);
+          var w = (hmax === hmin) ? 100 : Math.round(((v - hmin) / (hmax - hmin) * 0.8 + 0.2) * 100);
+          return '<div class="bar" style="grid-template-columns:64px 1fr 70px">' +
+            '<div class="nm">' + dsh(r.d) + '</div>' +
+            '<div class="ln"><u style="width:' + (isNaN(w) ? 0 : w) + '%"></u></div>' +
+            '<div class="vl"><b>' + nz(v) + '</b> ' + c.u + '</div></div>' +
+            '<div class="dets" style="margin:-4px 0 2px 74px">' + esc(c.ex(r)) + '</div>';
+        }).join('') + '</div>' : '<div class="muted">Замеров нет.</div>') +
+        '<div class="ice">' + (c.dir === 'min' ? 'чем меньше, тем лучше' : 'чем больше, тем лучше') +
+        ' · нажми на вратаря в таблице, чтобы сменить</div></div>';
+    }
+  }
+
+  if (best && worst && best.n === worst.n) worst = null;
+
+  sec.innerHTML =
+    '<div class="head"><h1>Когнитивка</h1>' +
+    '<div class="sub">замеры из приложения вратаря</div></div>' +
+    '<div class="mcbar">' + chips + '</div>' +
+    '<div class="kpi">' +
+      '<div class="kp"><b>' + (best ? best.v : '—') + '</b><i>лучший: ' +
+        esc(best ? best.n : '—') + '</i></div>' +
+      '<div class="kp"><b>' + (worst ? worst.v : '—') + '</b><i>слабее всех: ' +
+        esc(worst ? worst.n : '—') + '</i></div>' +
+      '<div class="kp"><b>' + c.u + '</b><i>' +
+        (c.dir === 'min' ? 'меньше - лучше' : 'больше - лучше') + '</i></div>' +
+    '</div>' +
+    '<div class="card"><h2>' + c.t + '</h2>' +
+      '<table class="tbl"><thead><tr><th>Вратарь</th><th class="num">Замеров</th>' +
+      '<th class="num">Дата</th><th class="num">Последний</th><th class="num">Сдвиг</th>' +
+      '<th class="num">Лучший</th><th>Подробности</th></tr></thead><tbody>' +
+      (rows || '<tr><td colspan="7" class="muted">По этому тесту замеров нет.</td></tr>') +
+      '</tbody></table></div>' + det;
+
+  sec.querySelector('.mcbar').onclick = function(e){
+    var b = e.target.closest ? e.target.closest('[data-ck]') : null;
+    if (b){ CG.k = b.getAttribute('data-ck'); cgDraw(); }
+  };
+  var tb = sec.querySelector('tbody');
+  if (tb) tb.onclick = function(e){
+    var tr = e.target.closest ? e.target.closest('tr[data-uid]') : null;
+    if (tr){
+      var u = tr.getAttribute('data-uid');
+      CG.gk = (CG.gk === u) ? '' : u;
+      cgDraw();
+    }
+  };
 }
 
 /* ───────── запуск ───────── */
