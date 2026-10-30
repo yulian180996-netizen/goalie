@@ -167,6 +167,26 @@
   .net button{height:36px;border:1px solid var(--line);background:var(--bg3);border-radius:7px;
       cursor:pointer;font-size:12px;color:var(--tx2)}
   .net button.on{background:var(--red);border-color:var(--red);color:#fff;font-weight:700}
+  .sktb{width:100%;border-collapse:collapse;font-size:13.5px}
+  .sktb th{text-align:left;font-size:10.5px;font-weight:700;color:var(--tx2);text-transform:uppercase;
+       letter-spacing:.5px;padding:0 6px 7px;border-bottom:1px solid var(--line)}
+  .sktb td{padding:4px 6px;border-bottom:1px solid var(--line)}
+  .sktb tr:last-child td{border-bottom:none}
+  .sktb .num{text-align:right;white-space:nowrap}
+  .sktb input{width:66px;height:32px;border:1px solid var(--line);border-radius:8px;
+       background:var(--bg3);color:var(--tx);font-family:inherit;font-size:13.5px;padding:0 8px;
+       text-align:right;outline:none}
+  .sktb input:focus{border-color:var(--red);background:var(--bg2)}
+  .sktb .pc{color:var(--tx2);width:46px}
+  /* панель источника и выбора вратаря */
+  .anbar{display:flex;align-items:flex-end;gap:16px;flex-wrap:wrap;margin:4px 0 18px}
+  .anbar .pick{display:flex;flex-direction:column;gap:4px}
+  .anbar .pick label{font-size:11px;color:var(--tx2);text-transform:uppercase;letter-spacing:.8px;
+       font-weight:700;padding-left:2px}
+  .anbar .pick select{height:40px;min-width:210px;border:1px solid var(--line);border-radius:10px;
+       background:var(--bg2);color:var(--tx);font-family:inherit;font-size:14px;padding:0 10px;
+       box-shadow:var(--shadow);outline:none}
+  .anbar .pick select:focus{border-color:var(--red)}
   /* предсезонка: карты бросков */
   .smap{position:relative;line-height:0;border-radius:10px;overflow:hidden;background:var(--bg3)}
   .smap img{width:100%;display:block}
@@ -304,6 +324,7 @@
       <button data-p="sched" class="on"><em>📅</em>Расписание</button>
       <button data-p="micro"><em>🧩</em>Микроциклы</button>
       <button data-p="games"><em>🏒</em>Игры</button>
+      <button data-p="skills"><em>🎯</em>Навыки</button>
       <button data-p="goals"><em>🥅</em>Аналитика голов</button>
       <div class="gr">Вратари</div>
       <button data-p="roster"><em>🧤</em>Все вратари</button>
@@ -328,7 +349,8 @@
         <h1>Расписание</h1>
         <div class="sub">нажми на день, чтобы изменить</div>
         <div class="sp"></div>
-        <button class="btn sec sm" id="sch-copy">Скопировать неделю вперёд</button>
+        <button class="btn sec sm" id="sch-pull">Подтянуть из таблицы</button>
+        <button class="btn sec sm" id="sch-copy" style="margin-left:8px">Скопировать неделю вперёд</button>
       </div>
       <div class="wnav">
         <button class="arr" id="w-prev">‹</button>
@@ -341,6 +363,7 @@
 
     <section data-pg="micro" class="hide"></section>
     <section data-pg="games" class="hide"></section>
+    <section data-pg="skills" class="hide"></section>
     <section data-pg="goals" class="hide"></section>
     <section data-pg="roster" class="hide"></section>
     <section data-pg="rates" class="hide"></section>
@@ -430,6 +453,7 @@ function go(p){
   if (p === 'sched') schLoad();
   else if (p === 'micro') mcLoad();
   else if (p === 'games') gmLoad();
+  else if (p === 'skills') skLoad();
   else if (p === 'goals') anLoad();
   else if (p === 'roster') rsLoad();
   else if (p === 'rates') rtLoad();
@@ -781,7 +805,7 @@ function mcEdit(n){
 }
 
 /* ───────── игры ───────── */
-var GM = { list: null, sit: [], gk: '' };
+var GM = { list: null, sit: [], sk: [], gk: '' };
 var LOADS = [['H','тяжёлая'], ['S','солидная'], ['O','нормальная'], ['B','плохая']];
 var RESS  = ['В', 'ВО', 'ВБ', 'П', 'ПО', 'ПБ'];
 
@@ -797,6 +821,7 @@ function gmLoad(fresh){
     }
     GM.list = res.list || [];
     GM.sit  = res.sit  || [];
+    GM.sk   = res.sk   || [];
     gmDraw();
   });
 }
@@ -879,7 +904,7 @@ function gmEdit(id){
   GME = null;
   (GM.list || []).forEach(function(g){ if (g.id === id) GME = JSON.parse(JSON.stringify(g)); });
   if (!GME) GME = { id:'', d: TODAY, gk:'', uid:'', opp:'', home:1, res:'',
-                    sh:0, ga:0, gmp:0, gmm:0, load:'', psy:0, cm:'', gls:[] };
+                    sh:0, ga:0, gmp:0, gmm:0, load:'', psy:0, cm:'', gls:[], sk:{} };
   gmForm();
 }
 
@@ -944,6 +969,20 @@ function gmForm(){
       '<input id="f-psy" type="number" min="0" max="10" value="' + (g.psy || '') + '"></div>' +
     '<div class="fld"><label>Комментарий</label><textarea id="f-cm">' + esc(g.cm) + '</textarea></div>' +
 
+    '<div class="fld"><label>Навыки — сколько раз и из них удачно</label>' +
+      '<div class="dets" style="margin:-2px 0 8px">пустая строка — навык в игре не встречался</div>' +
+      '<table class="sktb"><thead><tr><th>Навык</th><th class="num">Всего</th>' +
+      '<th class="num">Удачно</th><th class="num">Ошибка</th><th class="num">%</th></tr></thead><tbody>' +
+      (GM.sk || []).map(function(nm){
+        var x = (g.sk || {})[nm] || {};
+        var pc = x.n ? Math.round((x.ok || 0) / x.n * 100) + '%' : '—';
+        return '<tr data-sk="' + esc(nm) + '"><td>' + esc(nm) + '</td>' +
+          '<td class="num"><input data-sf="n" type="number" min="0" value="' + (x.n || '') + '"></td>' +
+          '<td class="num"><input data-sf="ok" type="number" min="0" value="' + (x.ok || '') + '"></td>' +
+          '<td class="num"><input data-sf="e" type="number" min="0" value="' + (x.e || '') + '"></td>' +
+          '<td class="num pc">' + pc + '</td></tr>';
+      }).join('') + '</tbody></table></div>' +
+
     '<div class="fld"><label>Голы — ситуация, деталь, зона ворот</label>' +
       '<div class="dets" style="margin:-2px 0 8px">зоны: 1 2 3 — верх, 4 5 6 — середина, 7 8 9 — низ; слева направо со стороны броска</div>' + glRows +
       '<button class="addbtn" id="gl-add">+ добавить гол</button></div>' +
@@ -974,7 +1013,7 @@ function gmForm(){
     $('gm-save').textContent = 'Сохраняю…';
     api({ a:'game2save', id: GME.id, d: GME.d, gk: GME.gk, uid: GME.uid, opp: GME.opp,
           home: GME.home, res: GME.res, sh: GME.sh, ga: GME.ga, gmp: GME.gmp, gmm: GME.gmm,
-          load: GME.load, psy: GME.psy, cm: GME.cm, gls: GME.gls }, function(res){
+          load: GME.load, psy: GME.psy, cm: GME.cm, gls: GME.gls, sk: GME.sk }, function(res){
       if (!res || !res.ok){ $('gm-save').textContent = 'Не вышло, ещё раз'; return; }
       mClose(); GM.list = null; gmLoad(true);
     });
@@ -1004,6 +1043,15 @@ function gmSync(){
                z: Number(row.querySelector('[data-gf="z"]').value) || '' });
   });
   GME.gls = gls;
+  var sk = {};
+  $('mbody').querySelectorAll('[data-sk]').forEach(function(row){
+    var q = function(f){ return Number(row.querySelector('[data-sf="' + f + '"]').value) || 0; };
+    var n = q('n'), ok = q('ok'), e = q('e');
+    if (!n && !ok && !e) return;
+    if (!n) n = ok + e;
+    sk[row.getAttribute('data-sk')] = { n: n, ok: ok, e: e };
+  });
+  GME.sk = sk;
 }
 
 /* ───────── аналитика голов ───────── */
@@ -1024,7 +1072,7 @@ function anLoad(){
           '<div class="card"><div class="muted">Не удалось загрузить.</div></div>';
         return;
       }
-      GM.list = res.list || []; GM.sit = res.sit || [];
+      GM.list = res.list || []; GM.sit = res.sit || []; GM.sk = res.sk || [];
       anDraw();
     });
     return;
@@ -1097,13 +1145,9 @@ function anDraw(){
 
   sec.innerHTML =
     '<div class="head"><h1>Аналитика голов</h1>' +
-    '<div class="sub">собирается из голов, записанных в карточках игр</div>' +
-    '<div class="sp"></div>' +
-    '<select id="an-gk" style="height:38px;border:1px solid var(--line);border-radius:10px;' +
-      'background:var(--bg2);color:var(--tx);font-family:inherit;font-size:13.5px;padding:0 10px">' + opts + '</select>' +
-    '</div>' +
+    '<div class="sub">собирается из голов, записанных в карточках игр</div></div>' +
 
-    anBar() +
+    anBar('an-gk', opts) +
 
     '<div class="kpi">' +
       '<div class="kp"><b>' + list.length + '</b><i>игр в выборке</i></div>' +
@@ -1926,12 +1970,17 @@ var PRE = {"pre":[{"name":"Иванов Юрий","rows":[{"t":"С броска"
 
 var PRE_SRC = { goal:'goal.jpg', rink:'rink.jpg' };
 
-function anBar(){
-  return '<div class="mcbar">' +
-    [['games','Журнал игр'], ['pre','Предсезонка'], ['seas','Сезон']].map(function(p){
-      return '<button class="mcb' + (AN.src === p[0] ? ' on' : '') + '" data-as="' + p[0] + '">' +
-        p[1] + '</button>';
-    }).join('') + '</div>';
+function anBar(id, opts){
+  return '<div class="anbar">' +
+    '<div class="mcbar" style="margin:0">' +
+      [['games','Журнал игр'], ['pre','Предсезонка'], ['seas','Сезон']].map(function(p){
+        return '<button class="mcb' + (AN.src === p[0] ? ' on' : '') + '" data-as="' + p[0] + '">' +
+          p[1] + '</button>';
+      }).join('') +
+    '</div>' +
+    '<div class="pick"><label>Вратарь</label>' +
+      '<select id="' + id + '">' + opts + '</select></div>' +
+  '</div>';
 }
 
 function preWho(x){
@@ -1970,12 +2019,9 @@ function preDraw(){
   sec.innerHTML =
     '<div class="head"><h1>Аналитика голов</h1>' +
     '<div class="sub">' + (AN.src === 'seas' ? 'сезон, из разбора игр' : 'предсезонка, из разбора игр') + '</div>' +
-    '<div class="sp"></div>' +
-    '<select id="an-pgk" style="height:38px;border:1px solid var(--line);border-radius:10px;' +
-      'background:var(--bg2);color:var(--tx);font-family:inherit;font-size:13.5px;padding:0 10px">' +
-      opts + '</select></div>' +
+    '</div>' +
 
-    anBar() +
+    anBar('an-pgk', opts) +
 
     '<div class="kpi">' +
       '<div class="kp"><b>' + preSum(cur.all) + '</b><i>голов всего</i></div>' +
@@ -2013,6 +2059,158 @@ function preDraw(){
   };
 }
 
+/* ───────── навыки ───────── */
+
+var SK = { gk: '' };
+
+function skLoad(){
+  var sec = $('main').querySelector('[data-pg="skills"]');
+  if (GM.list){ skDraw(); return; }
+  sec.innerHTML = '<div class="head"><h1>Навыки</h1></div>' +
+                  '<div class="card"><div class="muted">Загружаю…</div></div>';
+  api({ a:'games2' }, function(res){
+    if (!res || !res.ok){
+      sec.innerHTML = '<div class="head"><h1>Навыки</h1></div>' +
+        '<div class="card"><div class="muted">Не удалось загрузить.</div></div>';
+      return;
+    }
+    GM.list = res.list || []; GM.sit = res.sit || []; GM.sk = res.sk || [];
+    skDraw();
+  });
+}
+
+/** Свод по навыкам: { навык: {n, ok, e} } за набор игр. */
+function skSum(games){
+  var out = {};
+  games.forEach(function(g){
+    var sk = g.sk || {};
+    for (var nm in sk){
+      if (!out[nm]) out[nm] = { n:0, ok:0, e:0 };
+      out[nm].n  += Number(sk[nm].n)  || 0;
+      out[nm].ok += Number(sk[nm].ok) || 0;
+      out[nm].e  += Number(sk[nm].e)  || 0;
+    }
+  });
+  return out;
+}
+function skPct(x){ return x && x.n ? Math.round(x.ok / x.n * 1000) / 10 : null; }
+function skCol(p){
+  if (p === null) return '';
+  if (p >= 90) return 'var(--ok)';
+  if (p >= 75) return 'var(--warn)';
+  return 'var(--red)';
+}
+
+function skDraw(){
+  var sec = $('main').querySelector('[data-pg="skills"]');
+  var all = (GM.list || []).filter(function(g){ return g.sk && Object.keys(g.sk).length; });
+  var names = {};
+  all.forEach(function(g){ if (g.gk) names[g.gk] = 1; });
+  var order = (GM.sk && GM.sk.length) ? GM.sk : Object.keys(skSum(all));
+
+  var opts = '<option value="">Все вратари</option>' + Object.keys(names).sort().map(function(x){
+    return '<option' + (x === SK.gk ? ' selected' : '') + '>' + esc(x) + '</option>';
+  }).join('');
+
+  var mine = SK.gk ? all.filter(function(g){ return g.gk === SK.gk; }) : all;
+  var sum = skSum(mine);
+
+  /* сводка по навыкам */
+  var tot = { n:0, ok:0, e:0 };
+  order.forEach(function(nm){
+    var x = sum[nm];
+    if (!x) return;
+    tot.n += x.n; tot.ok += x.ok; tot.e += x.e;
+  });
+
+  var bars = order.map(function(nm){
+    var x = sum[nm];
+    if (!x || !x.n) return '';
+    var p = skPct(x);
+    return '<div class="bar" style="grid-template-columns:minmax(120px,180px) 1fr 160px">' +
+      '<div class="nm">' + esc(nm) + '</div>' +
+      '<div class="ln"><u style="width:' + p + '%;background:' + skCol(p) + '"></u></div>' +
+      '<div class="vl"><b>' + p + '%</b> · ' + x.ok + '/' + x.n +
+        (x.e ? ' · ош. ' + x.e : '') + '</div></div>';
+  }).join('');
+
+  /* таблица вратарь × навык */
+  var gks = Object.keys(names).sort();
+  var head = '<tr><th>Навык</th>' + gks.map(function(n){
+    return '<th class="num">' + esc(n.split(' ')[0]) + '</th>'; }).join('') +
+    '<th class="num">Всего</th></tr>';
+  var byGk = {};
+  gks.forEach(function(n){
+    byGk[n] = skSum(all.filter(function(g){ return g.gk === n; }));
+  });
+  var grid = order.map(function(nm){
+    var line = gks.map(function(n){
+      var x = byGk[n][nm], p = skPct(x);
+      return '<td class="num"' + (p === null ? ' class="muted"' : ' style="color:' + skCol(p) + '"') + '>' +
+        (p === null ? '—' : p + '%<span style="color:var(--tx2);font-size:11.5px"> ' + x.n + '</span>') + '</td>';
+    }).join('');
+    var a = skSum(all)[nm], ap = skPct(a);
+    if (!a) return '';
+    return '<tr><td class="gk">' + esc(nm) + '</td>' + line +
+      '<td class="num"><b>' + (ap === null ? '—' : ap + '%') + '</b></td></tr>';
+  }).join('');
+
+  /* по играм выбранного вратаря */
+  var byGame = '';
+  if (SK.gk){
+    var rows = mine.slice().sort(function(a, b){ return a.d < b.d ? 1 : -1; }).map(function(g){
+      var s = skSum([g]), n = 0, ok = 0;
+      for (var k in s){ n += s[k].n; ok += s[k].ok; }
+      var p = n ? Math.round(ok / n * 1000) / 10 : null;
+      var weak = '';
+      var worst = null;
+      for (var k2 in s){
+        var pp = skPct(s[k2]);
+        if (pp !== null && s[k2].n >= 2 && (worst === null || pp < worst.p)) worst = { nm:k2, p:pp, n:s[k2].n };
+      }
+      if (worst && worst.p < 100) weak = worst.nm + ' ' + worst.p + '%';
+      return '<tr><td class="num">' + dsh(g.d) + '</td><td>' + esc(g.opp) + '</td>' +
+        '<td class="num">' + n + '</td><td class="num">' + ok + '</td>' +
+        '<td class="num"' + (p === null ? '' : ' style="color:' + skCol(p) + '"') + '><b>' +
+          (p === null ? '—' : p + '%') + '</b></td>' +
+        '<td class="muted">' + esc(weak) + '</td></tr>';
+    }).join('');
+    byGame = '<div class="card"><h2>По играм · ' + esc(SK.gk) + '</h2>' +
+      '<table class="tbl"><thead><tr><th class="num">Дата</th><th>Соперник</th>' +
+      '<th class="num">Всего</th><th class="num">Удачно</th><th class="num">%</th>' +
+      '<th>Слабее всего</th></tr></thead><tbody>' + rows + '</tbody></table></div>';
+  }
+
+  sec.innerHTML =
+    '<div class="head"><h1>Навыки</h1>' +
+    '<div class="sub">считается из карточек игр</div></div>' +
+
+    '<div class="anbar">' +
+      '<div class="pick"><label>Вратарь</label><select id="sk-gk">' + opts + '</select></div>' +
+    '</div>' +
+
+    '<div class="kpi">' +
+      '<div class="kp"><b>' + mine.length + '</b><i>игр с разбором</i></div>' +
+      '<div class="kp"><b>' + tot.n + '</b><i>эпизодов</i></div>' +
+      '<div class="kp"><b>' + (tot.n ? Math.round(tot.ok / tot.n * 1000) / 10 + '%' : '—') +
+        '</b><i>успешно</i></div>' +
+      '<div class="kp"><b>' + tot.e + '</b><i>ошибок</i></div>' +
+    '</div>' +
+
+    '<div class="card"><h2>По навыкам' + (SK.gk ? ' · ' + esc(SK.gk) : '') + '</h2>' +
+      (bars ? '<div class="bars">' + bars + '</div>'
+            : '<div class="muted">Разборов пока нет. Заполняй навыки в карточке игры.</div>') +
+      '<div class="ice">зелёный от 90% · жёлтый от 75% · красный ниже</div></div>' +
+
+    (grid ? '<div class="card"><h2>Вратари рядом</h2><table class="tbl"><thead>' + head +
+      '</thead><tbody>' + grid + '</tbody></table>' +
+      '<div class="ice">процент успеха, рядом серым — сколько эпизодов</div></div>' : '') +
+
+    byGame;
+
+  $('sk-gk').onchange = function(){ SK.gk = this.value; skDraw(); };
+}
+
 /* ───────── запуск ───────── */
 function start(){
   showGate(false);
@@ -2030,6 +2228,19 @@ function boot(){
   $('w-prev').onclick = function(){ SCH.mon = shift(SCH.mon, -7); schLoad(); };
   $('w-next').onclick = function(){ SCH.mon = shift(SCH.mon,  7); schLoad(); };
   $('w-now').onclick  = function(){ SCH.mon = monday(TODAY);      schLoad(); };
+  $('sch-pull').onclick = function(){
+    if (!confirm('Перечитать планер из Google-таблицы?\n\n' +
+      'Расписание в приложении будет заменено тем, что в таблице. ' +
+      'Правки, сделанные здесь и не перенесённые в таблицу, пропадут. ' +
+      'Микроциклы не затрагиваются.')) return;
+    var b = $('sch-pull'); b.textContent = 'Читаю таблицу…';
+    api({ a:'pimport' }, function(res){
+      if (!res || !res.ok){ b.textContent = 'Не вышло, ещё раз'; return; }
+      b.textContent = 'Готово: дней ' + res.days;
+      SCH.cache = {}; schLoad();
+      setTimeout(function(){ b.textContent = 'Подтянуть из таблицы'; }, 4000);
+    });
+  };
   $('sch-copy').onclick = function(){
     if (!confirm('Скопировать эту неделю на следующую? Записи следующей недели будут заменены.')) return;
     api({ a:'pweekcopy', from: SCH.mon, to: shift(SCH.mon, 7) }, function(res){
