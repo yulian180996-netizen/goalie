@@ -95,6 +95,8 @@
   .main{flex:1;min-width:0;padding:26px 32px 60px}
   .main.empty:after{content:'Раздел свёрнут. Нажми пункт слева, чтобы открыть.';
        display:block;color:var(--tx2);font-size:14px;padding:40px 2px}
+  .main > section{display:block}
+  .main > section.hide{display:none}
   .head{display:flex;align-items:flex-end;gap:14px;margin-bottom:20px;flex-wrap:wrap}
   .head h1{font-family:'Unbounded',sans-serif;font-size:23px;font-weight:800;margin:0;letter-spacing:-.2px}
   .head .sub{font-size:13.5px;color:var(--tx2);padding-bottom:3px}
@@ -373,7 +375,7 @@
       <button class="thm" id="thm" type="button" title="Светлая или тёмная тема">🌙</button>
       <a id="me-out">выйти</a>
     </div>
-    <div class="ver" id="ver" title="Версия страницы. Если не меняется после заливки — браузер показывает старое: Cmd+Option+R">сборка 31.10 00:56</div>
+    <div class="ver" id="ver" title="Версия страницы. Если не меняется после заливки — браузер показывает старое: Cmd+Option+R">сборка 31.10 01:02</div>
   </aside>
 
   <main class="main" id="main">
