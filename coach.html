@@ -73,7 +73,14 @@
   .nav button.on{background:var(--roseBg);color:var(--w);font-weight:700}
   .nav button em{font-style:normal;width:20px;text-align:center;flex:none;font-size:15px}
   .nav .gr{font-size:11px;color:#858d9c;text-transform:uppercase;letter-spacing:.9px;
-        padding:15px 12px 6px;font-weight:700}
+        padding:15px 12px 6px;font-weight:700;cursor:pointer;user-select:none;
+        display:flex;align-items:center}
+  .nav .gr:hover{color:var(--red)}
+  .nav .gr:after{content:'';margin-left:auto;width:7px;height:7px;flex:none;
+        border-right:2px solid currentColor;border-bottom:2px solid currentColor;border-radius:1px;
+        transform:rotate(45deg) translate(-2px,-2px);transition:transform .15s;opacity:.8}
+  .nav .gr.off:after{transform:rotate(-45deg) translate(-2px,2px)}
+  .nav .gr.off{color:var(--red)}
   .me{padding:13px 14px;border-top:1px solid var(--line);font-size:13px;color:var(--tx2);
       display:flex;align-items:center;gap:8px}
   .me b{color:var(--tx);font-weight:600;font-size:13.5px}
@@ -364,7 +371,7 @@
       <button class="thm" id="thm" type="button" title="Светлая или тёмная тема">🌙</button>
       <a id="me-out">выйти</a>
     </div>
-    <div class="ver" id="ver" title="Версия страницы. Если не меняется после заливки — браузер показывает старое: Cmd+Option+R">сборка 31.10 00:35</div>
+    <div class="ver" id="ver" title="Версия страницы. Если не меняется после заливки — браузер показывает старое: Cmd+Option+R">сборка 31.10 00:44</div>
   </aside>
 
   <main class="main" id="main">
@@ -516,6 +523,34 @@ function foldKey(h){
   }
   return PAGE + '|' + t;
 }
+/* ── группы в боковом меню ── */
+var NAVF = {};
+try { NAVF = JSON.parse(localStorage.getItem('coach_nav') || '{}'); } catch(e){}
+
+function navApply(){
+  var kids = $('nav').children, cur = '';
+  for (var i = 0; i < kids.length; i++){
+    var el = kids[i];
+    if (el.className.indexOf('gr') === 0){
+      cur = (el.textContent || '').trim();
+      el.className = 'gr' + (NAVF[cur] ? ' off' : '');
+    } else if (cur){
+      el.style.display = NAVF[cur] ? 'none' : '';
+    }
+  }
+}
+function navInit(){
+  $('nav').addEventListener('click', function(e){
+    var g = e.target.closest ? e.target.closest('.gr') : null;
+    if (!g) return;
+    var k = (g.textContent || '').trim();
+    if (NAVF[k]) delete NAVF[k]; else NAVF[k] = 1;
+    try { localStorage.setItem('coach_nav', JSON.stringify(NAVF)); } catch(e){}
+    navApply();
+  });
+  navApply();
+}
+
 function foldToggle(h){
   var k = foldKey(h);
   var top = h.getBoundingClientRect().top;
@@ -2447,6 +2482,7 @@ function boot(){
   $('thm').onclick = function(){ applyTheme(document.body.className !== 'dk'); };
   initTheme();
   try { foldInit(); } catch(e){}
+  try { navInit(); } catch(e){}
   $('w-prev').onclick = function(){ SCH.mon = shift(SCH.mon, -7); schLoad(); };
   $('w-next').onclick = function(){ SCH.mon = shift(SCH.mon,  7); schLoad(); };
   $('w-now').onclick  = function(){ SCH.mon = monday(TODAY);      schLoad(); };
