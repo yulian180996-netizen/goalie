@@ -173,11 +173,27 @@
   .sktb td{padding:4px 6px;border-bottom:1px solid var(--line)}
   .sktb tr:last-child td{border-bottom:none}
   .sktb .num{text-align:right;white-space:nowrap}
-  .sktb input{width:66px;height:32px;border:1px solid var(--line);border-radius:8px;
+  .sktb td input{width:66px;height:32px;border:1px solid var(--line);border-radius:8px;
        background:var(--bg3);color:var(--tx);font-family:inherit;font-size:13.5px;padding:0 8px;
        text-align:right;outline:none}
-  .sktb input:focus{border-color:var(--red);background:var(--bg2)}
+  .sktb td input:focus{border-color:var(--red);background:var(--bg2)}
   .sktb .pc{color:var(--tx2);width:46px}
+  .sttb td:first-child{font-size:13.5px}
+  .sttb tr.sub td:first-child{padding-left:22px;color:var(--tx2);font-size:12.5px}
+  .sttb tr.sub td input{height:28px;width:58px}
+  /* раскрывающийся список ситуаций */
+  .sit .g{display:flex;align-items:baseline;gap:8px;padding:6px 0;border-bottom:1px solid var(--line);
+       cursor:default}
+  .sit .g.hk{cursor:pointer}
+  .sit .g.hk:hover{color:var(--red)}
+  .sit .ar{flex:none;width:12px;color:var(--tx2);transition:transform .15s;display:inline-block}
+  .sit .ar.e{visibility:hidden}
+  .sit .g.op .ar{transform:rotate(90deg)}
+  .sit .kids{display:none;padding:2px 0 6px 20px;border-bottom:1px solid var(--line)}
+  .sit .k{display:flex;align-items:baseline;gap:8px;padding:4px 0;font-size:13px;color:var(--tx2)}
+  .sit .k u{font-family:'Unbounded',sans-serif;font-weight:600;font-size:13px}
+  .sit .z{color:var(--tx2)}
+  .sit .z u{color:var(--tx2);font-weight:400}
   /* панель источника и выбора вратаря */
   .anbar{display:flex;align-items:flex-end;gap:16px;flex-wrap:wrap;margin:4px 0 18px}
   .anbar .pick{display:flex;flex-direction:column;gap:4px}
@@ -805,7 +821,80 @@ function mcEdit(n){
 }
 
 /* ───────── игры ───────── */
-var GM = { list: null, sit: [], sk: [], gk: '' };
+var GM = { list: null, sit: [], sk: [], tree: [], gk: '' };
+
+/* ситуации голов: верхний уровень и из чего складывается */
+var SIT_TREE = [
+  ['С броска',     []],
+  ['С передачи',   ['С приема', 'В касание']],
+  ['С угла',       ['Пас', 'Бросок']],
+  ['Из-за ворот',  ['Пас', 'Вылезание']],
+  ['Трафик',       []],
+  ['Добивания',    []],
+  ['Выход 1 на 1', ['Броском', 'Обыгрыш']],
+  ['Подправления', []],
+  ['Блокирование', []],
+  ['Буллиты',      ['Обыгрыш', 'Бросок']]
+];
+function sitTree(){ return (GM.tree && GM.tree.length) ? GM.tree : SIT_TREE; }
+function sitKey(top, sub){ return sub ? top + ' · ' + sub : top; }
+
+function sitNorm(t){
+  return String(t || '').toLowerCase().replace(/ё/g, 'е').replace(/[\s.·—–-]+/g, '')
+    .replace(/(ия|ие|ия|ы|и|а|я)$/, '');
+}
+/**
+ * Складывает плоский список строк в дерево.
+ * Имена вроде «Пас» или «Обыгрыш» встречаются в разных группах,
+ * поэтому идём по списку подряд: верхний уровень открывает группу,
+ * следующие за ним подпункты уходят в неё.
+ */
+function sitGroup(rows){
+  var tree = sitTree();
+  var out = tree.map(function(p){
+    return { t: p[0], n: 0, kids: p[1].map(function(c){ return { t: c, n: 0 }; }) };
+  });
+  var topAt = {};
+  tree.forEach(function(p, i){ topAt[sitNorm(p[0])] = i; });
+
+  var cur = -1;
+  (rows || []).forEach(function(r){
+    var key = sitNorm(r.t), v = Number(r.n) || 0;
+    if (topAt[key] !== undefined){ cur = topAt[key]; out[cur].n += v; return; }
+    if (cur < 0) return;
+    var kids = out[cur].kids;
+    for (var i = 0; i < kids.length; i++){
+      if (sitNorm(kids[i].t) === key){ kids[i].n += v; return; }
+    }
+  });
+  return out;
+}
+
+/** Рисует раскрывающийся список ситуаций. */
+function sitList(items, id){
+  return '<div class="sit" id="' + id + '">' + items.map(function(g, i){
+    var has = g.kids.length && g.kids.some(function(k){ return k.n; });
+    return '<div class="g' + (g.n ? '' : ' z') + (has ? ' hk' : '') + '" data-sg="' + i + '">' +
+      (has ? '<span class="ar">›</span>' : '<span class="ar e"></span>') +
+      '<i>' + esc(g.t) + '</i><u>' + (g.n || '—') + '</u></div>' +
+      (has ? '<div class="kids" data-sk-of="' + i + '">' + g.kids.map(function(k){
+        return '<div class="k' + (k.n ? '' : ' z') + '"><i>' + esc(k.t) + '</i><u>' +
+          (k.n || '—') + '</u></div>';
+      }).join('') + '</div>' : '');
+  }).join('') + '</div>';
+}
+function sitBind(id){
+  var box = document.getElementById(id);
+  if (!box) return;
+  box.onclick = function(e){
+    var g = e.target.closest ? e.target.closest('[data-sg]') : null;
+    if (!g || g.className.indexOf('hk') < 0) return;
+    var kids = box.querySelector('[data-sk-of="' + g.getAttribute('data-sg') + '"]');
+    var open = g.className.indexOf('op') >= 0;
+    g.className = open ? g.className.replace(' op', '') : g.className + ' op';
+    if (kids) kids.style.display = open ? 'none' : 'block';
+  };
+}
 var LOADS = [['H','тяжёлая'], ['S','солидная'], ['O','нормальная'], ['B','плохая']];
 var RESS  = ['В', 'ВО', 'ВБ', 'П', 'ПО', 'ПБ'];
 
@@ -822,6 +911,7 @@ function gmLoad(fresh){
     GM.list = res.list || [];
     GM.sit  = res.sit  || [];
     GM.sk   = res.sk   || [];
+    GM.tree = res.tree || [];
     gmDraw();
   });
 }
@@ -904,7 +994,7 @@ function gmEdit(id){
   GME = null;
   (GM.list || []).forEach(function(g){ if (g.id === id) GME = JSON.parse(JSON.stringify(g)); });
   if (!GME) GME = { id:'', d: TODAY, gk:'', uid:'', opp:'', home:1, res:'',
-                    sh:0, ga:0, gmp:0, gmm:0, load:'', psy:0, cm:'', gls:[], sk:{} };
+                    sh:0, ga:0, gmp:0, gmm:0, load:'', psy:0, cm:'', gls:[], sk:{}, st:{} };
   gmForm();
 }
 
@@ -969,6 +1059,23 @@ function gmForm(){
       '<input id="f-psy" type="number" min="0" max="10" value="' + (g.psy || '') + '"></div>' +
     '<div class="fld"><label>Комментарий</label><textarea id="f-cm">' + esc(g.cm) + '</textarea></div>' +
 
+    '<div class="fld"><label>Голы по ситуациям — сколько пропущено</label>' +
+      '<div class="dets" style="margin:-2px 0 8px">подпункты складываются в строку над ними</div>' +
+      '<table class="sktb sttb"><tbody>' +
+      sitTree().map(function(pr){
+        var v = (g.st || {});
+        var row = '<tr><td>' + esc(pr[0]) + '</td>' +
+          '<td class="num"><input data-st="' + esc(pr[0]) + '" type="number" min="0" value="' +
+          (v[pr[0]] || '') + '"></td></tr>';
+        pr[1].forEach(function(c){
+          var k = pr[0] + ' · ' + c;
+          row += '<tr class="sub"><td>' + esc(c) + '</td>' +
+            '<td class="num"><input data-st="' + esc(k) + '" type="number" min="0" value="' +
+            (v[k] || '') + '"></td></tr>';
+        });
+        return row;
+      }).join('') + '</tbody></table></div>' +
+
     '<div class="fld"><label>Навыки — сколько раз и из них удачно</label>' +
       '<div class="dets" style="margin:-2px 0 8px">пустая строка — навык в игре не встречался</div>' +
       '<table class="sktb"><thead><tr><th>Навык</th><th class="num">Всего</th>' +
@@ -1013,7 +1120,7 @@ function gmForm(){
     $('gm-save').textContent = 'Сохраняю…';
     api({ a:'game2save', id: GME.id, d: GME.d, gk: GME.gk, uid: GME.uid, opp: GME.opp,
           home: GME.home, res: GME.res, sh: GME.sh, ga: GME.ga, gmp: GME.gmp, gmm: GME.gmm,
-          load: GME.load, psy: GME.psy, cm: GME.cm, gls: GME.gls, sk: GME.sk }, function(res){
+          load: GME.load, psy: GME.psy, cm: GME.cm, gls: GME.gls, skl: GME.sk, st: GME.st }, function(res){
       if (!res || !res.ok){ $('gm-save').textContent = 'Не вышло, ещё раз'; return; }
       mClose(); GM.list = null; gmLoad(true);
     });
@@ -1052,6 +1159,12 @@ function gmSync(){
     sk[row.getAttribute('data-sk')] = { n: n, ok: ok, e: e };
   });
   GME.sk = sk;
+  var st = {};
+  $('mbody').querySelectorAll('[data-st]').forEach(function(el){
+    var n = Number(el.value) || 0;
+    if (n) st[el.getAttribute('data-st')] = n;
+  });
+  GME.st = st;
 }
 
 /* ───────── аналитика голов ───────── */
@@ -1072,7 +1185,7 @@ function anLoad(){
           '<div class="card"><div class="muted">Не удалось загрузить.</div></div>';
         return;
       }
-      GM.list = res.list || []; GM.sit = res.sit || []; GM.sk = res.sk || [];
+      GM.list = res.list || []; GM.sit = res.sit || []; GM.sk = res.sk || []; GM.tree = res.tree || [];
       anDraw();
     });
     return;
@@ -1125,6 +1238,20 @@ function anDraw(){
            (d ? '<div class="dets" style="margin:-4px 0 2px 160px">' + d + '</div>' : '');
   }).join('');
 
+  /* ситуации, занесённые числом в карточке игры */
+  var stSum = {}, stAny = 0;
+  list.forEach(function(g){
+    var st = g.st || {};
+    for (var k in st){
+      var v = Number(st[k]) || 0;
+      if (!v) continue;
+      var nm = k.indexOf(' · ') > 0 ? k.split(' · ')[1] : k;
+      stSum[nm] = (stSum[nm] || 0) + v;
+      stAny += v;
+    }
+  });
+  var stRows = stAny ? Object.keys(stSum).map(function(k){ return { t:k, n:stSum[k] }; }) : [];
+
   var names = {};
   (GM.list || []).forEach(function(g){ if (g.gk) names[g.gk] = 1; });
   var opts = '<option value="">Все вратари</option>' + Object.keys(names).sort().map(function(x){
@@ -1163,8 +1290,9 @@ function anDraw(){
         '<div class="goal">' + net + '</div>' +
         '<div class="ice">вид со стороны броска · чем темнее, тем чаще</div></div>' +
       '<div class="card"><h2>Ситуации</h2>' +
-        (arr.length ? '<div class="bars">' + bars + '</div>'
-                    : '<div class="muted">Голы пока не записаны. Заноси их в карточке игры.</div>') +
+        (stRows.length ? sitList(sitGroup(stRows), 'gm-sit')
+          : (arr.length ? '<div class="bars">' + bars + '</div>'
+                        : '<div class="muted">Голы пока не записаны. Заноси их в карточке игры.</div>')) +
       '</div>' +
     '</div>' +
 
@@ -1172,6 +1300,7 @@ function anDraw(){
       '<th>Вратарь</th><th class="num">Игр</th><th class="num">БВ</th><th class="num">ПШ</th>' +
       '<th class="num">Отражено</th></tr></thead><tbody>' + gkRows + '</tbody></table></div>' : '');
 
+  sitBind('gm-sit');
   $('an-gk').onchange = function(){ AN.gk = this.value; anDraw(); };
   sec.querySelector('.mcbar').onclick = function(e){
     var b = e.target.closest ? e.target.closest('[data-as]') : null;
@@ -2011,10 +2140,7 @@ function preDraw(){
       esc(x.name) + (preWho(x) ? '' : ' — пусто') + '</option>';
   }).join('');
 
-  var sit = (cur.rows || []).map(function(r){
-    return '<div' + (r.n ? '' : ' class="z"') + '><i>' + esc(r.t) + '</i><u>' +
-      (r.n || '—') + '</u></div>';
-  }).join('');
+  var sit = sitList(sitGroup(cur.rows), 'pre-sit');
 
   sec.innerHTML =
     '<div class="head"><h1>Аналитика голов</h1>' +
@@ -2045,12 +2171,11 @@ function preDraw(){
             preDots(cur.rink) + '</div>'
                          : '<div class="muted">Отметок нет.</div>') +
       '</div>' +
-      '<div class="card"><h2>Ситуации</h2>' +
-        (sit ? '<div class="sit">' + sit + '</div>' : '<div class="muted">Пусто.</div>') +
-      '</div>' +
+      '<div class="card"><h2>Ситуации</h2>' + sit + '</div>' +
     '</div>';
 
   $('an-pgk').onchange = function(){ AN.pgk = this.value.replace(/ — пусто$/, ''); preDraw(); };
+  sitBind('pre-sit');
   sec.querySelector('.mcbar').onclick = function(e){
     var b = e.target.closest ? e.target.closest('[data-as]') : null;
     if (!b) return;
@@ -2074,7 +2199,7 @@ function skLoad(){
         '<div class="card"><div class="muted">Не удалось загрузить.</div></div>';
       return;
     }
-    GM.list = res.list || []; GM.sit = res.sit || []; GM.sk = res.sk || [];
+    GM.list = res.list || []; GM.sit = res.sit || []; GM.sk = res.sk || []; GM.tree = res.tree || [];
     skDraw();
   });
 }
