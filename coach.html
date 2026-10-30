@@ -95,7 +95,8 @@
   .muted{color:var(--tx2);font-size:14px}
   .card{overflow-x:auto}
   /* сворачивание разделов */
-  .card > h2, .mcbox > h3{cursor:pointer;user-select:none}
+  .card > h2, .mcbox > h3{cursor:pointer;user-select:none;padding:8px 0;margin-top:-8px}
+  .card > h2{margin-bottom:4px}
   .card > h2:hover, .mcbox > h3:hover{color:var(--red)}
   .card > h2:after, .mcbox > h3:after{content:'';margin-left:auto;width:9px;height:9px;flex:none;
        border-right:2px solid var(--tx2);border-bottom:2px solid var(--tx2);border-radius:1px;
@@ -517,7 +518,16 @@ function foldApply(){
 function foldInit(){
   var main = $('main');
   main.addEventListener('click', function(e){
-    var h = e.target.closest ? e.target.closest('.card > h2, .mcbox > h3') : null;
+    if (!e.target.closest) return;
+    var h = e.target.closest('.card > h2, .mcbox > h3');
+    if (!h){
+      /* попали рядом с заголовком — засчитываем, полоска тонкая */
+      var bx = e.target.closest('.card, .mcbox');
+      if (bx && bx === e.target){
+        var hh = bx.querySelector(':scope > h2, :scope > h3');
+        if (hh && e.clientY <= hh.getBoundingClientRect().bottom + 14) h = hh;
+      }
+    }
     if (!h) return;
     var k = foldKey(h);
     var top = h.getBoundingClientRect().top;
