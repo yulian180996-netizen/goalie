@@ -103,6 +103,8 @@
   .card.fold > h2:after, .mcbox.fold > h3:after{transform:rotate(-45deg) translate(-2px,2px)}
   .card.fold > *:not(h2), .mcbox.fold > *:not(h3){display:none}
   .card.fold > h2, .mcbox.fold > h3{margin-bottom:0}
+  .card.fold > h2:after, .mcbox.fold > h3:after{border-color:var(--red)}
+  .card.fold, .mcbox.fold{background:var(--bg3)}
 
   /* ── расписание ── */
   .wnav{display:flex;align-items:center;gap:10px;margin-bottom:16px}
@@ -178,6 +180,8 @@
        text-align:right;outline:none}
   .sktb td input:focus{border-color:var(--red);background:var(--bg2)}
   .sktb .pc{color:var(--tx2);width:46px}
+  .sktb tr.tot td{border-top:2px solid var(--line);border-bottom:none;padding-top:9px;
+       font-family:'Unbounded',sans-serif;font-weight:700;font-size:13.5px}
   .sttb td:first-child{font-size:13.5px}
   .sttb tr.sub td:first-child{padding-left:22px;color:var(--tx2);font-size:12.5px}
   .sttb tr.sub td input{height:28px;width:58px}
@@ -516,9 +520,13 @@ function foldInit(){
     var h = e.target.closest ? e.target.closest('.card > h2, .mcbox > h3') : null;
     if (!h) return;
     var k = foldKey(h);
+    var top = h.getBoundingClientRect().top;
     if (FOLD[k]) delete FOLD[k]; else FOLD[k] = 1;
     try { localStorage.setItem('coach_fold', JSON.stringify(FOLD)); } catch(e){}
     foldApply();
+    /* держим заголовок на том же месте, иначе страница прыгает под курсором */
+    var moved = h.getBoundingClientRect().top - top;
+    if (Math.abs(moved) > 1) window.scrollBy(0, moved);
   });
   var wait = 0;
   new MutationObserver(function(){
@@ -821,7 +829,7 @@ function mcEdit(n){
 }
 
 /* ───────── игры ───────── */
-var GM = { list: null, sit: [], sk: [], tree: [], gk: '' };
+var GM = { list: null, sit: [], sk: [], tree: [], gk: '', st: '' };
 
 /* ситуации голов: верхний уровень и из чего складывается */
 var SIT_TREE = [
@@ -836,6 +844,21 @@ var SIT_TREE = [
   ['Блокирование', []],
   ['Буллиты',      ['Обыгрыш', 'Бросок']]
 ];
+/* граница предсезонки и сезона */
+var STAGE_FROM = '2026-09-01';
+function gmStage(g){ return (g.d && g.d >= STAGE_FROM) ? 'seas' : 'pre'; }
+function stageFilter(list, st){
+  if (!st) return list;
+  return list.filter(function(g){ return gmStage(g) === st; });
+}
+function stageBar(cur, attr){
+  return '<div class="mcbar" style="margin:0">' +
+    [['', 'Весь год'], ['pre', 'Предсезонка'], ['seas', 'Сезон']].map(function(p){
+      return '<button class="mcb' + (cur === p[0] ? ' on' : '') + '" ' + attr + '="' + p[0] + '">' +
+        p[1] + '</button>';
+    }).join('') + '</div>';
+}
+
 function sitTree(){ return (GM.tree && GM.tree.length) ? GM.tree : SIT_TREE; }
 function sitKey(top, sub){ return sub ? top + ' · ' + sub : top; }
 
@@ -918,7 +941,8 @@ function gmLoad(fresh){
 
 function gmDraw(){
   var sec = $('main').querySelector('[data-pg="games"]');
-  var list = GM.gk ? GM.list.filter(function(g){ return g.gk === GM.gk; }) : GM.list;
+  var list = stageFilter(GM.list, GM.st);
+  if (GM.gk) list = list.filter(function(g){ return g.gk === GM.gk; });
 
   /* сводка по отфильтрованному */
   var n = list.length, sh = 0, ga = 0, w = 0, l = 0, psy = 0, psyN = 0, gmp = 0, gmm = 0;
@@ -957,9 +981,11 @@ function gmDraw(){
     '<div class="head"><h1>Игры</h1>' +
     '<div class="sub">отчёт, статистика, психология и голы</div>' +
     '<div class="sp"></div>' +
-    '<select id="gm-gk" style="height:38px;border:1px solid var(--line);border-radius:10px;' +
-      'background:var(--bg2);color:var(--tx);font-family:inherit;font-size:13.5px;padding:0 10px">' + opts + '</select>' +
-    '<button class="btn sec sm" id="gm-new" style="margin-left:8px">+ Добавить игру</button></div>' +
+    '<button class="btn sec sm" id="gm-new">+ Добавить игру</button></div>' +
+
+    '<div class="anbar">' + stageBar(GM.st, 'data-gst') +
+      '<div class="pick"><label>Вратарь</label><select id="gm-gk">' + opts + '</select></div>' +
+    '</div>' +
 
     '<div class="kpi">' +
       '<div class="kp"><b>' + n + '</b><i>игр' + (GM.gk ? ' · ' + esc(GM.gk) : '') + '</i></div>' +
@@ -978,6 +1004,10 @@ function gmDraw(){
       : '<div class="soon"><b>Игр пока нет</b>Нажми «Добавить игру», чтобы занести первый матч.</div>') +
     '</div>';
 
+  sec.querySelector('.anbar .mcbar').onclick = function(e){
+    var b = e.target.closest ? e.target.closest('[data-gst]') : null;
+    if (b){ GM.st = b.getAttribute('data-gst'); gmDraw(); }
+  };
   $('gm-gk').onchange = function(){ GM.gk = this.value; gmDraw(); };
   $('gm-new').onclick = function(){ gmEdit(''); };
   var tb = sec.querySelector('tbody');
@@ -1088,7 +1118,12 @@ function gmForm(){
           '<td class="num"><input data-sf="ok" type="number" min="0" value="' + (x.ok || '') + '"></td>' +
           '<td class="num"><input data-sf="e" type="number" min="0" value="' + (x.e || '') + '"></td>' +
           '<td class="num pc">' + pc + '</td></tr>';
-      }).join('') + '</tbody></table></div>' +
+      }).join('') +
+      '<tr class="tot"><td>Всего</td><td class="num" id="sk-tn">0</td>' +
+      '<td class="num" id="sk-tok">0</td><td class="num" id="sk-te">0</td>' +
+      '<td class="num pc" id="sk-tp">—</td></tr>' +
+      '</tbody></table>' +
+      '<div class="dets" id="sk-cmp" style="margin:8px 0 0"></div></div>' +
 
     '<div class="fld"><label>Голы — ситуация, деталь, зона ворот</label>' +
       '<div class="dets" style="margin:-2px 0 8px">зоны: 1 2 3 — верх, 4 5 6 — середина, 7 8 9 — низ; слева направо со стороны броска</div>' + glRows +
@@ -1100,6 +1135,31 @@ function gmForm(){
       '<div class="sp"></div>' +
       (g.id ? '<button class="del" id="gm-del">Удалить игру</button>' : '') +
     '</div>');
+
+  function skTotals(){
+    var n = 0, ok = 0, e = 0;
+    $('mbody').querySelectorAll('[data-sk]').forEach(function(row){
+      var q = function(f){ return Number(row.querySelector('[data-sf="' + f + '"]').value) || 0; };
+      var rn = q('n'), rok = q('ok'), re = q('e');
+      if (!rn) rn = rok + re;
+      n += rn; ok += rok; e += re;
+      var pc = row.querySelector('.pc');
+      if (pc) pc.textContent = rn ? Math.round(rok / rn * 100) + '%' : '—';
+    });
+    $('sk-tn').textContent = n; $('sk-tok').textContent = ok; $('sk-te').textContent = e;
+    $('sk-tp').textContent = n ? Math.round(ok / n * 100) + '%' : '—';
+    var sh = Number($('f-sh').value) || 0;
+    var box = $('sk-cmp');
+    if (!sh){ box.textContent = ''; box.style.color = ''; return; }
+    var d = n - sh;
+    box.textContent = 'Ситуаций ' + n + ' · бросков в створ ' + sh +
+      (d === 0 ? ' · сходится' : (d > 0 ? ' · больше на ' + d : ' · не хватает ' + (-d)));
+    box.style.color = d === 0 ? 'var(--ok)' : 'var(--warn)';
+  }
+  $('mbody').addEventListener('input', function(e){
+    if (e.target.matches && (e.target.matches('[data-sf]') || e.target.id === 'f-sh')) skTotals();
+  });
+  skTotals();
 
   $('gm-cancel').onclick = mClose;
   $('gl-add').onclick = function(){ gmSync(); GME.gls.push({ s: GM.sit[0], d:'', z:'' }); gmForm(); };
@@ -2186,7 +2246,7 @@ function preDraw(){
 
 /* ───────── навыки ───────── */
 
-var SK = { gk: '' };
+var SK = { gk: '', st: '' };
 
 function skLoad(){
   var sec = $('main').querySelector('[data-pg="skills"]');
@@ -2228,7 +2288,8 @@ function skCol(p){
 
 function skDraw(){
   var sec = $('main').querySelector('[data-pg="skills"]');
-  var all = (GM.list || []).filter(function(g){ return g.sk && Object.keys(g.sk).length; });
+  var all = stageFilter(GM.list || [], SK.st)
+    .filter(function(g){ return g.sk && Object.keys(g.sk).length; });
   var names = {};
   all.forEach(function(g){ if (g.gk) names[g.gk] = 1; });
   var order = (GM.sk && GM.sk.length) ? GM.sk : Object.keys(skSum(all));
@@ -2310,7 +2371,7 @@ function skDraw(){
     '<div class="head"><h1>Навыки</h1>' +
     '<div class="sub">считается из карточек игр</div></div>' +
 
-    '<div class="anbar">' +
+    '<div class="anbar">' + stageBar(SK.st, 'data-sst') +
       '<div class="pick"><label>Вратарь</label><select id="sk-gk">' + opts + '</select></div>' +
     '</div>' +
 
@@ -2333,6 +2394,10 @@ function skDraw(){
 
     byGame;
 
+  sec.querySelector('.anbar .mcbar').onclick = function(e){
+    var b = e.target.closest ? e.target.closest('[data-sst]') : null;
+    if (b){ SK.st = b.getAttribute('data-sst'); skDraw(); }
+  };
   $('sk-gk').onchange = function(){ SK.gk = this.value; skDraw(); };
 }
 
