@@ -93,6 +93,8 @@
   .ver{padding:0 14px 10px;font-size:10.5px;color:var(--tx2);opacity:.75;letter-spacing:.3px}
 
   .main{flex:1;min-width:0;padding:26px 32px 60px}
+  .main.empty:after{content:'Раздел свёрнут. Нажми пункт слева, чтобы открыть.';
+       display:block;color:var(--tx2);font-size:14px;padding:40px 2px}
   .head{display:flex;align-items:flex-end;gap:14px;margin-bottom:20px;flex-wrap:wrap}
   .head h1{font-family:'Unbounded',sans-serif;font-size:23px;font-weight:800;margin:0;letter-spacing:-.2px}
   .head .sub{font-size:13.5px;color:var(--tx2);padding-bottom:3px}
@@ -324,7 +326,7 @@
     .side{width:100%;height:auto;position:static;flex-direction:row;overflow:auto}
     .logo{border-bottom:none;border-right:1px solid var(--line)}
     .nav{display:flex;gap:4px;padding:10px}
-    .nav .gr,.me{display:none}
+    .nav .gr,.me,.ver{display:none}
     .nav button{white-space:nowrap}
     .week{grid-template-columns:1fr}
   }
@@ -371,7 +373,7 @@
       <button class="thm" id="thm" type="button" title="Светлая или тёмная тема">🌙</button>
       <a id="me-out">выйти</a>
     </div>
-    <div class="ver" id="ver" title="Версия страницы. Если не меняется после заливки — браузер показывает старое: Cmd+Option+R">сборка 31.10 00:44</div>
+    <div class="ver" id="ver" title="Версия страницы. Если не меняется после заливки — браузер показывает старое: Cmd+Option+R">сборка 31.10 00:56</div>
   </aside>
 
   <main class="main" id="main">
@@ -474,14 +476,24 @@ function gateOut(){
 
 /* ───────── навигация ───────── */
 var PAGE = 'sched';
-function go(p){
-  PAGE = p;
-  var btns = $('nav').querySelectorAll('button');
+var OPEN = true;          /* раздел раскрыт в правой части или свёрнут */
+
+/** Подсветка пункта меню и показ секции. */
+function paint(){
+  var btns = $('nav').querySelectorAll('button[data-p]');
   for (var i = 0; i < btns.length; i++)
-    btns[i].className = (btns[i].getAttribute('data-p') === p) ? 'on' : '';
+    btns[i].className = (OPEN && btns[i].getAttribute('data-p') === PAGE) ? 'on' : '';
   var secs = $('main').querySelectorAll('section');
   for (var j = 0; j < secs.length; j++)
-    secs[j].className = (secs[j].getAttribute('data-pg') === p) ? '' : 'hide';
+    secs[j].className = (OPEN && secs[j].getAttribute('data-pg') === PAGE) ? '' : 'hide';
+  $('main').className = OPEN ? 'main' : 'main empty';
+}
+
+function go(p){
+  /* повторное нажатие по открытому разделу — закрываем правую часть */
+  if (p === PAGE && OPEN){ OPEN = false; paint(); return; }
+  PAGE = p; OPEN = true;
+  paint();
   if (p === 'sched') schLoad();
   else if (p === 'micro') mcLoad();
   else if (p === 'games') gmLoad();
