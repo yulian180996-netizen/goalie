@@ -780,6 +780,24 @@ body.lt .tabbar{background:rgba(255,255,255,.98)}
     <div class="sub">Коротко: что заполнять каждый день, что раз в месяц и зачем это нужно.</div>
 
     <div class="card">
+      <h2>Вход и как не потерять приложение</h2>
+      <div class="hp">
+        <p>Войти можно двумя путями. Через Telegram — открываешь бота и жмёшь кнопку.
+          Или по личной ссылке от тренера: открыл один раз, и приложение тебя запомнило,
+          вводить ничего не надо.</p>
+        <div class="st"><u>1</u><div><b>Открой ссылку с того телефона, с которого будешь заниматься.</b>
+          Ключ запоминается именно в этом браузере. Откроешь с другого — придётся просить новую ссылку.</div></div>
+        <div class="st"><u>2</u><div><b>Сразу вынеси на экран.</b> В Safari кнопка «Поделиться» внизу →
+          «На экран «Домой»». На Android в Chrome: три точки справа вверху → «Добавить на главный экран».
+          Дальше заходишь по иконке, как в обычное приложение.</div></div>
+        <div class="st"><u>3</u><div><b>Ссылка личная.</b> Не пересылай её — кто откроет,
+          тот и попадёт в твой дневник. Потерял или сменил телефон — скажи тренеру, выдаст новую.</div></div>
+        <div class="nt">Не чисти историю браузера вместе с данными сайтов — так приложение забудет,
+          кто ты, и придётся входить заново.</div>
+      </div>
+    </div>
+
+    <div class="card">
       <h2>Главное правило</h2>
       <div class="hp">
         <p>Приложение полезно ровно настолько, насколько регулярно ты его заполняешь.
@@ -2093,7 +2111,12 @@ var trType = 0;
 var DATA_KEYS = ['wb','tr','schulte','svet','stroop','mot','gng','cups','mem','tempo','goals','gls','games','me'];
 
 function boot(){
-  if (needGate()){ showGate(true); return; }
+  var lc = linkCode();
+  if (needGate()){
+    showGate(true);
+    if (lc){ setTxt('gerr', 'Проверяю код из ссылки…'); gateCode(lc); }
+    return;
+  }
   showGate(false);
   setTxt('how-in', authWay());
 
@@ -4624,6 +4647,11 @@ function gateIn(){
   var el = document.getElementById('gcode');
   var code = (el ? el.value : '').trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
   if (code.length < 4){ setTxt('gerr', 'Код короткий — проверь ещё раз.'); return; }
+  gateCode(code);
+}
+
+/* общий вход по коду: и с формы, и из ссылки */
+function gateCode(code){
   setTxt('gerr', '');
   setTxt('gbtn', 'Проверяю…');
   api({ a: 'login', code: code }, function(res){
@@ -4638,6 +4666,16 @@ function gateIn(){
     setTxt('how-in', authWay());
     boot();
   });
+}
+
+/* код прямо в ссылке: .../?c=K7M2PQ — вратарю ничего вводить не надо */
+function linkCode(){
+  var m = String(location.search || '').match(/[?&]c=([A-Za-z0-9]+)/);
+  if (!m) return '';
+  var code = m[1].toUpperCase().replace(/[^A-Z0-9]/g, '');
+  /* адрес чистим сразу, чтобы код не остался в истории и не ушёл дальше */
+  try { history.replaceState(null, '', location.pathname + location.hash); } catch(e){}
+  return code.length >= 4 ? code : '';
 }
 
 function gateOut(){

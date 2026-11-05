@@ -366,6 +366,7 @@
       <button data-p="rates"><em>📊</em>Оценки</button>
       <button data-p="cog"><em>🧠</em>Когнитивка</button>
       <button data-p="ofp"><em>💪</em>ОФП</button>
+      <button data-p="acc"><em>🔑</em>Доступ</button>
       <div class="gr">Материалы</div>
       <button data-p="theory"><em>📚</em>Теория</button>
       <button data-p="psy"><em>🧩</em>Психология</button>
@@ -375,7 +376,7 @@
       <button class="thm" id="thm" type="button" title="Светлая или тёмная тема">🌙</button>
       <a id="me-out">выйти</a>
     </div>
-    <div class="ver" id="ver" title="Версия страницы. Если не меняется после заливки — браузер показывает старое: Cmd+Option+R">сборка 05.11 15:40</div>
+    <div class="ver" id="ver" title="Версия страницы. Если не меняется после заливки — браузер показывает старое: Cmd+Option+R">сборка 05.11 16:20</div>
   </aside>
 
   <main class="main" id="main">
@@ -405,6 +406,7 @@
     <section data-pg="rates" class="hide"></section>
     <section data-pg="cog" class="hide"></section>
     <section data-pg="ofp" class="hide"></section>
+    <section data-pg="acc" class="hide"></section>
     <section data-pg="theory" class="hide"></section>
     <section data-pg="psy" class="hide"></section>
   </main>
@@ -505,6 +507,7 @@ function go(p){
   else if (p === 'rates') rtLoad();
   else if (p === 'cog') cgLoad();
   else if (p === 'ofp') ofLoad();
+  else if (p === 'acc') acLoad();
   else drawSoon(p);
 }
 var SOON = {
@@ -512,6 +515,7 @@ var SOON = {
   rates:  ['Оценки', 'Оценка вратаря по разделам, сравнение самооценки и оценки тренера, динамика по месяцам.'],
   cog:    ['Когнитивка', 'Результаты Шульте, «Светофона», Струпа, слежения, реакции с помехами, напёрстков, памяти и темпа.'],
   ofp:    ['ОФП', 'Две вкладки: результаты тестирования с динамикой и планирование по микроциклам.'],
+  acc:    ['Доступ', 'Личные ссылки и коды для входа вратарей в приложение без Telegram.'],
   theory: ['Теория', 'Материалы для вратарей: что уже выложено и что в плане.'],
   psy:    ['Психология', 'Материалы и план работы по психологической подготовке.']
 };
@@ -1772,6 +1776,134 @@ function rtDraw(){
 }
 
 /* ───────── когнитивка ───────── */
+
+/* ───────── доступ вратарей на сайт ───────── */
+
+var APP_URL = 'https://yulian180996-netizen.github.io/goalie/';
+var AC = { list: null, bad: false, busy: '' };
+
+function acLoad(){
+  pgWait('acc', 'Доступ');
+  api({ a:'sitelist' }, function(res){
+    AC.bad = !res || !res.ok;
+    AC.list = (res && res.list) || [];
+    sqLoad(acDraw);
+  });
+}
+
+function acLink(code){ return APP_URL + '?c=' + code; }
+
+function acMsg(name, code){
+  var first = String(name || '').split(' ')[1] || String(name || '');
+  return first + ', это твой личный вход в приложение вратаря - без Telegram, прямо в браузере.\n\n' +
+    acLink(code) + '\n\n' +
+    'Открой ссылку с телефона. Приложение само тебя узнает, вводить ничего не надо.\n' +
+    'Сразу добавь его на экран: в Safari кнопка «Поделиться» внизу → «На экран «Домой»». ' +
+    'Дальше заходишь как в обычное приложение, по иконке.\n\n' +
+    'Ссылка личная, никому не пересылай. Если потеряешь - скажи, выдам новую.';
+}
+
+function acDraw(){
+  var sec = $('main').querySelector('[data-pg="acc"]');
+  if (AC.bad || SQ.bad) return sqFail('acc', 'Доступ');
+
+  var by = {};
+  (AC.list || []).forEach(function(x){ by[x.uid] = x; });
+  var list = (SQ.list || []);
+
+  var inN = 0, waitN = 0, noN = 0;
+  var rows = list.map(function(g){
+    var a = by[g.uid];
+    var st, act;
+    if (a && a.on){ st = '<span style="color:var(--ok)">вошёл</span>'; inN++; }
+    else if (a && a.code){ st = '<span style="color:var(--warn)">код выдан, не вошёл</span>'; waitN++; }
+    else { st = '<span class="muted">доступа нет</span>'; noN++; }
+
+    var code = (a && a.code) ? a.code : '';
+    act = '<button class="btn sec sm" data-ac="mk" data-uid="' + esc(g.uid) + '">' +
+            ((a && (a.on || a.code)) ? 'Новый код' : 'Выдать код') + '</button>' +
+          (code ? ' <button class="btn sec sm" data-ac="copy" data-uid="' + esc(g.uid) + '">Скопировать сообщение</button>' : '') +
+          ((a && (a.on || a.code)) ? ' <button class="btn sec sm" data-ac="rm" data-uid="' + esc(g.uid) + '">Отозвать</button>' : '');
+
+    return '<tr>' +
+      '<td class="gk">' + esc(g.name) + '</td>' +
+      '<td>' + st + '</td>' +
+      '<td class="num"><b>' + (code || '—') + '</b></td>' +
+      '<td class="muted">' + (code ? esc(acLink(code)) : (a && a.on ? 'код уже использован' : '—')) + '</td>' +
+      '<td>' + act + '</td></tr>';
+  }).join('');
+
+  sec.innerHTML =
+    '<div class="head"><h1>Доступ</h1>' +
+    '<div class="sub">вход в приложение по личной ссылке, без Telegram</div></div>' +
+    '<div class="kpi">' +
+      '<div class="kp"><b>' + inN + '</b><i>уже заходят</i></div>' +
+      '<div class="kp"><b>' + waitN + '</b><i>код выдан, ждём</i></div>' +
+      '<div class="kp"><b>' + noN + '</b><i>без доступа</i></div>' +
+    '</div>' +
+    '<div class="card"><h2>Вратари</h2>' +
+      '<table class="tbl"><thead><tr><th>Вратарь</th><th>Статус</th>' +
+      '<th class="num">Код</th><th>Ссылка</th><th>Что сделать</th></tr></thead><tbody>' +
+      (rows || '<tr><td colspan="5" class="muted">Вратарей нет.</td></tr>') +
+      '</tbody></table>' +
+      '<div class="ice">Код одноразовый: вратарь открыл ссылку - код сгорел, вместо него приложение запомнило ключ. ' +
+      'Поэтому после входа код в таблице пропадает, это нормально. «Новый код» гасит старый доступ и выдаёт другой.</div>' +
+    '</div>' +
+    '<div class="card"><h2>Что отправить вратарю</h2>' +
+      '<div class="ice" style="margin:0 0 10px">Жми «Скопировать сообщение» в строке вратаря - в буфер ляжет готовый текст с его ссылкой. ' +
+      'Вставляешь в любой мессенджер и отправляешь. Ниже - как этот текст выглядит.</div>' +
+      '<pre style="white-space:pre-wrap;font-family:inherit;font-size:13px;color:var(--tx2);margin:0;' +
+      'background:var(--bg3);border:1px solid var(--line);border-radius:10px;padding:12px">' +
+      esc(acMsg('Иванов Иван', 'K7M2PQ')) + '</pre></div>' +
+    '<div class="card"><h2>Если что-то пошло не так</h2>' +
+      '<div class="list">' +
+      '<div><span>Ссылка открылась, но просит код</span><b>Код уже использован - выдай новый</b></div>' +
+      '<div><span>Вратарь сменил телефон</span><b>Выдай новый код, старый сам погаснет</b></div>' +
+      '<div><span>Видит чужие данные</span><b>Отзови доступ обоим и выдай коды заново</b></div>' +
+      '<div><span>Надо закрыть доступ</span><b>«Отозвать» - приложение перестанет пускать сразу</b></div>' +
+      '</div></div>';
+
+  sec.onclick = function(e){
+    var b = e.target.closest ? e.target.closest('button[data-ac]') : null;
+    if (!b) return;
+    var uid = b.getAttribute('data-uid'), ac = b.getAttribute('data-ac');
+    if (ac === 'mk') acMk(uid, b);
+    else if (ac === 'rm') acRm(uid);
+    else if (ac === 'copy') acCopy(uid, b);
+  };
+}
+
+function acMk(uid, btn){
+  var g = sqBy(uid);
+  var a = null; (AC.list || []).forEach(function(x){ if (x.uid === uid) a = x; });
+  if (a && (a.on || a.code) &&
+      !confirm('У вратаря ' + (g ? g.name : '') + ' уже есть доступ. Старый перестанет работать. Выдать новый код?')) return;
+  btn.textContent = 'создаю…';
+  api({ a:'mkcode', uid: uid }, function(res){
+    if (!res || !res.ok){ alert((res && res.err) || 'Не получилось выдать код.'); acDraw(); return; }
+    acLoad();
+  });
+}
+
+function acRm(uid){
+  var g = sqBy(uid);
+  if (!confirm('Отозвать доступ у ' + (g ? g.name : '') + '? Записи останутся в базе, но войти он больше не сможет.')) return;
+  api({ a:'revoke', uid: uid }, function(res){
+    if (!res || !res.ok){ alert((res && res.err) || 'Не получилось.'); return; }
+    acLoad();
+  });
+}
+
+function acCopy(uid, btn){
+  var g = sqBy(uid), a = null;
+  (AC.list || []).forEach(function(x){ if (x.uid === uid) a = x; });
+  if (!a || !a.code) return;
+  var txt = acMsg(g ? g.name : '', a.code);
+  var done = function(){ btn.textContent = 'скопировано'; setTimeout(function(){ btn.textContent = 'Скопировать сообщение'; }, 1800); };
+  if (navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(txt).then(done, function(){ prompt('Скопируй вручную:', txt); });
+  } else prompt('Скопируй вручную:', txt);
+}
 
 var CG = { k:'schulte:0', gk:'' };
 
