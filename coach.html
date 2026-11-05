@@ -375,7 +375,7 @@
       <button class="thm" id="thm" type="button" title="Светлая или тёмная тема">🌙</button>
       <a id="me-out">выйти</a>
     </div>
-    <div class="ver" id="ver" title="Версия страницы. Если не меняется после заливки — браузер показывает старое: Cmd+Option+R">сборка 31.10 01:02</div>
+    <div class="ver" id="ver" title="Версия страницы. Если не меняется после заливки — браузер показывает старое: Cmd+Option+R">сборка 05.11 08:59</div>
   </aside>
 
   <main class="main" id="main">
@@ -418,7 +418,7 @@
 var API_URL = 'https://script.google.com/macros/s/AKfycbySUUoLkv6qaywWfDZ9Qn1fob2Z2o4Md7npra59c_F24DreU8iSc9tzdsoedyC_6-tM/exec';
 
 var KEY = '';
-try { KEY = localStorage.getItem('gk_site_key') || ''; } catch(e){}
+try { KEY = localStorage.getItem('gk_coach_key') || localStorage.getItem('gk_site_key') || ''; } catch(e){}
 var ME = { name: '', coach: false };
 var ROSTER = [];
 
@@ -465,14 +465,14 @@ function gateIn(){
       if (!res || !res.ok){ $('g-err').textContent = (res && res.err) || 'Не получилось.'; return; }
       if (!res.isCoach){ $('g-err').textContent = 'Этот код не тренерский. Вратарям — основное приложение.'; return; }
       KEY = res.key;
-      try { localStorage.setItem('gk_site_key', KEY); } catch(e){}
+      try { localStorage.setItem('gk_coach_key', KEY); } catch(e){}
       ME.name = res.name || ''; ME.coach = true;
       start();
     })
     .catch(function(){ $('g-err').textContent = 'Нет связи.'; });
 }
 function gateOut(){
-  try { localStorage.removeItem('gk_site_key'); } catch(e){}
+  try { localStorage.removeItem('gk_coach_key'); localStorage.removeItem('gk_site_key'); } catch(e){}
   KEY = ''; location.reload();
 }
 
@@ -1615,9 +1615,21 @@ function rsCard(uid){
         '<th class="num">Вес</th></tr></thead><tbody>' + wb + '</tbody></table>'
          : '<div class="muted">Записей нет.</div>') +
     '</div>' +
-    '<div class="mact"><div class="sp"></div><button class="btn sec sm" id="rc-x">Закрыть</button></div>'
+    '<div class="mact">' +
+      '<button class="btn sec sm" id="rc-code">Код для входа на сайт</button>' +
+      '<div class="muted" id="rc-codev" style="margin-left:12px;font-size:15px"></div>' +
+      '<div class="sp"></div><button class="btn sec sm" id="rc-x">Закрыть</button></div>'
   );
   $('rc-x').onclick = mClose;
+  $('rc-code').onclick = function(){
+    if (!confirm('Выдать ' + x.name + ' новый код?\n\nПрежний код этого вратаря перестанет работать.')) return;
+    $('rc-codev').textContent = 'создаю…';
+    api({ a:'mkcode', uid: x.uid }, function(res){
+      if (!res || !res.ok){ $('rc-codev').textContent = (res && res.err) || 'не вышло'; return; }
+      $('rc-codev').innerHTML = '<b style="font-size:19px;letter-spacing:2px;color:var(--tx)">' +
+        esc(res.code) + '</b> — отправь вратарю';
+    });
+  };
 }
 
 function radBars(rad){
