@@ -363,6 +363,16 @@
   .cdn span{font-size:14px;color:var(--tx2)}
   @keyframes cdp{from{transform:scale(.55);opacity:.2}to{transform:scale(1);opacity:1}}
   /* слежение за шариками */
+  .gridwrap{position:relative}
+  .schov{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;
+         justify-content:center;gap:10px;background:rgba(18,22,28,.72);border-radius:14px;z-index:4;
+         backdrop-filter:blur(2px)}
+  .schov.hide{display:none}
+  .schov span{font-size:13px;color:#c7cdd6}
+  .schgo{width:112px;height:112px;border-radius:56px;border:0;cursor:pointer;
+         background:var(--red);color:#fff;font-family:inherit;font-size:21px;font-weight:800;
+         letter-spacing:.5px;box-shadow:0 8px 26px rgba(214,17,46,.45)}
+  .schgo:active{transform:scale(.96)}
   .motbox{position:relative;background:var(--bg3);border:1px solid var(--line);
           border-radius:14px;overflow:hidden;margin-top:10px;touch-action:manipulation}
   .motbox canvas{display:block;width:100%;height:auto}
@@ -378,6 +388,45 @@
        padding:9px 6px;text-align:center}
   .motbar b{display:block;font-size:17px;font-weight:800;color:var(--w)}
   .motbar span{font-size:10px;color:var(--tx2)}
+  /* напёрстки */
+  .cupbox{display:flex;gap:9px;justify-content:center;align-items:flex-end;margin-top:12px;
+          min-height:118px;flex-wrap:nowrap}
+  .cup{position:relative;flex:1;max-width:84px;height:106px;cursor:pointer;
+       touch-action:manipulation;-webkit-user-select:none;user-select:none;
+       transition:order 0s, transform .18s ease}
+  .cup .cuptop{position:absolute;left:0;right:0;bottom:0;height:86px;border-radius:40px 40px 9px 9px;
+       background:linear-gradient(180deg,#3A4350,#232A34);border:1px solid var(--line);
+       transition:transform .22s ease, opacity .22s ease}
+  body.lt .cup .cuptop{background:linear-gradient(180deg,#CBD4DF,#A9B5C3)}
+  .cup .cupball{position:absolute;left:50%;bottom:10px;width:26px;height:26px;margin-left:-13px;
+       border-radius:50%;background:var(--red);opacity:0;transition:opacity .18s ease}
+  .cup.open .cuptop{transform:translateY(-62px) rotate(-6deg)}
+  .cup.open .cupball{opacity:1}
+  .cup.sel .cuptop{border-color:var(--red);box-shadow:0 0 0 2px rgba(214,17,46,.5)}
+  .cup.good .cupball{background:var(--ok)}
+  .cup.bad .cuptop{border-color:var(--red)}
+  .cupbox.n5 .cup{max-width:66px}
+  /* память 5×5 */
+  .memgrid{display:grid;grid-template-columns:repeat(5,1fr);gap:7px;margin-top:12px}
+  .memc{aspect-ratio:1/1;border-radius:11px;background:var(--bg2);border:1px solid var(--line);
+        color:var(--w);font-family:inherit;font-size:20px;font-weight:800;cursor:pointer;
+        touch-action:manipulation;transition:background .12s ease}
+  .memc.lit{background:var(--red);border-color:var(--red);color:#fff}
+  .memc.good{background:var(--ok);border-color:var(--ok);color:#fff}
+  .memc.wrong{background:#5A1020;border-color:var(--red);color:#fff}
+  /* темп */
+  .tmpbox{margin-top:12px;border-radius:14px;border:1px solid var(--line);background:var(--bg3);
+          min-height:168px;display:flex;gap:8px;padding:8px;transition:background .12s ease}
+  .tmpbox.beat{background:var(--sec)}
+  .tmpbox.fast{background:#4A1020}
+  .tmpbox.slow{background:#102A4A}
+  .tmpbox .tmppad{flex:1;border-radius:11px;background:var(--bg2);border:1px solid var(--line);
+       display:flex;align-items:center;justify-content:center;cursor:pointer;
+       touch-action:manipulation;-webkit-user-select:none;user-select:none}
+  .tmpbox .tmppad b{font-size:17px;font-weight:800;color:var(--w)}
+  .tmpbox .tmppad.hit{background:var(--red);border-color:var(--red)}
+  .tmpbox .tmppad.hit b{color:#fff}
+  .tmpbox:not(.two) #tmp-r{display:none}
   /* план занятия */
   .pgw{position:relative;margin-bottom:10px;border-radius:12px;overflow:hidden;
        background:var(--bg3);border:1px solid var(--line)}
@@ -750,7 +799,7 @@ body.lt .tabbar{background:rgba(255,255,255,.98)}
           а в том, чтобы поймать, когда организм не тянет.</div></div>
         <div class="st"><u>2</u><div><b>Когнитивка — любое упражнение.</b> Три-пять минут.
           Лучший порядок: Шульте на разминку, потом Реакция, Струп последним — он самый
-          утомительный. Слежение и Помехи — через день, на свежую голову.</div></div>
+          утомительный. Слежение и реакцию с помехами — через день, на свежую голову.</div></div>
         <div class="st"><u>3</u><div><b>После льда — дневник занятия.</b> Какую задачу ставил,
           что получилось, на что обратить внимание дальше. Три строки, но именно из них
           потом собирается разбор.</div></div>
@@ -776,10 +825,10 @@ body.lt .tabbar{background:rgba(255,255,255,.98)}
       <h2>Что меряет каждое упражнение</h2>
       <div class="list">
         <div><span>Шульте</span><b>Объём и скорость сканирования</b></div>
-        <div><span>Реакция</span><b>Скорость решения под временем</b></div>
+        <div><span>Реакция выбора</span><b>Скорость решения под временем</b></div>
         <div><span>Струп</span><b>Помехоустойчивость</b></div>
         <div><span>Слежение</span><b>Распределённое внимание</b></div>
-        <div><span>Помехи</span><b>Умение не дёрнуться</b></div>
+        <div><span>Реакция с помехами</span><b>Умение не дёрнуться</b></div>
       </div>
       <div class="hp" style="margin-top:12px">
         <p>Это разные качества, заменять одно другим не стоит. В Шульте и Реакции растёт
@@ -898,19 +947,25 @@ body.lt .tabbar{background:rgba(255,255,255,.98)}
     <div class="sub">Внимание, реакция и помехоустойчивость. Мерим каждый день.</div>
     <div class="tiles">
       <button class="tile wide" data-act="go:cog"><e>🔢</e><b>Шульте</b><i id="t-cog">Внимание и скорость сканирования</i></button>
-      <button class="tile wide" data-act="go:rx"><e>🎯</e><b>Реакция</b><i id="t-rx">Скорость решения под временем</i></button>
+      <button class="tile wide" data-act="go:rx"><e>🎯</e><b>Реакция выбора</b><i id="t-rx">Скорость решения под временем</i></button>
       <button class="tile wide" data-act="go:str"><e>🎨</e><b>Струп</b><i id="t-str">Цвет букв, а не слово</i></button>
       <button class="tile wide" data-act="go:mot"><e>🔴</e><b>Слежение</b><i id="t-mot">Держать своих боковым зрением</i></button>
-      <button class="tile wide" data-act="go:gng"><e>🚦</e><b>Помехи</b><i id="t-gng">Зелёный нажимай, красный нельзя</i></button>
+      <button class="tile wide" data-act="go:gng"><e>🚦</e><b>Реакция с помехами</b><i id="t-gng">Зелёный нажимай, красный нельзя</i></button>
+      <button class="tile wide" data-act="go:cup"><e>🥤</e><b>Напёрстки</b><i id="t-cup">Не потерять шарик в перемешивании</i></button>
+      <button class="tile wide" data-act="go:mem"><e>🧠</e><b>Память на поле</b><i id="t-mem">Запомнить порядок и повторить</i></button>
+      <button class="tile wide" data-act="go:tmp"><e>🥁</e><b>Темп</b><i id="t-tmp">Ровность движений под счёт</i></button>
     </div>
     <div class="card" style="margin-top:12px">
       <h2>Что мерит каждый</h2>
       <div class="list">
         <div><span>Шульте</span><b>Объём и скорость сканирования</b></div>
-        <div><span>Реакция</span><b>Скорость решения под временем</b></div>
+        <div><span>Реакция выбора</span><b>Скорость решения под временем</b></div>
         <div><span>Струп</span><b>Помехоустойчивость</b></div>
         <div><span>Слежение</span><b>Распределённое внимание</b></div>
-        <div><span>Помехи</span><b>Умение не дёрнуться</b></div>
+        <div><span>Реакция с помехами</span><b>Умение не дёрнуться</b></div>
+        <div><span>Напёрстки</span><b>Удержание цели в перемешивании</b></div>
+        <div><span>Память на поле</span><b>Рабочая память</b></div>
+        <div><span>Темп</span><b>Ровность и переключение темпа</b></div>
       </div>
       <div class="sub" style="margin:12px 0 0">Три разных качества — заменять одно другим не стоит.
         Лучший порядок: Шульте на разминку, потом реакция, Струп последним — он самый утомительный.</div>
@@ -932,7 +987,13 @@ body.lt .tabbar{background:rgba(255,255,255,.98)}
       <div class="sub" style="text-align:center;margin:0">
         Ищем: <b id="next-num" style="color:var(--w)">1</b> · ошибок: <b id="errs" style="color:var(--w)">0</b>
       </div>
-      <div id="grid"></div>
+      <div class="gridwrap">
+        <div id="grid"></div>
+        <div class="schov" id="sch-ov">
+          <button class="schgo" data-act="schstart">Старт</button>
+          <span>или нажми любое число</span>
+        </div>
+      </div>
       <button class="btn" data-act="schstart">Новая попытка</button>
     </div>
     <div class="card">
@@ -1487,6 +1548,117 @@ body.lt .tabbar{background:rgba(255,255,255,.98)}
     </div>
   </section>
 
+  <!-- НАПЁРСТКИ -->
+  <section id="p-cup" class="hide">
+    <h1>Напёрстки</h1>
+    <div class="sub">Шарик прячется под стакан, стаканы меняются местами. Найди, где он. Два шарика — это уже
+      распределённое внимание: держать две цели сразу тяжелее, чем одну.</div>
+
+    <div class="card">
+      <h2>Поле</h2>
+      <div class="motbar">
+        <div><b id="cup-n">0 / 10</b><span>попытка</span></div>
+        <div><b id="cup-ok">0</b><span>верно</span></div>
+        <div><b id="cup-lv">—</b><span>скорость</span></div>
+      </div>
+      <div class="cupbox" id="cup-box"></div>
+      <div class="sub" id="cup-hint" style="text-align:center;margin:10px 0 0">Нажми «Начать серию».</div>
+      <button class="btn" data-act="cupstart" id="cup-btn">Начать серию</button>
+    </div>
+
+    <div class="card">
+      <h2>Настройка</h2>
+      <label style="margin-top:0">Сколько шариков</label>
+      <div class="chips" id="cup-tg"></div>
+      <label>Сколько стаканов</label>
+      <div class="chips" id="cup-cn"></div>
+      <label>Скорость перемешивания</label>
+      <div class="chips" id="cup-sp"></div>
+      <label>Попыток в серии</label>
+      <div class="chips" id="cup-tr"></div>
+      <div class="sub" style="margin:10px 0 0">Один шарик из четырёх - базовый вариант. Два шарика из пяти и больше -
+        работа на распределение внимания: следишь за двумя целями и не теряешь ни одну.</div>
+    </div>
+
+    <div class="card">
+      <h2>Последние серии</h2>
+      <div class="list" id="cup-list"></div>
+    </div>
+  </section>
+
+  <!-- ПАМЯТЬ 5×5 -->
+  <section id="p-mem" class="hide">
+    <h1>Память на поле</h1>
+    <div class="sub">В поле 5×5 загораются цифры по порядку. Запомни, где какая, и повтори последовательность.
+      Это рабочая память: удержать картинку и воспроизвести её, когда она уже погасла.</div>
+
+    <div class="card">
+      <h2>Поле</h2>
+      <div class="motbar">
+        <div><b id="mem-lvl">1</b><span>цифр</span></div>
+        <div><b id="mem-ok">0</b><span>пройдено</span></div>
+        <div><b id="mem-best">—</b><span>рекорд</span></div>
+      </div>
+      <div id="mem-grid" class="memgrid"></div>
+      <div class="sub" id="mem-hint" style="text-align:center;margin:10px 0 0">Нажми «Начать».</div>
+      <button class="btn" data-act="memstart" id="mem-btn">Начать</button>
+    </div>
+
+    <div class="card">
+      <h2>Режим</h2>
+      <div class="chips" id="mem-md"></div>
+      <label>Сколько цифр в тренировке</label>
+      <div class="chips" id="mem-fix"></div>
+      <div class="sub" style="margin:10px 0 0">В тесте уровень растёт сам: прошёл три цифры - следующая попытка на
+        четыре. Две ошибки подряд - тест закончен, в результат идёт последний пройденный уровень.
+        В тренировке уровень фиксированный: ставишь то число, на котором спотыкаешься, и добиваешь его.</div>
+    </div>
+
+    <div class="card">
+      <h2>Последние попытки</h2>
+      <div class="list" id="mem-list"></div>
+    </div>
+  </section>
+
+  <!-- ТЕМП -->
+  <section id="p-tmp" class="hide">
+    <h1>Темп</h1>
+    <div class="sub">Ровность движений под счёт. Вратарю это нужно для шаффлов и работы ног: не быстрее всех,
+      а одинаково от первого повтора до последнего.</div>
+
+    <div class="card">
+      <h2>Упражнение</h2>
+      <div class="chips" id="tmp-md"></div>
+      <div class="sub" id="tmp-about" style="margin:8px 0 0"></div>
+      <div class="motbar" style="margin-top:12px">
+        <div><b id="tmp-a">—</b><span id="tmp-al">точность</span></div>
+        <div><b id="tmp-b">—</b><span id="tmp-bl">разброс</span></div>
+        <div><b id="tmp-c">0</b><span id="tmp-cl">ударов</span></div>
+      </div>
+      <div class="tmpbox" id="tmp-box">
+        <div class="tmppad" id="tmp-l" data-act="tmptap:l"><b>Левая</b></div>
+        <div class="tmppad" id="tmp-r" data-act="tmptap:r"><b>Правая</b></div>
+      </div>
+      <div class="sub" id="tmp-hint" style="text-align:center;margin:10px 0 0">Выбери режим и нажми «Начать».</div>
+      <button class="btn" data-act="tmpstart" id="tmp-btn">Начать</button>
+    </div>
+
+    <div class="card">
+      <h2>Настройка</h2>
+      <label style="margin-top:0">Темп, ударов в минуту</label>
+      <div class="chips" id="tmp-bpm"></div>
+      <label>Длительность</label>
+      <div class="chips" id="tmp-du"></div>
+      <div class="sub" style="margin:10px 0 0">В «Метрономе» звук и вспышка пропадают на середине - дальше держишь
+        ритм сам. В «Смене темпа» экран краснеет - ускоряешься вдвое, синеет - замедляешься вдвое.</div>
+    </div>
+
+    <div class="card">
+      <h2>Последние попытки</h2>
+      <div class="list" id="tmp-list"></div>
+    </div>
+  </section>
+
   <!-- СЛЕЖЕНИЕ -->
   <section id="p-mot" class="hide">
     <h1>Слежение</h1>
@@ -1521,7 +1693,13 @@ body.lt .tabbar{background:rgba(255,255,255,.98)}
       <div class="chips" id="mot-du"></div>
       <label>Попыток в серии</label>
       <div class="chips" id="mot-tr"></div>
-      <div class="sub" style="margin:12px 0 0">Скорость подбирается сама: угадал — быстрее, ошибся — медленнее.
+      <label>Как ведут себя шарики</label>
+      <div class="chips" id="mot-md"></div>
+      <label>Скорость движения</label>
+      <div class="chips" id="mot-fast"></div>
+      <div class="sub" style="margin:10px 0 0">«Отскакивают» — шарики расходятся при встрече. «Сквозь друг друга» —
+        проходят один через другой и на миг сливаются, как в трафике перед воротами: цель легко потерять.</div>
+      <div class="sub" style="margin:8px 0 0">Скорость подбирается сама: угадал — быстрее, ошибся — медленнее.
         В результат идёт твой порог скорости.</div>
     </div>
 
@@ -1912,7 +2090,7 @@ var today = new Date().toISOString().slice(0,10);
 var curMonth = today.slice(0,7);
 var trType = 0;
 
-var DATA_KEYS = ['wb','tr','schulte','svet','stroop','mot','gng','goals','gls','games','me'];
+var DATA_KEYS = ['wb','tr','schulte','svet','stroop','mot','gng','cups','mem','tempo','goals','gls','games','me'];
 
 function boot(){
   if (needGate()){ showGate(true); return; }
@@ -1978,16 +2156,17 @@ function applyRole(){
 }
 
 /* ---------- навигация ---------- */
-var PAGES = ['home','wb','tr','cog','rx','goals','an','notes','me','coach','gk','lib','mat','game','rad','prog','str','cgn','plan','mot','gng','diary','help'];
+var PAGES = ['home','wb','tr','cog','rx','goals','an','notes','me','coach','gk','lib','mat','game','rad','prog','str','cgn','plan','mot','gng','cup','mem','tmp','diary','help'];
 var TITLES = { home:'', wb:'Самочувствие', tr:'Дневник занятий', cog:'Шульте',
-  rx:'Реакция', goals:'Цели', an:'Разбор игр', notes:'Заметки тренера',
-  me:'Профиль', coach:'Кабинет тренера', gk:'Карточка вратаря', lib:'Материалы', mat:'Материал', game:'Игра', rad:'Оценка вратаря', prog:'Мой прогресс', str:'Струп', cgn:'Когнитивка', plan:'План занятия', mot:'Слежение', gng:'Помехи', diary:'Ежедневник', help:'Как пользоваться' };
+  rx:'Реакция выбора', goals:'Цели', an:'Разбор игр', notes:'Заметки тренера',
+  me:'Профиль', coach:'Кабинет тренера', gk:'Карточка вратаря', lib:'Материалы', mat:'Материал', game:'Игра', rad:'Оценка вратаря', prog:'Мой прогресс', str:'Струп', cgn:'Когнитивка', plan:'План занятия', mot:'Слежение', gng:'Реакция с помехами', cup:'Напёрстки', mem:'Память на поле', tmp:'Темп', diary:'Ежедневник', help:'Как пользоваться' };
 var navStack = [];
 
 /* ── нижняя панель ── */
 var TAB_OF = { home:'home', prog:'home', me:'home',
                diary:'diary', wb:'diary', tr:'diary',
                cgn:'cgn', cog:'cgn', rx:'cgn', str:'cgn', mot:'cgn', gng:'cgn',
+               cup:'cgn', mem:'cgn', tmp:'cgn',
                goals:'goals', rad:'rad', an:'an', game:'an' };
 /* помечает карточки по смыслу — для цветной полоски у заголовка */
 var KMAP = [
@@ -2055,6 +2234,9 @@ function go(page, back){
   if (page !== 'plan' && PL_TICK){ clearInterval(PL_TICK); PL_TICK = null; }
   if (page === 'mot') openMot(); else if (MOT.run) motStop();
   if (page === 'gng') openGng(); else if (GN.run) gnStop();
+  if (page === 'cup') openCup(); else if (CUP.run) cupStop();
+  if (page === 'mem') openMem(); else if (MEM.run) memStop();
+  if (page === 'tmp') openTmp(); else if (TMP.run) tmpStop();
   cdnStop();
   if (page === 'prog'){ renderWork(); curveBlock('pg-chips','pg-curve',['rd','sl','fat','sch','svrt','stac','mot','gng'],PCURVE,'pcv'); }
 }
@@ -2212,6 +2394,23 @@ document.addEventListener('click', function(ev){
     else if (a[0] === 'motstart') { if (MOT.run) motStop(); else countdown(motStart, 'Запоминай красные'); }
     else if (a[0] === 'moto') { MOT[a[1]] = parseInt(a[2], 10); haptic(); renderMotOpts();
                                 if (!MOT.run){ MOT.balls = []; motDraw(); } }
+    else if (a[0] === 'cupstart') { if (CUP.run) cupStop(); else countdown(cupStart, 'Запоминай, где шарик'); }
+    else if (a[0] === 'cuptap') cupTap(parseInt(a[1], 10));
+    else if (a[0] === 'cupo') { CUP[a[1]] = parseInt(a[2], 10);
+                                if (CUP.tg >= CUP.cn) CUP.tg = CUP.cn - 1;
+                                haptic(); renderCupOpts();
+                                if (!CUP.run){ cupBuild(); cupShow('hidden'); setTxt('cup-n', '0 / ' + CUP.tr);
+                                               setTxt('cup-lv', CUP_SP[CUP.sp] || '—'); } }
+    else if (a[0] === 'memstart') { if (MEM.run) memStop(); else countdown(memStart, 'Запоминай порядок'); }
+    else if (a[0] === 'memtap') memTap(parseInt(a[1], 10));
+    else if (a[0] === 'memo') { MEM[a[1]] = parseInt(a[2], 10); haptic(); renderMemOpts();
+                                if (!MEM.run){ setTxt('mem-lvl', String(memLevel()));
+                                  setTxt('mem-hint', MEM.md === 1 ? 'Тест: уровень растёт сам.' : 'Тренировка на ' + MEM.fix + ' цифрах.'); } }
+    else if (a[0] === 'tmpstart') { if (TMP.run) tmpStop(); else tmpStart(); }
+    else if (a[0] === 'tmptap') tmpTap(a[1]);
+    else if (a[0] === 'tmpo') { TMP[a[1]] = parseInt(a[2], 10); haptic();
+                                if (TMP.run) tmpStop();
+                                renderTmpOpts(); }
     else if (a[0] === 'plput') putPlan();
     else if (a[0] === 'plh') { PL_HOURS = parseInt(a[1], 10); haptic(); renderPlanHours(); }
     else if (a[0] === 'plrm') { PL_PAGES.splice(parseInt(a[1], 10), 1); renderPlThumbs(); }
@@ -3612,6 +3811,8 @@ function buildGrid(preview){
   if (b36) b36.className = (SCH_N === 36) ? 'on' : '';
   if (b49) b49.className = (SCH_N === 49) ? 'on' : '';
   next = 1; errs = 0; running = !preview;
+  var ov = document.getElementById('sch-ov');
+  if (ov) ov.className = preview ? 'schov' : 'schov hide';
   document.getElementById('next-num').textContent = '1';
   document.getElementById('errs').textContent = '0';
   document.getElementById('timer').textContent = '0.0';
@@ -3638,6 +3839,8 @@ function hit(idx){
 }
 function finishSchulte(){
   running = false; clearInterval(tick);
+  var ovF = document.getElementById('sch-ov');
+  if (ovF) ovF.className = 'schov';
   var sec = Math.round((Date.now()-t0)/100)/10;
   DB.schulte.unshift({ d: today, t: sec, e: errs, n: SCH_N });
   DB.schulte = DB.schulte.slice(0,60);
@@ -4571,7 +4774,8 @@ function selfTest(){
 }
 
 /* ---------- удаление одной записи ---------- */
-var RM_NAME = { schulte: 'Шульте', svet: '«Светофон»', stroop: 'Струп', mot: 'Слежение', gng: 'Реакция с помехами' };
+var RM_NAME = { schulte: 'Шульте', svet: '«Светофон»', stroop: 'Струп', mot: 'Слежение', gng: 'Реакция с помехами',
+                cups: 'Напёрстки', mem: 'Память на поле', tempo: 'Темп' };
 function rmRec(key, i){
   i = parseInt(i, 10);
   var l = DB[key] || [];
@@ -4580,7 +4784,8 @@ function rmRec(key, i){
   l.splice(i, 1);
   DB[key] = l;
   haptic('medium');
-  save(key, DB[key], function(){ render(); if (key === 'mot') renderMotList(); if (key === 'gng') renderGnList(); });
+  save(key, DB[key], function(){ render(); if (key === 'mot') renderMotList(); if (key === 'gng') renderGnList();
+    if (key === 'cups') renderCupList(); if (key === 'mem') renderMemList(); if (key === 'tempo') renderTmpList(); });
 }
 
 /* ---------- обратный отсчёт 3-2-1 ---------- */
@@ -4826,10 +5031,556 @@ function openGng(){
   if (cv && !cv._g){ cv._g = true; cv.addEventListener('click', gnTap); }
 }
 
+/* ═══════════ НАПЁРСТКИ ═══════════ */
+
+var CUP = {
+  tg: 1, cn: 4, sp: 1, tr: 10,     /* шариков · стаканов · скорость · попыток */
+  i: 0, ok: 0, run: false, phase: 'idle',
+  pos: [], hid: [], pick: [], t: null
+};
+var CUP_OPT = { tg: [1, 2, 3], cn: [3, 4, 5], sp: [1, 2, 3], tr: [10, 15, 20] };
+var CUP_SP  = { 1: 'спокойно', 2: 'быстро', 3: 'очень быстро' };
+/* длительность одной перестановки и сколько их делаем */
+var CUP_MS  = { 1: 620, 2: 400, 3: 260 };
+var CUP_SW  = { 1: 8, 2: 12, 3: 16 };
+
+function cupList(){ return DB.cups || (DB.cups = []); }
+
+function renderCupOpts(){
+  [['tg', 'cup-tg', null], ['cn', 'cup-cn', null], ['sp', 'cup-sp', CUP_SP], ['tr', 'cup-tr', null]]
+  .forEach(function(o){
+    var el = document.getElementById(o[1]);
+    if (!el) return;
+    el.innerHTML = CUP_OPT[o[0]].map(function(v){
+      var lab = o[2] ? o[2][v] : v;
+      var off = (o[0] === 'tg' && v >= CUP.cn) ? ' disabled' : '';
+      return '<button data-act="cupo:' + o[0] + ':' + v + '"' +
+             (CUP[o[0]] === v ? ' class="on"' : '') + off + '>' + lab + '</button>';
+    }).join('');
+  });
+}
+
+function renderCupList(){
+  var box = document.getElementById('cup-list');
+  if (!box) return;
+  var l = cupList();
+  box.innerHTML = l.length ? l.slice(0, 12).map(function(x, i){
+    var p = x.n ? Math.round(x.ok / x.n * 100) : 0;
+    return '<div><span>' + dm(x.d) + ' · ' + x.tg + ' из ' + x.cn + ' · ' + (CUP_SP[x.sp] || '') +
+           '</span><b>' + p + ' % <i>' + x.ok + ' из ' + x.n + '</i></b>' +
+           '<span class="rm" data-act="rmrec:cups:' + i + '">×</span></div>';
+  }).join('') : '<div>Серий пока нет.</div>';
+}
+
+function cupBuild(){
+  var box = document.getElementById('cup-box');
+  if (!box) return;
+  box.className = 'cupbox n' + CUP.cn;
+  var h = '';
+  for (var i = 0; i < CUP.cn; i++){
+    h += '<div class="cup" id="cup' + i + '" data-act="cuptap:' + i + '">' +
+         '<div class="cupball"></div><div class="cuptop"></div></div>';
+  }
+  box.innerHTML = h;
+}
+
+function cupShow(state){
+  for (var i = 0; i < CUP.cn; i++){
+    var el = document.getElementById('cup' + i);
+    if (!el) continue;
+    var cls = 'cup';
+    if (state === 'show' && CUP.hid.indexOf(i) >= 0) cls += ' open';
+    if (state === 'done'){
+      if (CUP.hid.indexOf(i) >= 0) cls += ' open ' + (CUP.pick.indexOf(i) >= 0 ? 'good' : 'bad');
+      else if (CUP.pick.indexOf(i) >= 0) cls += ' bad';
+    }
+    if (state === 'pick' && CUP.pick.indexOf(i) >= 0) cls += ' sel';
+    el.className = cls;
+  }
+}
+
+function cupPos(){
+  /* раскладываем стаканы по местам: индекс в массиве — место на экране */
+  var box = document.getElementById('cup-box');
+  if (!box) return;
+  for (var i = 0; i < CUP.cn; i++){
+    var el = document.getElementById('cup' + i);
+    if (el) el.style.order = String(CUP.pos.indexOf(i));
+  }
+}
+
+function cupTrial(){
+  CUP.phase = 'show';
+  CUP.pick = [];
+  CUP.pos = [];
+  for (var i = 0; i < CUP.cn; i++) CUP.pos.push(i);
+  /* выбираем, под какими стаканами шарики */
+  var idx = CUP.pos.slice();
+  idx.sort(function(){ return Math.random() - 0.5; });
+  CUP.hid = idx.slice(0, CUP.tg).sort(function(a, b){ return a - b; });
+  cupBuild(); cupPos(); cupShow('show');
+  setTxt('cup-n', (CUP.i + 1) + ' / ' + CUP.tr);
+  setTxt('cup-hint', CUP.tg === 1 ? 'Запомни, где шарик' : 'Запомни, где ' + CUP.tg + ' шарика');
+  CUP.t = setTimeout(function(){
+    cupShow('hidden');
+    CUP.phase = 'mix';
+    setTxt('cup-hint', 'Следи');
+    cupMix(0);
+  }, 1100);
+}
+
+function cupMix(done){
+  if (!CUP.run) return;
+  var total = CUP_SW[CUP.sp] || 10;
+  if (done >= total){
+    CUP.phase = 'pick';
+    setTxt('cup-hint', CUP.tg === 1 ? 'Где шарик?' : 'Укажи все ' + CUP.tg);
+    return;
+  }
+  /* меняем местами два случайных места */
+  var a = Math.floor(Math.random() * CUP.cn), b = Math.floor(Math.random() * CUP.cn);
+  while (b === a) b = Math.floor(Math.random() * CUP.cn);
+  var t = CUP.pos[a]; CUP.pos[a] = CUP.pos[b]; CUP.pos[b] = t;
+  cupPos();
+  CUP.t = setTimeout(function(){ cupMix(done + 1); }, CUP_MS[CUP.sp] || 500);
+}
+
+function cupTap(i){
+  if (!CUP.run || CUP.phase !== 'pick') return;
+  var k = CUP.pick.indexOf(i);
+  if (k >= 0) CUP.pick.splice(k, 1);
+  else {
+    if (CUP.pick.length >= CUP.tg) return;
+    CUP.pick.push(i);
+  }
+  haptic();
+  cupShow('pick');
+  if (CUP.pick.length === CUP.tg) cupCheck();
+}
+
+function cupCheck(){
+  CUP.phase = 'done';
+  var win = CUP.pick.slice().sort().join(',') === CUP.hid.slice().sort().join(',');
+  if (win){ CUP.ok++; haptic('medium'); } else haptic('heavy');
+  setTxt('cup-ok', String(CUP.ok));
+  setTxt('cup-hint', win ? 'Верно' : 'Мимо');
+  cupShow('done');
+  CUP.i++;
+  CUP.t = setTimeout(function(){
+    if (!CUP.run) return;
+    if (CUP.i >= CUP.tr) cupFinish(); else cupTrial();
+  }, win ? 800 : 1500);
+}
+
+function cupStart(){
+  if (CUP.run){ cupStop(); return; }
+  if (CUP.tg >= CUP.cn) CUP.tg = CUP.cn - 1;
+  CUP.run = true; CUP.i = 0; CUP.ok = 0;
+  setTxt('cup-btn', 'Остановить');
+  setTxt('cup-lv', CUP_SP[CUP.sp] || '—');
+  cupTrial();
+}
+function cupStop(){
+  CUP.run = false; CUP.phase = 'idle';
+  if (CUP.t) clearTimeout(CUP.t);
+  setTxt('cup-btn', 'Начать серию');
+  setTxt('cup-hint', 'Остановлено.');
+}
+function cupFinish(){
+  CUP.run = false; CUP.phase = 'idle';
+  setTxt('cup-btn', 'Начать серию');
+  var p = Math.round(CUP.ok / CUP.tr * 100);
+  cupList().unshift({ d: today, tg: CUP.tg, cn: CUP.cn, sp: CUP.sp, n: CUP.tr, ok: CUP.ok, acc: p });
+  DB.cups = cupList().slice(0, 60);
+  setTxt('cup-hint', 'Серия окончена: ' + CUP.ok + ' из ' + CUP.tr + ' — ' + p + ' %');
+  ckAuto(1);
+  save('cups', DB.cups, function(){ haptic('medium'); renderCupList(); render(); });
+}
+
+function openCup(){
+  renderCupOpts(); renderCupList(); cupBuild(); cupShow('hidden');
+  setTxt('cup-n', '0 / ' + CUP.tr); setTxt('cup-ok', '0');
+  setTxt('cup-lv', CUP_SP[CUP.sp] || '—');
+}
+
+/* ═══════════ ПАМЯТЬ 5×5 ═══════════ */
+
+var MEM = {
+  md: 1,          /* 1 — тест с ростом, 2 — тренировка на фиксированном числе */
+  fix: 5,         /* сколько цифр в тренировке */
+  lvl: 1, step: 0, fails: 0, ok: 0,
+  seq: [], got: 0, run: false, phase: 'idle', t: null
+};
+var MEM_OPT = { md: [1, 2], fix: [3, 4, 5, 6, 7, 8] };
+var MEM_MD  = { 1: 'тест', 2: 'тренировка' };
+
+function memList(){ return DB.mem || (DB.mem = []); }
+function memBest(){
+  var l = memList().filter(function(x){ return x.md === 1; });
+  return l.length ? l.reduce(function(a, x){ return Math.max(a, x.lvl || 0); }, 0) : 0;
+}
+
+function renderMemOpts(){
+  var el = document.getElementById('mem-md');
+  if (el) el.innerHTML = MEM_OPT.md.map(function(v){
+    return '<button data-act="memo:md:' + v + '"' + (MEM.md === v ? ' class="on"' : '') + '>' +
+           MEM_MD[v] + '</button>'; }).join('');
+  var f = document.getElementById('mem-fix');
+  if (f) f.innerHTML = MEM_OPT.fix.map(function(v){
+    return '<button data-act="memo:fix:' + v + '"' + (MEM.fix === v ? ' class="on"' : '') +
+           (MEM.md === 1 ? ' disabled' : '') + '>' + v + '</button>'; }).join('');
+}
+
+function renderMemList(){
+  var box = document.getElementById('mem-list');
+  if (!box) return;
+  var l = memList();
+  box.innerHTML = l.length ? l.slice(0, 12).map(function(x, i){
+    return '<div><span>' + dm(x.d) + ' · ' + (MEM_MD[x.md] || '') + '</span><b>' +
+           (x.md === 1 ? x.lvl + ' цифр' : x.ok + ' из ' + x.n) +
+           '</b><span class="rm" data-act="rmrec:mem:' + i + '">×</span></div>';
+  }).join('') : '<div>Попыток пока нет.</div>';
+}
+
+function memBuild(){
+  var g = document.getElementById('mem-grid');
+  if (!g) return;
+  var h = '';
+  for (var i = 0; i < 25; i++) h += '<button class="memc" id="mc' + i + '" data-act="memtap:' + i + '"></button>';
+  g.innerHTML = h;
+}
+function memClear(){
+  for (var i = 0; i < 25; i++){
+    var el = document.getElementById('mc' + i);
+    if (el){ el.className = 'memc'; el.textContent = ''; }
+  }
+}
+
+function memLevel(){ return MEM.md === 1 ? MEM.lvl : MEM.fix; }
+
+function memTrial(){
+  MEM.phase = 'show'; MEM.got = 0;
+  memClear();
+  var n = memLevel();
+  var cells = [];
+  for (var i = 0; i < 25; i++) cells.push(i);
+  cells.sort(function(){ return Math.random() - 0.5; });
+  MEM.seq = cells.slice(0, n);
+  setTxt('mem-lvl', String(n));
+  setTxt('mem-hint', 'Запоминай порядок');
+  /* показываем цифры по очереди */
+  MEM.seq.forEach(function(c, k){
+    var el = document.getElementById('mc' + c);
+    if (el){ el.textContent = String(k + 1); el.className = 'memc lit'; }
+  });
+  MEM.t = setTimeout(function(){
+    if (!MEM.run) return;
+    memClear();
+    MEM.phase = 'pick';
+    setTxt('mem-hint', 'Повтори по порядку: 1, 2, 3…');
+  }, 900 + n * 650);
+}
+
+function memTap(i){
+  if (!MEM.run || MEM.phase !== 'pick') return;
+  var el = document.getElementById('mc' + i);
+  if (MEM.seq[MEM.got] === i){
+    MEM.got++;
+    if (el){ el.textContent = String(MEM.got); el.className = 'memc good'; }
+    haptic();
+    if (MEM.got >= MEM.seq.length) memWin();
+  } else {
+    if (el) el.className = 'memc wrong';
+    haptic('heavy');
+    memLose();
+  }
+}
+
+function memWin(){
+  MEM.phase = 'done'; MEM.ok++;
+  MEM.passed = Math.max(MEM.passed || 0, memLevel());
+  setTxt('mem-ok', String(MEM.ok));
+  setTxt('mem-hint', 'Верно');
+  MEM.t = setTimeout(function(){
+    if (!MEM.run) return;
+    if (MEM.md === 1){ MEM.lvl++; MEM.fails = 0; memTrial(); }
+    else { MEM.step++; if (MEM.step >= 10) memFinish(); else memTrial(); }
+  }, 700);
+}
+
+function memLose(){
+  MEM.phase = 'done'; MEM.fails++;
+  /* показываем правильный порядок */
+  MEM.seq.forEach(function(c, k){
+    var el = document.getElementById('mc' + c);
+    if (el && !el.className.match(/good/)){ el.textContent = String(k + 1); el.className = 'memc lit'; }
+  });
+  setTxt('mem-hint', 'Не тот порядок');
+  MEM.t = setTimeout(function(){
+    if (!MEM.run) return;
+    if (MEM.md === 1){
+      if (MEM.fails >= 2) memFinish();
+      else memTrial();
+    } else {
+      MEM.step++;
+      if (MEM.step >= 10) memFinish(); else memTrial();
+    }
+  }, 1600);
+}
+
+function memStart(){
+  if (MEM.run){ memStop(); return; }
+  MEM.run = true; MEM.ok = 0; MEM.step = 0; MEM.fails = 0; MEM.passed = 0;
+  MEM.lvl = MEM.md === 1 ? 1 : MEM.fix;
+  setTxt('mem-ok', '0');
+  setTxt('mem-btn', 'Остановить');
+  memTrial();
+}
+function memStop(){
+  MEM.run = false; MEM.phase = 'idle';
+  if (MEM.t) clearTimeout(MEM.t);
+  setTxt('mem-btn', 'Начать');
+  setTxt('mem-hint', 'Остановлено.');
+}
+function memFinish(){
+  MEM.run = false; MEM.phase = 'idle';
+  setTxt('mem-btn', 'Начать');
+  var rec;
+  if (MEM.md === 1){
+    var reached = MEM.passed || 0;
+    rec = { d: today, md: 1, lvl: reached, n: MEM.ok + MEM.fails, ok: MEM.ok };
+    setTxt('mem-hint', reached ? 'Дошёл до ' + reached + ' цифр' : 'Ни один уровень не пройден');
+  } else {
+    rec = { d: today, md: 2, lvl: MEM.fix, n: 10, ok: MEM.ok };
+    setTxt('mem-hint', 'Тренировка: ' + MEM.ok + ' из 10 на ' + MEM.fix + ' цифрах');
+  }
+  memList().unshift(rec);
+  DB.mem = memList().slice(0, 60);
+  setTxt('mem-best', String(memBest() || '—'));
+  ckAuto(1);
+  save('mem', DB.mem, function(){ haptic('medium'); renderMemList(); render(); });
+}
+
+function openMem(){
+  renderMemOpts(); renderMemList(); memBuild(); memClear();
+  setTxt('mem-lvl', String(memLevel()));
+  setTxt('mem-ok', '0');
+  setTxt('mem-best', String(memBest() || '—'));
+  setTxt('mem-hint', MEM.md === 1 ? 'Тест: уровень растёт сам.' : 'Тренировка на ' + MEM.fix + ' цифрах.');
+}
+
+/* ═══════════ ТЕМП ═══════════ */
+
+var TMP = {
+  md: 1,            /* 1 — метроном, 2 — чередование сторон, 3 — смена темпа */
+  bpm: 100, du: 30,
+  run: false, t0: 0, taps: [], beats: [], side: 'l', t: null, raf: null,
+  mul: 1, next: 0, silent: false
+};
+var TMP_OPT = { md: [1, 2, 3], bpm: [80, 100, 120, 140], du: [20, 30, 45] };
+var TMP_MD  = { 1: 'метроном', 2: 'чередование сторон', 3: 'смена темпа' };
+var TMP_ABOUT = {
+  1: 'Бей в такт. На середине звук и вспышка пропадают — держишь ритм сам. Смотрим, насколько точно попадаешь и ровно ли держишь.',
+  2: 'Бей поочерёдно левой и правой как можно быстрее, но ровно. Смотрим частоту и насколько темп падает к концу.',
+  3: 'Экран краснеет — ускоряешься вдвое, синеет — замедляешься вдвое. Задача: поймать новый темп за один-два удара.'
+};
+
+function tmpList(){ return DB.tempo || (DB.tempo = []); }
+
+function renderTmpOpts(){
+  var m = document.getElementById('tmp-md');
+  if (m) m.innerHTML = TMP_OPT.md.map(function(v){
+    return '<button data-act="tmpo:md:' + v + '"' + (TMP.md === v ? ' class="on"' : '') + '>' +
+           TMP_MD[v] + '</button>'; }).join('');
+  var b = document.getElementById('tmp-bpm');
+  if (b) b.innerHTML = TMP_OPT.bpm.map(function(v){
+    return '<button data-act="tmpo:bpm:' + v + '"' + (TMP.bpm === v ? ' class="on"' : '') +
+           (TMP.md === 2 ? ' disabled' : '') + '>' + v + '</button>'; }).join('');
+  var d = document.getElementById('tmp-du');
+  if (d) d.innerHTML = TMP_OPT.du.map(function(v){
+    return '<button data-act="tmpo:du:' + v + '"' + (TMP.du === v ? ' class="on"' : '') + '>' +
+           v + ' с</button>'; }).join('');
+  setTxt('tmp-about', TMP_ABOUT[TMP.md] || '');
+  var box = document.getElementById('tmp-box');
+  if (box) box.className = 'tmpbox' + (TMP.md === 2 ? ' two' : '');
+  var lp = document.querySelector('#tmp-l b');
+  if (lp) lp.textContent = TMP.md === 2 ? 'Левая' : 'Бей здесь';
+  var lab = { 1: ['точность', 'разброс', 'ударов'], 2: ['ударов/с', 'падение', 'всего'],
+              3: ['точность', 'сбоев', 'ударов'] }[TMP.md];
+  setTxt('tmp-al', lab[0]); setTxt('tmp-bl', lab[1]); setTxt('tmp-cl', lab[2]);
+}
+
+function renderTmpList(){
+  var box = document.getElementById('tmp-list');
+  if (!box) return;
+  var l = tmpList();
+  box.innerHTML = l.length ? l.slice(0, 12).map(function(x, i){
+    var main = x.md === 2 ? (x.a + ' уд/с') : (x.a + ' мс');
+    return '<div><span>' + dm(x.d) + ' · ' + (TMP_MD[x.md] || '') +
+           (x.md === 2 ? '' : ' · ' + x.bpm) + '</span><b>' + main +
+           ' <i>' + (x.md === 2 ? 'падение ' + x.b + ' %' : 'разброс ' + x.b + ' мс') + '</i></b>' +
+           '<span class="rm" data-act="rmrec:tempo:' + i + '">×</span></div>';
+  }).join('') : '<div>Попыток пока нет.</div>';
+}
+
+function tmpBeep(strong){
+  try {
+    var C = window.AudioContext || window.webkitAudioContext;
+    if (!C) return;
+    if (!TMP.ac) TMP.ac = new C();
+    var o = TMP.ac.createOscillator(), g = TMP.ac.createGain();
+    o.frequency.value = strong ? 1050 : 760;
+    g.gain.value = 0.16;
+    o.connect(g); g.connect(TMP.ac.destination);
+    o.start();
+    g.gain.exponentialRampToValueAtTime(0.0001, TMP.ac.currentTime + 0.07);
+    o.stop(TMP.ac.currentTime + 0.08);
+  } catch(e){}
+}
+
+function tmpFlash(cls){
+  var box = document.getElementById('tmp-box');
+  if (!box) return;
+  box.className = 'tmpbox' + (TMP.md === 2 ? ' two' : '') + (cls ? ' ' + cls : '');
+  if (cls === 'beat') setTimeout(function(){
+    var b = document.getElementById('tmp-box');
+    if (b && b.className.indexOf('beat') >= 0)
+      b.className = 'tmpbox' + (TMP.md === 2 ? ' two' : '') + (TMP.mul === 2 ? ' fast' : (TMP.mul === 0.5 ? ' slow' : ''));
+  }, 90);
+}
+
+function tmpLoop(){
+  if (!TMP.run) return;
+  var now = performance.now();
+  var el = (now - TMP.t0) / 1000;
+  if (el >= TMP.du){ tmpFinish(); return; }
+  var period = 60000 / (TMP.bpm * TMP.mul);
+
+  if (TMP.md === 3){
+    /* смена темпа каждые 8 секунд */
+    var seg = Math.floor(el / 8);
+    if (seg !== TMP.seg){
+      TMP.seg = seg;
+      TMP.mul = seg === 0 ? 1 : [1, 2, 0.5, 1, 2, 0.5][seg % 6];
+      TMP.switches = (TMP.switches || 0) + (seg ? 1 : 0);
+      tmpFlash(TMP.mul === 2 ? 'fast' : (TMP.mul === 0.5 ? 'slow' : ''));
+      TMP.next = now + period;
+    }
+  }
+  if (TMP.md === 1 && !TMP.silent && el >= TMP.du / 2){
+    TMP.silent = true;
+    setTxt('tmp-hint', 'Звук выключен — держи ритм сам');
+  }
+
+  while (now >= TMP.next){
+    TMP.beats.push(TMP.next);
+    if (!(TMP.md === 1 && TMP.silent)){ tmpBeep(false); tmpFlash('beat'); }
+    TMP.next += period;
+  }
+  TMP.raf = requestAnimationFrame(tmpLoop);
+}
+
+function tmpTap(side){
+  if (!TMP.run) return;
+  var now = performance.now();
+  haptic();
+  if (TMP.md === 2){
+    if (side !== TMP.side){ TMP.errs = (TMP.errs || 0) + 1; }
+    TMP.side = side === 'l' ? 'r' : 'l';
+    TMP.taps.push(now);
+    setTxt('tmp-c', String(TMP.taps.length));
+    var pad = document.getElementById('tmp-' + side);
+    if (pad){ pad.className = 'tmppad hit'; setTimeout(function(){ pad.className = 'tmppad'; }, 90); }
+    return;
+  }
+  TMP.taps.push(now);
+  setTxt('tmp-c', String(TMP.taps.length));
+  tmpFlash('beat');
+}
+
+function tmpStart(){
+  if (TMP.run){ tmpStop(); return; }
+  TMP.run = true; TMP.taps = []; TMP.beats = []; TMP.errs = 0;
+  TMP.mul = 1; TMP.silent = false; TMP.seg = -1; TMP.switches = 0; TMP.side = 'l';
+  setTxt('tmp-btn', 'Остановить');
+  setTxt('tmp-a', '—'); setTxt('tmp-b', '—'); setTxt('tmp-c', '0');
+  setTxt('tmp-hint', TMP.md === 2 ? 'Поочерёдно, как можно быстрее' : 'Бей в такт');
+  TMP.t0 = performance.now();
+  TMP.next = TMP.t0 + 60000 / TMP.bpm;
+  if (TMP.md === 2){ tmpTick2(); } else { TMP.raf = requestAnimationFrame(tmpLoop); }
+}
+function tmpTick2(){
+  if (!TMP.run) return;
+  var el = (performance.now() - TMP.t0) / 1000;
+  if (el >= TMP.du){ tmpFinish(); return; }
+  TMP.raf = requestAnimationFrame(tmpTick2);
+}
+function tmpStop(){
+  TMP.run = false;
+  if (TMP.raf) cancelAnimationFrame(TMP.raf);
+  setTxt('tmp-btn', 'Начать');
+  setTxt('tmp-hint', 'Остановлено.');
+  tmpFlash('');
+}
+
+function tmpFinish(){
+  TMP.run = false;
+  if (TMP.raf) cancelAnimationFrame(TMP.raf);
+  setTxt('tmp-btn', 'Начать');
+  tmpFlash('');
+  var rec = { d: today, md: TMP.md, bpm: TMP.bpm, du: TMP.du, n: TMP.taps.length };
+
+  if (TMP.md === 2){
+    var t = TMP.taps;
+    if (t.length < 4){ setTxt('tmp-hint', 'Слишком мало ударов.'); return; }
+    var dur = (t[t.length - 1] - t[0]) / 1000;
+    var rate = Math.round(t.length / dur * 100) / 100;
+    var half = Math.floor(t.length / 2);
+    var r1 = half / ((t[half] - t[0]) / 1000);
+    var r2 = (t.length - half) / ((t[t.length - 1] - t[half]) / 1000);
+    var drop = Math.round((1 - r2 / r1) * 1000) / 10;
+    rec.a = rate; rec.b = drop; rec.err = TMP.errs || 0;
+    setTxt('tmp-a', String(rate)); setTxt('tmp-b', drop + ' %');
+    setTxt('tmp-hint', 'Частота ' + rate + ' уд/с, падение к концу ' + drop + ' %' +
+           (TMP.errs ? ', сбоев очереди ' + TMP.errs : ''));
+  } else {
+    /* каждому удару ищем ближайший сигнал */
+    var errs = [];
+    TMP.taps.forEach(function(x){
+      var best = null;
+      TMP.beats.forEach(function(b){
+        var d = Math.abs(x - b);
+        if (best === null || d < best) best = d;
+      });
+      if (best !== null) errs.push(best);
+    });
+    if (!errs.length){ setTxt('tmp-hint', 'Ударов не было.'); return; }
+    var mean = errs.reduce(function(a, b){ return a + b; }, 0) / errs.length;
+    var sd = Math.sqrt(errs.reduce(function(a, b){ return a + (b - mean) * (b - mean); }, 0) / errs.length);
+    rec.a = Math.round(mean); rec.b = Math.round(sd);
+    if (TMP.md === 3) rec.sw = TMP.switches || 0;
+    setTxt('tmp-a', Math.round(mean) + ' мс'); setTxt('tmp-b', Math.round(sd) + ' мс');
+    setTxt('tmp-hint', 'Среднее отклонение ' + Math.round(mean) + ' мс, разброс ' + Math.round(sd) + ' мс');
+  }
+
+  tmpList().unshift(rec);
+  DB.tempo = tmpList().slice(0, 60);
+  ckAuto(1);
+  save('tempo', DB.tempo, function(){ haptic('medium'); renderTmpList(); render(); });
+}
+
+function openTmp(){
+  renderTmpOpts(); renderTmpList();
+  setTxt('tmp-a', '—'); setTxt('tmp-b', '—'); setTxt('tmp-c', '0');
+  setTxt('tmp-hint', 'Выбери режим и нажми «Начать».');
+}
+
 /* ══════════════════ СЛЕЖЕНИЕ ЗА ШАРИКАМИ ══════════════════ */
 
 var MOT = {
   tg: 2, bl: 12, du: 6, tr: 20,         /* целей · всего · секунд · попыток */
+  md: 1,                                 /* 1 — отскакивают, 2 — проходят сквозь (трафик) */
+  fast: 1,                               /* множитель скорости: 1 обычно, 2 быстро, 3 очень */
   sp: 0.26,                              /* доля поля в секунду */
   i: 0, ok: 0, run: false, phase: 'idle',
   balls: [], pick: [], log: [], raf: null, t0: 0
@@ -4838,18 +5589,25 @@ var MOT_OPT = {
   tg: [1, 2, 3, 4],
   bl: [8, 12, 16],
   du: [4, 6, 8],
-  tr: [10, 20]
+  tr: [10, 20],
+  md: [1, 2],
+  fast: [1, 2, 3]
 };
+var MOT_MD   = { 1: 'отскакивают', 2: 'сквозь друг друга' };
+var MOT_FAST = { 1: 'обычно', 2: 'быстро', 3: 'очень быстро' };
+var MOT_MUL  = { 1: 1, 2: 1.45, 3: 2 };
 
 function motList(){ return DB.mot || (DB.mot = []); }
 
 function renderMotOpts(){
-  [['tg', 'mot-tg', ''], ['bl', 'mot-bl', ''], ['du', 'mot-du', ' с'], ['tr', 'mot-tr', '']].forEach(function(o){
+  [['tg', 'mot-tg', ''], ['bl', 'mot-bl', ''], ['du', 'mot-du', ' с'], ['tr', 'mot-tr', ''],
+   ['md', 'mot-md', '', MOT_MD], ['fast', 'mot-fast', '', MOT_FAST]].forEach(function(o){
     var el = document.getElementById(o[1]);
     if (!el) return;
     el.innerHTML = MOT_OPT[o[0]].map(function(v){
+      var lab = o[3] ? o[3][v] : (v + o[2]);
       return '<button data-act="moto:' + o[0] + ':' + v + '"' + (MOT[o[0]] === v ? ' class="on"' : '') + '>' +
-             v + o[2] + '</button>';
+             lab + '</button>';
     }).join('');
   });
 }
@@ -4903,6 +5661,9 @@ function motDraw(){
   g.moveTo(MOT.w / 2, MOT.h / 2 - 7); g.lineTo(MOT.w / 2, MOT.h / 2 + 7);
   g.stroke();
 
+  /* в режиме «сквозь» шарики полупрозрачные — видно, как они накладываются */
+  g.globalAlpha = (MOT.md === 2 && MOT.phase === 'move') ? 0.78 : 1;
+
   MOT.balls.forEach(function(b, i){
     var lit = (MOT.phase === 'show' && b.t) ||
               (MOT.phase === 'done' && b.t) ||
@@ -4920,12 +5681,13 @@ function motDraw(){
       g.lineWidth = 3; g.strokeStyle = '#D6112E'; g.stroke();
     }
   });
+  g.globalAlpha = 1;
 }
 
 function motSpawn(){
   var w = MOT.w, h = MOT.h, n = MOT.bl;
   var r = Math.max(9, Math.round(Math.min(w, h) / 22));
-  var v = MOT.sp * Math.min(w, h);          /* пикселей в секунду */
+  var v = MOT.sp * (MOT_MUL[MOT.fast] || 1) * Math.min(w, h);   /* пикселей в секунду */
   MOT.balls = [];
   for (var i = 0; i < n; i++){
     var tries = 0, x, y, okp;
@@ -4935,7 +5697,8 @@ function motSpawn(){
       y = r + Math.random() * (h - 2 * r);
       for (var j = 0; j < MOT.balls.length; j++){
         var dx = MOT.balls[j].x - x, dy = MOT.balls[j].y - y;
-        if (dx * dx + dy * dy < (r * 2.6) * (r * 2.6)) { okp = false; break; }
+        var minSt = MOT.md === 2 ? r * 2.1 : r * 2.6;
+        if (dx * dx + dy * dy < minSt * minSt) { okp = false; break; }
       }
     } while (!okp && ++tries < 200);
     var a = Math.random() * Math.PI * 2;
@@ -4957,6 +5720,8 @@ function motStep(dt){
     if (b.y < b.r){ b.y = b.r; b.vy = Math.abs(b.vy); }
     if (b.y > h - b.r){ b.y = h - b.r; b.vy = -Math.abs(b.vy); }
   }
+  /* в режиме «сквозь» шарики не сталкиваются — проходят один через другой, как в трафике */
+  if (MOT.md === 2) return;
   /* шарики отталкиваются друг от друга, чтобы не слипались */
   for (var a = 0; a < B.length; a++){
     for (var c = a + 1; c < B.length; c++){
@@ -5077,7 +5842,8 @@ function motFinish(){
   var thr = tail.length ? tail.reduce(function(a, b){ return a + b; }, 0) / tail.length : MOT.sp;
   var acc = Math.round(MOT.ok / MOT.tr * 100);
   motList().unshift({ d: today, tg: MOT.tg, bl: MOT.bl, du: MOT.du, n: MOT.tr,
-                      ok: MOT.ok, acc: acc, sp: Math.round(thr * 1000) / 1000 });
+                      ok: MOT.ok, acc: acc, sp: Math.round(thr * 1000) / 1000,
+                      md: MOT.md, fast: MOT.fast });
   DB.mot = motList().slice(0, 60);
   var g = gradeMot({ sp: thr, n: MOT.tr, ok: MOT.ok });
   motOv(true, g.name + ' · ' + g.v,
