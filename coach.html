@@ -375,7 +375,7 @@
       <button class="thm" id="thm" type="button" title="Светлая или тёмная тема">🌙</button>
       <a id="me-out">выйти</a>
     </div>
-    <div class="ver" id="ver" title="Версия страницы. Если не меняется после заливки — браузер показывает старое: Cmd+Option+R">сборка 05.11 08:59</div>
+    <div class="ver" id="ver" title="Версия страницы. Если не меняется после заливки — браузер показывает старое: Cmd+Option+R">сборка 05.11 15:40</div>
   </aside>
 
   <main class="main" id="main">
@@ -510,7 +510,7 @@ function go(p){
 var SOON = {
   roster: ['Все вратари', 'Список вратарей системы, их данные, дисциплина заполнения и заметки.'],
   rates:  ['Оценки', 'Оценка вратаря по разделам, сравнение самооценки и оценки тренера, динамика по месяцам.'],
-  cog:    ['Когнитивка', 'Результаты Шульте, «Светофона», Струпа, слежения и реакции с помехами.'],
+  cog:    ['Когнитивка', 'Результаты Шульте, «Светофона», Струпа, слежения, реакции с помехами, напёрстков, памяти и темпа.'],
   ofp:    ['ОФП', 'Две вкладки: результаты тестирования с динамикой и планирование по микроциклам.'],
   theory: ['Теория', 'Материалы для вратарей: что уже выложено и что в плане.'],
   psy:    ['Психология', 'Материалы и план работы по психологической подготовке.']
@@ -1509,13 +1509,42 @@ var COG = [
   { k:'gng', t:'Реакция с помехами', u:'%', dir:'max',
     v:function(x){ return x.n ? Math.round(x.ok / x.n * 1000) / 10 : null; },
     ex:function(x){ return (x.n ? x.ok + ' из ' + x.n : '') + (x.e ? ' · ошибок ' + x.e : '') +
-                           (x.lv ? ' · уровень ' + x.lv : ''); } }
+                           (x.lv ? ' · уровень ' + x.lv : ''); } },
+  { k:'cups', t:'Напёрстки', u:'%', dir:'max',
+    v:function(x){ return x.n ? Math.round(x.ok / x.n * 1000) / 10 : null; },
+    ex:function(x){ return (x.n ? x.ok + ' из ' + x.n : '') +
+                           (x.tg ? ' · ' + x.tg + ' из ' + x.cn : '') +
+                           (x.sp ? ' · ' + (CUP_SP[x.sp] || '') : ''); } },
+  { k:'mem', t:'Память на поле', u:'цифр', dir:'max',
+    v:function(x){ return x.lvl || null; },
+    ex:function(x){ return (x.md === 1 ? 'тест' : 'тренировка') +
+                           (x.n ? ' · ' + x.ok + ' из ' + x.n : ''); } },
+  { k:'tempo', t:'Темп: метроном', u:'мс', dir:'min', f:function(x){ return x.md === 1; },
+    v:function(x){ return x.a; },
+    ex:function(x){ return x.bpm + ' уд/мин · разброс ' + x.b + ' мс · ударов ' + x.n; } },
+  { k:'tempo', t:'Темп: стороны', u:'уд/с', dir:'max', f:function(x){ return x.md === 2; },
+    v:function(x){ return x.a; },
+    ex:function(x){ return 'падение ' + x.b + ' % · ударов ' + x.n +
+                           (x.err ? ' · сбоев очереди ' + x.err : ''); } },
+  { k:'tempo', t:'Темп: смена', u:'мс', dir:'min', f:function(x){ return x.md === 3; },
+    v:function(x){ return x.a; },
+    ex:function(x){ return x.bpm + ' уд/мин · разброс ' + x.b + ' мс' +
+                           (x.sw ? ' · переключений ' + x.sw : ''); } }
 ];
-function cogCfg(k){ var r = COG[0]; COG.forEach(function(c){ if (c.k === k) r = c; }); return r; }
+/* ключ в COG может повторяться (режимы одного упражнения) - различаем по индексу */
+COG.forEach(function(c, i){ c.id = c.k + ':' + i; });
+function cogArr(g, c){
+  var a = ((g && g.cog && g.cog[c.k]) || []);
+  if (c.f) a = a.filter(c.f);
+  return a;
+}
+var CUP_SP = { 1: 'спокойно', 2: 'быстро', 3: 'очень быстро' };
+var TMP_MD = { 1: 'метроном', 2: 'чередование сторон', 3: 'смена темпа' };
+function cogCfg(k){ var r = COG[0]; COG.forEach(function(c){ if (c.id === k || c.k === k) r = c; }); return r; }
 function cogN(c){
   if (!c) return 0;
-  var n = 0;
-  COG.forEach(function(x){ n += (c[x.k] || []).length; });
+  var n = 0, seen = {};
+  COG.forEach(function(x){ if (seen[x.k]) return; seen[x.k] = 1; n += (c[x.k] || []).length; });
   return n;
 }
 
@@ -1586,7 +1615,7 @@ function rsCard(uid){
   var radHtml = rad ? radBars(rad) : '<div class="muted">Оценок пока нет.</div>';
 
   var cg = COG.map(function(c){
-    var arr = (x.cog && x.cog[c.k]) || [];
+    var arr = cogArr(x, c);
     if (!arr.length) return '';
     var l = arr[0], v = c.v(l);
     return '<div class="bar" style="grid-template-columns:170px 1fr 90px">' +
@@ -1744,7 +1773,7 @@ function rtDraw(){
 
 /* ───────── когнитивка ───────── */
 
-var CG = { k:'schulte', gk:'' };
+var CG = { k:'schulte:0', gk:'' };
 
 function cgLoad(){ pgWait('cog', 'Когнитивка'); sqLoad(cgDraw); }
 
@@ -1755,14 +1784,14 @@ function cgDraw(){
 
   var chips = COG.map(function(x){
     var n = 0;
-    list.forEach(function(g){ n += ((g.cog && g.cog[x.k]) || []).length; });
-    return '<button class="mcb' + (x.k === CG.k ? ' on' : '') + '" data-ck="' + x.k + '">' +
+    list.forEach(function(g){ n += cogArr(g, x).length; });
+    return '<button class="mcb' + (x.id === CG.k ? ' on' : '') + '" data-ck="' + x.id + '">' +
       x.t + ' <span style="opacity:.6">' + n + '</span></button>';
   }).join('');
 
   var best = null, worst = null;
   var rows = list.map(function(g){
-    var arr = ((g.cog && g.cog[c.k]) || []).slice().sort(function(a, b){ return a.d < b.d ? 1 : -1; });
+    var arr = cogArr(g, c).slice().sort(function(a, b){ return a.d < b.d ? 1 : -1; });
     if (!arr.length) return '';
     var last = arr[0], prev = arr[1];
     var v = c.v(last), pv = prev ? c.v(prev) : null;
@@ -1795,7 +1824,7 @@ function cgDraw(){
   if (CG.gk){
     var g = sqBy(CG.gk);
     if (g){
-      var arr = ((g.cog && g.cog[c.k]) || []).slice().sort(function(a, b){ return a.d < b.d ? 1 : -1; });
+      var arr = cogArr(g, c).slice().sort(function(a, b){ return a.d < b.d ? 1 : -1; });
       var hv = arr.map(c.v).filter(function(z){ return z !== null && z !== undefined && !isNaN(z); });
       var hmax = hv.length ? Math.max.apply(null, hv) : 1;
       var hmin = hv.length ? Math.min.apply(null, hv) : 0;
