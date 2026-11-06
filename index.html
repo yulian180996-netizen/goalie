@@ -1838,6 +1838,9 @@ body.lt .tabbar{background:rgba(255,255,255,.98)}
     <button class="btn" data-act="gatein" id="gbtn">Войти</button>
     <div class="gerr" id="gerr"></div>
     <div class="gh">Открываешь из бота в Telegram — код не нужен, вход произойдёт сам.<br><br>
+      <b style="color:var(--w)">Сразу после входа вынеси приложение на домашний экран.</b>
+      В Safari кнопка «Поделиться» внизу → «На экран «Домой»». Иначе Safari через неделю
+      забудет, кто ты, и код придётся вводить заново.<br><br>
       Код потеряли или он не подходит — напиши тренеру, он выдаст новый.</div>
   </div>
 </div>
@@ -2138,36 +2141,70 @@ function boot(){
   markTabs(CUR_PAGE);
   markCards();
 
-  /* 2. подтягиваем актуальное с сервера */
+  /* 2. подтягиваем актуальное с сервера.
+        Если данные уже пришли вместе со входом — второй запрос не нужен. */
   if (!apiReady()){ setSync('база не подключена'); return; }
+  if (FRESH){ FRESH = false; afterPull(); return; }
   setSync('синхронизация…');
   api({ a: 'pull' }, function(res){
     if (!res || !res.ok){ setSync('нет связи — работаю по кэшу'); return; }
-    IS_COACH = !!res.isCoach;
-    DATA_KEYS.forEach(function(k){
-      /* раздел с неотправленными правками с сервера НЕ перетираем:
-         иначе свежая запись вратаря пропадёт, не дойдя до базы */
-      if (QUEUE[k] !== undefined) return;
-      if (res.data && res.data[k] !== undefined && res.data[k] !== null){
-        DB[k] = res.data[k];
-        lset(k, DB[k]);
-      }
-    });
-    DB.notes = res.notes || [];
-    lset('notes', DB.notes);
-    if (res.lib){ LIB = res.lib; lset('lib', LIB); }
-    DB.rates = res.rates || [];
-    lset('rates', DB.rates);
-    fixGoals();
-    setSync(qCount() ? 'есть неотправленное: ' + qCount() : 'на связи');
-    flushQueue();
-    applyRole();
-    buildForms();
-    render();
-    if (IS_COACH) loadRoster();
-    loadPlans();
-    applyHomeRole();
+    applyPull(res);
+    afterPull();
   });
+}
+
+/* разбор ответа сервера: и для обычного pull, и для данных, пришедших со входом */
+var FRESH = false;
+function applyPull(res, atLogin){
+  IS_COACH = !!res.isCoach;
+  DATA_KEYS.forEach(function(k){
+    /* раздел с неотправленными правками с сервера НЕ перетираем:
+       иначе свежая запись вратаря пропадёт, не дойдя до базы */
+    if (QUEUE[k] !== undefined) return;
+    if (res.data && res.data[k] !== undefined && res.data[k] !== null){
+      DB[k] = res.data[k];
+      lset(k, DB[k]);
+    }
+  });
+  DB.notes = res.notes || [];
+  lset('notes', DB.notes);
+  if (res.lib){ LIB = res.lib; lset('lib', LIB); }
+  DB.rates = res.rates || [];
+  lset('rates', DB.rates);
+  fixGoals();
+  if (atLogin) FRESH = true;
+}
+
+/* Safari выбрасывает память сайта, если им неделю не пользовались,
+   и вратарю приходится вводить код заново. Вынесенное на домашний экран
+   приложение он не трогает — поэтому просим об этом один раз, прямо после входа. */
+function homeHint(){
+  if (viaTelegram() || !SITE_KEY) return;
+  var standalone = false;
+  try { standalone = !!(navigator.standalone || (window.matchMedia &&
+        window.matchMedia('(display-mode: standalone)').matches)); } catch(e){}
+  if (standalone) return;
+  var seen = false;
+  try { seen = localStorage.getItem('gk_home_hint') === '1'; } catch(e){}
+  if (seen) return;
+  var ios = /iPad|iPhone|iPod/.test(navigator.userAgent || '');
+  alert('Вынеси приложение на домашний экран — это займёт пять секунд.\n\n' +
+        (ios ? 'Кнопка «Поделиться» внизу → «На экран «Домой»».'
+             : 'Три точки справа вверху → «Добавить на главный экран».') +
+        '\n\nИначе браузер через неделю забудет, кто ты, и код придётся вводить заново.');
+  try { localStorage.setItem('gk_home_hint', '1'); } catch(e){}
+}
+
+function afterPull(){
+  setTimeout(homeHint, 900);
+  setSync(qCount() ? 'есть неотправленное: ' + qCount() : 'на связи');
+  flushQueue();
+  applyRole();
+  buildForms();
+  render();
+  if (IS_COACH) loadRoster();
+  loadPlans();
+  applyHomeRole();
 }
 
 /* ---------- роль: вратарь или тренер ---------- */
@@ -4662,6 +4699,9 @@ function gateCode(code){
     try { localStorage.setItem('gk_site_key', SITE_KEY); } catch(e){}
     UID = String(res.uid || UID);
     try { localStorage.setItem('gk_site_uid', UID); } catch(e){}
+    /* сервер отдал данные вместе со входом — кладём в кэш,
+       чтобы boot() не ходил за ними второй раз */
+    if (res.pull && res.pull.ok) applyPull(res.pull, true);
     showGate(false);
     setTxt('how-in', authWay());
     boot();
