@@ -180,6 +180,28 @@
   .gl{display:flex;gap:8px;align-items:center;margin-bottom:8px}
   .gl select{flex:1}
   .gl .z{width:62px;flex:none}
+  /* карточка гола: ситуация плюс две кликабельные схемы */
+  .glc{border:1px solid var(--line);border-radius:11px;padding:10px;margin-bottom:10px;background:var(--bg3)}
+  .glh{display:flex;gap:8px;align-items:center}
+  .glh b{font-size:12px;color:var(--tx2);white-space:nowrap}
+  .glh select{flex:1}
+  .glh input{flex:1}
+  .glmaps{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:9px}
+  .glcap{font-size:11px;color:var(--tx2);margin-bottom:4px}
+  .glcap.zn{margin:4px 0 0}
+  .pick{position:relative;line-height:0;border-radius:9px;overflow:hidden;cursor:crosshair;
+        border:1px solid var(--line);background:var(--bg2)}
+  .pick img{width:100%;display:block;-webkit-user-select:none;user-select:none}
+  .pick u{position:absolute;width:13px;height:13px;margin:-7px 0 0 -7px;border-radius:50%;
+          background:var(--red);box-shadow:0 0 0 2px #fff;pointer-events:none}
+  /* накопительная карта в аналитике */
+  .maps2{display:grid;grid-template-columns:1.35fr 1fr;gap:14px;align-items:start;margin-top:10px}
+  .hmap{position:relative;line-height:0;border-radius:10px;overflow:hidden;border:1px solid var(--line)}
+  .hmap img{width:100%;display:block}
+  .hmap u{position:absolute;width:12px;height:12px;margin:-6px 0 0 -6px;border-radius:50%;
+          background:rgba(214,17,46,.82);box-shadow:0 0 0 1.5px rgba(255,255,255,.85)}
+  .sitbar{margin:0 0 4px}
+  @media (max-width:860px){ .maps2{grid-template-columns:1fr} }
   .net{display:grid;grid-template-columns:repeat(3,44px);gap:4px;margin-top:4px}
   .net button{height:36px;border:1px solid var(--line);background:var(--bg3);border-radius:7px;
       cursor:pointer;font-size:12px;color:var(--tx2)}
@@ -376,7 +398,7 @@
       <button class="thm" id="thm" type="button" title="Светлая или тёмная тема">🌙</button>
       <a id="me-out">выйти</a>
     </div>
-    <div class="ver" id="ver" title="Версия страницы. Если не меняется после заливки — браузер показывает старое: Cmd+Option+R">сборка 05.11 16:20</div>
+    <div class="ver" id="ver" title="Версия страницы. Если не меняется после заливки — браузер показывает старое: Cmd+Option+R">сборка 09.11 14:05</div>
   </aside>
 
   <main class="main" id="main">
@@ -1124,17 +1146,28 @@ function gmForm(){
     gkOpts = '<option selected>' + esc(g.gk) + '</option>' + gkOpts;
 
   var glRows = (g.gls || []).map(function(x, i){
-    return '<div class="gl" data-gl="' + i + '">' +
-      '<select data-gf="s">' + GM.sit.map(function(sit){
-        return '<option' + (sit === x.s ? ' selected' : '') + '>' + esc(sit) + '</option>';
-      }).join('') + '</select>' +
-      '<input data-gf="d" placeholder="деталь" value="' + esc(x.d || '') + '">' +
-      '<select class="z" data-gf="z">' +
-        '<option value=""></option>' +
-        [1,2,3,4,5,6,7,8,9].map(function(z){
-          return '<option value="' + z + '"' + (Number(x.z) === z ? ' selected' : '') + '>' + z + '</option>';
+    return '<div class="glc" data-gl="' + i + '">' +
+      '<div class="glh"><b>Гол ' + (i + 1) + '</b>' +
+        '<select data-gf="s">' + GM.sit.map(function(sit){
+          return '<option' + (sit === x.s ? ' selected' : '') + '>' + esc(sit) + '</option>';
         }).join('') + '</select>' +
-      '<button class="x" data-glx="' + i + '">×</button></div>';
+        '<input data-gf="d" placeholder="деталь" value="' + esc(x.d || '') + '">' +
+        '<button class="x" data-glx="' + i + '">×</button></div>' +
+      '<div class="glmaps">' +
+        '<div><div class="glcap">Откуда бросали</div>' +
+          '<div class="pick" data-pk="rink" data-gi="' + i + '">' +
+            '<img src="rink.jpg" alt="">' + pkDot(x.x, x.y) + '</div></div>' +
+        '<div><div class="glcap">Куда зашла</div>' +
+          '<div class="pick" data-pk="goal" data-gi="' + i + '">' +
+            '<img src="goal.jpg" alt="">' + pkDot(x.gx, x.gy) + '</div>' +
+          '<div class="glcap zn" data-zn="' + i + '">' + (x.z ? 'зона ' + x.z + ' · ' + ZNAMES[x.z - 1] : 'не отмечено') + '</div></div>' +
+      '</div>' +
+      '<input type="hidden" data-gf="x" value="' + (x.x === undefined ? '' : x.x) + '">' +
+      '<input type="hidden" data-gf="y" value="' + (x.y === undefined ? '' : x.y) + '">' +
+      '<input type="hidden" data-gf="gx" value="' + (x.gx === undefined ? '' : x.gx) + '">' +
+      '<input type="hidden" data-gf="gy" value="' + (x.gy === undefined ? '' : x.gy) + '">' +
+      '<input type="hidden" data-gf="z" value="' + (x.z || '') + '">' +
+      '</div>';
   }).join('');
 
   mOpen(
@@ -1210,8 +1243,9 @@ function gmForm(){
       '</tbody></table>' +
       '<div class="dets" id="sk-cmp" style="margin:8px 0 0"></div></div>' +
 
-    '<div class="fld"><label>Голы — ситуация, деталь, зона ворот</label>' +
-      '<div class="dets" style="margin:-2px 0 8px">зоны: 1 2 3 — верх, 4 5 6 — середина, 7 8 9 — низ; слева направо со стороны броска</div>' + glRows +
+    '<div class="fld"><label>Голы — ситуация, точка броска, место в воротах</label>' +
+      '<div class="dets" style="margin:-2px 0 8px">ткни по схеме площадки, откуда бросали, и по воротам, куда зашла шайба. ' +
+      'Зона ворот определится сама. Точка ставится заново по новому клику</div>' + glRows +
       '<button class="addbtn" id="gl-add">+ добавить гол</button></div>' +
 
     '<div class="mact">' +
@@ -1249,6 +1283,8 @@ function gmForm(){
   $('gm-cancel').onclick = mClose;
   $('gl-add').onclick = function(){ gmSync(); GME.gls.push({ s: GM.sit[0], d:'', z:'' }); gmForm(); };
   $('mbody').onclick = function(e){
+    var pk = e.target.closest ? e.target.closest('[data-pk]') : null;
+    if (pk){ pkClick(pk, e); return; }
     var b = e.target.closest ? e.target.closest('[data-glx]') : null;
     if (!b) return;
     gmSync();
@@ -1272,6 +1308,42 @@ function gmForm(){
   };
 }
 
+/* ── отметка гола по схеме: площадка и ворота ── */
+
+function pkDot(x, y){
+  if (x === undefined || x === null || x === '' || isNaN(x)) return '';
+  return '<u style="left:' + (x * 100) + '%;top:' + (y * 100) + '%"></u>';
+}
+
+/** клик по картинке: ставим точку и, для ворот, считаем зону 1-9 */
+function pkClick(box, ev){
+  var r = box.getBoundingClientRect();
+  var x = (ev.clientX - r.left) / r.width;
+  var y = (ev.clientY - r.top) / r.height;
+  if (x < 0 || x > 1 || y < 0 || y > 1) return;
+  x = Math.round(x * 10000) / 10000;
+  y = Math.round(y * 10000) / 10000;
+
+  var i = box.getAttribute('data-gi');
+  var row = $('mbody').querySelector('[data-gl="' + i + '"]');
+  if (!row) return;
+  var set = function(f, v){ var el = row.querySelector('[data-gf="' + f + '"]'); if (el) el.value = v; };
+
+  if (box.getAttribute('data-pk') === 'rink'){
+    set('x', x); set('y', y);
+  } else {
+    set('gx', x); set('gy', y);
+    /* сетка 3×3 по картинке ворот: номер зоны выводим из координат */
+    var col = x < 1 / 3 ? 0 : (x < 2 / 3 ? 1 : 2);
+    var rw  = y < 1 / 3 ? 0 : (y < 2 / 3 ? 1 : 2);
+    var z = rw * 3 + col + 1;
+    set('z', z);
+    var cap = row.querySelector('[data-zn]');
+    if (cap) cap.textContent = 'зона ' + z + ' · ' + ZNAMES[z - 1];
+  }
+  box.innerHTML = box.querySelector('img').outerHTML + pkDot(x, y);
+}
+
 function gmSync(){
   var v = function(id){ var el = $('f-' + id); return el ? el.value : ''; };
   var sel = $('f-gk'), opt = sel ? sel.options[sel.selectedIndex] : null;
@@ -1290,9 +1362,15 @@ function gmSync(){
   GME.cm   = v('cm');
   var gls = [];
   $('mbody').querySelectorAll('[data-gl]').forEach(function(row){
+    var num = function(f){
+      var el = row.querySelector('[data-gf="' + f + '"]');
+      var v = el ? el.value : '';
+      return v === '' ? undefined : Number(v);
+    };
     gls.push({ s: row.querySelector('[data-gf="s"]').value,
                d: row.querySelector('[data-gf="d"]').value.trim(),
-               z: Number(row.querySelector('[data-gf="z"]').value) || '' });
+               z: Number(row.querySelector('[data-gf="z"]').value) || '',
+               x: num('x'), y: num('y'), gx: num('gx'), gy: num('gy') });
   });
   GME.gls = gls;
   var sk = {};
@@ -1313,7 +1391,7 @@ function gmSync(){
 }
 
 /* ───────── аналитика голов ───────── */
-var AN = { gk: '', from: '', to: '', src: 'games', pgk: '' };
+var AN = { gk: '', from: '', to: '', src: 'games', pgk: '', sit: '' };
 var ZNAMES = ['верх левый','верх центр','верх правый',
               'средн левый','средн центр','средн правый',
               'низ левый','низ центр','низ правый'];
@@ -1338,6 +1416,18 @@ function anLoad(){
   anDraw();
 }
 
+/** переключатели ситуаций над картой: пусто - все голы */
+function sitChips(sits, all){
+  var keys = Object.keys(sits).sort(function(a, b){ return sits[b] - sits[a]; });
+  if (!keys.length) return '';
+  return '<div class="mcbar sitbar">' +
+    '<button class="mcb' + (AN.sit ? '' : ' on') + '" data-sf="">Все <span style="opacity:.6">' + all + '</span></button>' +
+    keys.map(function(k){
+      return '<button class="mcb' + (AN.sit === k ? ' on' : '') + '" data-sf="' + esc(k) + '">' +
+             esc(k) + ' <span style="opacity:.6">' + sits[k] + '</span></button>';
+    }).join('') + '</div>';
+}
+
 function anDraw(){
   var sec = $('main').querySelector('[data-pg="goals"]');
   var list = (GM.list || []).filter(function(g){
@@ -1347,20 +1437,29 @@ function anDraw(){
     return true;
   });
 
-  var zones = [0,0,0,0,0,0,0,0,0], sits = {}, dets = {}, total = 0, shots = 0;
+  /* все голы выборки одним списком: из них строятся и карта, и зоны, и счётчики */
+  var pts = [];
   list.forEach(function(g){
-    shots += g.sh;
     (g.gls || []).forEach(function(x){
-      total++;
-      var z = Number(x.z) || 0;
-      if (z >= 1 && z <= 9) zones[z - 1]++;
-      var sname = x.s || 'Другое';
-      sits[sname] = (sits[sname] || 0) + 1;
-      if (x.d){
-        if (!dets[sname]) dets[sname] = {};
-        dets[sname][x.d] = (dets[sname][x.d] || 0) + 1;
-      }
+      pts.push({ s: x.s || 'Другое', d: x.d || '', z: Number(x.z) || 0,
+                 x: x.x, y: x.y, gx: x.gx, gy: x.gy, gk: g.gk || '', dt: g.d || '' });
     });
+  });
+  /* фильтр по ситуации действует на карту, ворота и счётчики */
+  var shown = AN.sit ? pts.filter(function(p){ return p.s === AN.sit; }) : pts;
+
+  var zones = [0,0,0,0,0,0,0,0,0], sits = {}, dets = {}, total = 0, shots = 0;
+  list.forEach(function(g){ shots += g.sh; });
+  pts.forEach(function(x){
+    sits[x.s] = (sits[x.s] || 0) + 1;
+    if (x.d){
+      if (!dets[x.s]) dets[x.s] = {};
+      dets[x.s][x.d] = (dets[x.s][x.d] || 0) + 1;
+    }
+  });
+  shown.forEach(function(x){
+    total++;
+    if (x.z >= 1 && x.z <= 9) zones[x.z - 1]++;
   });
 
   var zmax = Math.max.apply(null, zones) || 1;
@@ -1379,7 +1478,7 @@ function anDraw(){
               .map(function(k){ return esc(k) + ' ' + dets[x.s][k]; }).join(' · ') : '';
     return '<div class="bar"><div class="nm">' + esc(x.s) + '</div>' +
            '<div class="ln"><u style="width:' + Math.round(x.n / smax * 100) + '%"></u></div>' +
-           '<div class="vl"><b>' + x.n + '</b> · ' + (total ? Math.round(x.n / total * 1000) / 10 : 0) + '%</div></div>' +
+           '<div class="vl"><b>' + x.n + '</b> · ' + (pts.length ? Math.round(x.n / pts.length * 1000) / 10 : 0) + '%</div></div>' +
            (d ? '<div class="dets" style="margin:-4px 0 2px 160px">' + d + '</div>' : '');
   }).join('');
 
@@ -1430,6 +1529,20 @@ function anDraw(){
         '</b><i>голов за игру</i></div>' +
     '</div>' +
 
+    '<div class="card"><h2>Откуда забивают</h2>' +
+      sitChips(sits, pts.length) +
+      '<div class="maps2">' +
+        '<div><div class="glcap">Площадка · ' + shown.filter(function(p){ return p.x !== undefined; }).length +
+          ' из ' + shown.length + ' отмечено</div>' +
+          '<div class="hmap"><img src="rink.jpg" alt="">' +
+          shown.map(function(p){ return pkDot(p.x, p.y); }).join('') + '</div></div>' +
+        '<div><div class="glcap">Ворота · точкой, как заходила шайба</div>' +
+          '<div class="hmap"><img src="goal.jpg" alt="">' +
+          shown.map(function(p){ return pkDot(p.gx, p.gy); }).join('') + '</div></div>' +
+      '</div>' +
+      '<div class="ice">' + (AN.sit ? 'показана ситуация «' + esc(AN.sit) + '», нажми ещё раз, чтобы снять фильтр'
+                                    : 'показаны все голы выборки · выбери ситуацию, чтобы оставить только её') + '</div></div>' +
+
     '<div class="anwrap">' +
       '<div class="card"><h2>Куда забивают</h2>' +
         '<div class="goal">' + net + '</div>' +
@@ -1446,6 +1559,14 @@ function anDraw(){
       '<th class="num">Отражено</th></tr></thead><tbody>' + gkRows + '</tbody></table></div>' : '');
 
   sitBind('gm-sit');
+  var sb = sec.querySelector('.sitbar');
+  if (sb) sb.onclick = function(e){
+    var b = e.target.closest ? e.target.closest('[data-sf]') : null;
+    if (!b) return;
+    var k = b.getAttribute('data-sf');
+    AN.sit = (k && k === AN.sit) ? '' : k;    /* повторный клик снимает фильтр */
+    anDraw();
+  };
   $('an-gk').onchange = function(){ AN.gk = this.value; anDraw(); };
   sec.querySelector('.mcbar').onclick = function(e){
     var b = e.target.closest ? e.target.closest('[data-as]') : null;
