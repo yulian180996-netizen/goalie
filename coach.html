@@ -398,7 +398,7 @@
       <button class="thm" id="thm" type="button" title="Светлая или тёмная тема">🌙</button>
       <a id="me-out">выйти</a>
     </div>
-    <div class="ver" id="ver" title="Версия страницы. Если не меняется после заливки — браузер показывает старое: Cmd+Option+R">сборка 09.11 14:05</div>
+    <div class="ver" id="ver" title="Версия страницы. Если не меняется после заливки — браузер показывает старое: Cmd+Option+R">сборка 09.11 14:40</div>
   </aside>
 
   <main class="main" id="main">
@@ -1256,23 +1256,27 @@ function gmForm(){
     '</div>');
 
   function skTotals(){
-    var n = 0, ok = 0, e = 0;
+    var n = 0, ok = 0, e = 0, stk = 0;
     $('mbody').querySelectorAll('[data-sk]').forEach(function(row){
       var q = function(f){ return Number(row.querySelector('[data-sf="' + f + '"]').value) || 0; };
       var rn = q('n'), rok = q('ok'), re = q('e');
       if (!rn) rn = rok + re;
-      n += rn; ok += rok; e += re;
       var pc = row.querySelector('.pc');
       if (pc) pc.textContent = rn ? Math.round(rok / rn * 100) + '%' : '—';
+      /* клюшка - это выходы за шайбой, а не броски по воротам.
+         В сумму, которую сверяем с бросками в створ, она не идёт. */
+      if (SK_OUT.indexOf(row.getAttribute('data-sk')) >= 0){ stk += rn; return; }
+      n += rn; ok += rok; e += re;
     });
     $('sk-tn').textContent = n; $('sk-tok').textContent = ok; $('sk-te').textContent = e;
     $('sk-tp').textContent = n ? Math.round(ok / n * 100) + '%' : '—';
     var sh = Number($('f-sh').value) || 0;
     var box = $('sk-cmp');
-    if (!sh){ box.textContent = ''; box.style.color = ''; return; }
+    var tail = stk ? ' · клюшка ' + stk + ', в броски не идёт' : '';
+    if (!sh){ box.textContent = tail ? tail.slice(3) : ''; box.style.color = ''; return; }
     var d = n - sh;
     box.textContent = 'Ситуаций ' + n + ' · бросков в створ ' + sh +
-      (d === 0 ? ' · сходится' : (d > 0 ? ' · больше на ' + d : ' · не хватает ' + (-d)));
+      (d === 0 ? ' · сходится' : (d > 0 ? ' · больше на ' + d : ' · не хватает ' + (-d))) + tail;
     box.style.color = d === 0 ? 'var(--ok)' : 'var(--warn)';
   }
   $('mbody').addEventListener('input', function(e){
@@ -1392,6 +1396,8 @@ function gmSync(){
 
 /* ───────── аналитика голов ───────── */
 var AN = { gk: '', from: '', to: '', src: 'games', pgk: '', sit: '' };
+/* навыки, которые не сверяются с бросками в створ: это не броски по воротам */
+var SK_OUT = ['Клюшка'];
 var ZNAMES = ['верх левый','верх центр','верх правый',
               'средн левый','средн центр','средн правый',
               'низ левый','низ центр','низ правый'];
@@ -2676,12 +2682,13 @@ function skDraw(){
   var mine = SK.gk ? all.filter(function(g){ return g.gk === SK.gk; }) : all;
   var sum = skSum(mine);
 
-  /* сводка по навыкам */
-  var tot = { n:0, ok:0, e:0 };
+  /* сводка по навыкам: клюшка идёт отдельно, это выходы за шайбой, а не броски */
+  var tot = { n:0, ok:0, e:0 }, stk = { n:0, ok:0, e:0 };
   order.forEach(function(nm){
     var x = sum[nm];
     if (!x) return;
-    tot.n += x.n; tot.ok += x.ok; tot.e += x.e;
+    var t = SK_OUT.indexOf(nm) >= 0 ? stk : tot;
+    t.n += x.n; t.ok += x.ok; t.e += x.e;
   });
 
   var bars = order.map(function(nm){
@@ -2721,7 +2728,7 @@ function skDraw(){
   if (SK.gk){
     var rows = mine.slice().sort(function(a, b){ return a.d < b.d ? 1 : -1; }).map(function(g){
       var s = skSum([g]), n = 0, ok = 0;
-      for (var k in s){ n += s[k].n; ok += s[k].ok; }
+      for (var k in s){ if (SK_OUT.indexOf(k) >= 0) continue; n += s[k].n; ok += s[k].ok; }
       var p = n ? Math.round(ok / n * 1000) / 10 : null;
       var weak = '';
       var worst = null;
@@ -2755,13 +2762,14 @@ function skDraw(){
       '<div class="kp"><b>' + tot.n + '</b><i>эпизодов</i></div>' +
       '<div class="kp"><b>' + (tot.n ? Math.round(tot.ok / tot.n * 1000) / 10 + '%' : '—') +
         '</b><i>успешно</i></div>' +
-      '<div class="kp"><b>' + tot.e + '</b><i>ошибок</i></div>' +
+      '<div class="kp"><b>' + stk.n + '</b><i>игра клюшкой, отдельно</i></div>' +
     '</div>' +
 
     '<div class="card"><h2>По навыкам' + (SK.gk ? ' · ' + esc(SK.gk) : '') + '</h2>' +
       (bars ? '<div class="bars">' + bars + '</div>'
             : '<div class="muted">Разборов пока нет. Заполняй навыки в карточке игры.</div>') +
-      '<div class="ice">зелёный от 90% · жёлтый от 75% · красный ниже</div></div>' +
+      '<div class="ice">зелёный от 90% · жёлтый от 75% · красный ниже · ' +
+      'клюшка в число эпизодов не входит: это выходы за шайбой, а не броски по воротам</div></div>' +
 
     (grid ? '<div class="card"><h2>Вратари рядом</h2><table class="tbl"><thead>' + head +
       '</thead><tbody>' + grid + '</tbody></table>' +
