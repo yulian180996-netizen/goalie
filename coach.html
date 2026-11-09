@@ -398,7 +398,7 @@
       <button class="thm" id="thm" type="button" title="Светлая или тёмная тема">🌙</button>
       <a id="me-out">выйти</a>
     </div>
-    <div class="ver" id="ver" title="Версия страницы. Если не меняется после заливки — браузер показывает старое: Cmd+Option+R">сборка 09.11 14:40</div>
+    <div class="ver" id="ver" title="Версия страницы. Если не меняется после заливки — браузер показывает старое: Cmd+Option+R">сборка 09.11 15:20</div>
   </aside>
 
   <main class="main" id="main">
@@ -1145,13 +1145,21 @@ function gmForm(){
   if (g.gk && ROSTER.every(function(r){ return r.name !== g.gk; }))
     gkOpts = '<option selected>' + esc(g.gk) + '</option>' + gkOpts;
 
+  var tree = sitTree();
   var glRows = (g.gls || []).map(function(x, i){
+    /* подпункты зависят от выбранной ситуации: «С передачи» - приём или касание и так далее */
+    var kids = [];
+    tree.forEach(function(p){ if (p[0] === x.s) kids = p[1]; });
     return '<div class="glc" data-gl="' + i + '">' +
       '<div class="glh"><b>Гол ' + (i + 1) + '</b>' +
-        '<select data-gf="s">' + GM.sit.map(function(sit){
-          return '<option' + (sit === x.s ? ' selected' : '') + '>' + esc(sit) + '</option>';
+        '<select data-gf="s" data-gi="' + i + '">' + tree.map(function(p){
+          return '<option' + (p[0] === x.s ? ' selected' : '') + '>' + esc(p[0]) + '</option>';
         }).join('') + '</select>' +
-        '<input data-gf="d" placeholder="деталь" value="' + esc(x.d || '') + '">' +
+        (kids.length
+          ? '<select data-gf="d"><option value="">—</option>' + kids.map(function(c){
+              return '<option' + (c === x.d ? ' selected' : '') + '>' + esc(c) + '</option>';
+            }).join('') + '</select>'
+          : '<input data-gf="d" placeholder="заметка" value="' + esc(x.d || '') + '">') +
         '<button class="x" data-glx="' + i + '">×</button></div>' +
       '<div class="glmaps">' +
         '<div><div class="glcap">Откуда бросали</div>' +
@@ -1207,23 +1215,6 @@ function gmForm(){
       '<input id="f-psy" type="number" min="0" max="10" value="' + (g.psy || '') + '"></div>' +
     '<div class="fld"><label>Комментарий</label><textarea id="f-cm">' + esc(g.cm) + '</textarea></div>' +
 
-    '<div class="fld"><label>Голы по ситуациям — сколько пропущено</label>' +
-      '<div class="dets" style="margin:-2px 0 8px">подпункты складываются в строку над ними</div>' +
-      '<table class="sktb sttb"><tbody>' +
-      sitTree().map(function(pr){
-        var v = (g.st || {});
-        var row = '<tr><td>' + esc(pr[0]) + '</td>' +
-          '<td class="num"><input data-st="' + esc(pr[0]) + '" type="number" min="0" value="' +
-          (v[pr[0]] || '') + '"></td></tr>';
-        pr[1].forEach(function(c){
-          var k = pr[0] + ' · ' + c;
-          row += '<tr class="sub"><td>' + esc(c) + '</td>' +
-            '<td class="num"><input data-st="' + esc(k) + '" type="number" min="0" value="' +
-            (v[k] || '') + '"></td></tr>';
-        });
-        return row;
-      }).join('') + '</tbody></table></div>' +
-
     '<div class="fld"><label>Навыки — сколько раз и из них удачно</label>' +
       '<div class="dets" style="margin:-2px 0 8px">пустая строка — навык в игре не встречался</div>' +
       '<table class="sktb"><thead><tr><th>Навык</th><th class="num">Всего</th>' +
@@ -1244,8 +1235,9 @@ function gmForm(){
       '<div class="dets" id="sk-cmp" style="margin:8px 0 0"></div></div>' +
 
     '<div class="fld"><label>Голы — ситуация, точка броска, место в воротах</label>' +
-      '<div class="dets" style="margin:-2px 0 8px">ткни по схеме площадки, откуда бросали, и по воротам, куда зашла шайба. ' +
-      'Зона ворот определится сама. Точка ставится заново по новому клику</div>' + glRows +
+      '<div class="dets" style="margin:-2px 0 8px">каждый гол отдельной карточкой: ситуация, при необходимости подпункт, ' +
+      'и две отметки кликом - откуда бросали и куда зашла шайба. Зона ворот определится сама. ' +
+      'Статистика по ситуациям собирается отсюда, отдельно её заносить не надо</div>' + glRows +
       '<button class="addbtn" id="gl-add">+ добавить гол</button></div>' +
 
     '<div class="mact">' +
@@ -1282,10 +1274,14 @@ function gmForm(){
   $('mbody').addEventListener('input', function(e){
     if (e.target.matches && (e.target.matches('[data-sf]') || e.target.id === 'f-sh')) skTotals();
   });
+  /* сменили ситуацию - подпункты должны стать её собственными */
+  $('mbody').addEventListener('change', function(e){
+    if (e.target.matches && e.target.matches('[data-gf="s"]')){ gmSync(); gmForm(); }
+  });
   skTotals();
 
   $('gm-cancel').onclick = mClose;
-  $('gl-add').onclick = function(){ gmSync(); GME.gls.push({ s: GM.sit[0], d:'', z:'' }); gmForm(); };
+  $('gl-add').onclick = function(){ gmSync(); GME.gls.push({ s: sitTree()[0][0], d:'', z:'' }); gmForm(); };
   $('mbody').onclick = function(e){
     var pk = e.target.closest ? e.target.closest('[data-pk]') : null;
     if (pk){ pkClick(pk, e); return; }
@@ -1386,12 +1382,8 @@ function gmSync(){
     sk[row.getAttribute('data-sk')] = { n: n, ok: ok, e: e };
   });
   GME.sk = sk;
-  var st = {};
-  $('mbody').querySelectorAll('[data-st]').forEach(function(el){
-    var n = Number(el.value) || 0;
-    if (n) st[el.getAttribute('data-st')] = n;
-  });
-  GME.st = st;
+  /* таблицу ситуаций числом убрали - статистика считается из самих голов.
+     Старое значение не трогаем: у игр, занесённых до этого, оно остаётся в базе. */
 }
 
 /* ───────── аналитика голов ───────── */
@@ -1488,19 +1480,37 @@ function anDraw(){
            (d ? '<div class="dets" style="margin:-4px 0 2px 160px">' + d + '</div>' : '');
   }).join('');
 
-  /* ситуации, занесённые числом в карточке игры */
+  /* Ситуации собираем из самих голов. Старую таблицу числом берём только
+     у тех игр, где голы поштучно ещё не занесены - чтобы не задвоить. */
   var stSum = {}, stAny = 0;
+  var bump = function(top, sub, v){
+    var kt = top || 'Другое';
+    stSum[kt] = (stSum[kt] || 0) + v;
+    if (sub){
+      var ks = kt + ' · ' + sub;
+      stSum[ks] = (stSum[ks] || 0) + v;
+    }
+    stAny += v;
+  };
   list.forEach(function(g){
+    if ((g.gls || []).length){
+      g.gls.forEach(function(x){ bump(x.s, x.d, 1); });
+      return;
+    }
     var st = g.st || {};
     for (var k in st){
       var v = Number(st[k]) || 0;
       if (!v) continue;
-      var nm = k.indexOf(' · ') > 0 ? k.split(' · ')[1] : k;
-      stSum[nm] = (stSum[nm] || 0) + v;
-      stAny += v;
+      var pr = k.split(' · ');
+      bump(pr[0], pr[1] || '', v);
     }
   });
-  var stRows = stAny ? Object.keys(stSum).map(function(k){ return { t:k, n:stSum[k] }; }) : [];
+  /* в sitGroup список идёт подряд: группа, затем её подпункты */
+  var stRows = [];
+  if (stAny) sitTree().forEach(function(p){
+    stRows.push({ t: p[0], n: stSum[p[0]] || 0 });
+    p[1].forEach(function(c){ stRows.push({ t: c, n: stSum[p[0] + ' · ' + c] || 0 }); });
+  });
 
   var names = {};
   (GM.list || []).forEach(function(g){ if (g.gk) names[g.gk] = 1; });
