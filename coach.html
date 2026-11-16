@@ -347,10 +347,10 @@
   }
   @media (max-width:760px){
     .app{flex-direction:column}
-    .side{width:100%;height:auto;position:static;flex-direction:row;overflow:auto}
-    .logo{border-bottom:none;border-right:1px solid var(--line)}
-    .nav{display:flex;gap:4px;padding:10px}
-    .nav .gr,.me,.ver{display:none}
+    .side{width:100%;height:auto;position:static;flex-direction:column}
+    .logo{border-bottom:1px solid var(--line);border-right:none}
+    .nav{display:flex;flex:none;gap:4px;padding:10px;overflow-x:auto}
+    .nav .gr,.ver{display:none}
     .nav button{white-space:nowrap}
     .week{grid-template-columns:1fr}
   }
@@ -787,8 +787,13 @@ function mcDraw(){
 }
 
 /* ───────── окно ───────── */
-function mOpen(html){ $('mbody').innerHTML = html; $('modal').className = 'modal'; }
-function mClose(){ $('modal').className = 'modal hide'; $('mbody').innerHTML = ''; }
+function mReset(){
+  var box = $('mbody');
+  box.onclick = box.oninput = box.onchange = null;
+  box.innerHTML = '';
+}
+function mOpen(html){ mReset(); $('mbody').innerHTML = html; $('modal').className = 'modal'; }
+function mClose(){ $('modal').className = 'modal hide'; mReset(); }
 
 /* ───────── редактор дня ───────── */
 var KINDS = [['plan','время'], ['who','состав'], ['note','заметка'],
@@ -1271,13 +1276,13 @@ function gmForm(){
       (d === 0 ? ' · сходится' : (d > 0 ? ' · больше на ' + d : ' · не хватает ' + (-d))) + tail;
     box.style.color = d === 0 ? 'var(--ok)' : 'var(--warn)';
   }
-  $('mbody').addEventListener('input', function(e){
+  $('mbody').oninput = function(e){
     if (e.target.matches && (e.target.matches('[data-sf]') || e.target.id === 'f-sh')) skTotals();
-  });
+  };
   /* сменили ситуацию - подпункты должны стать её собственными */
-  $('mbody').addEventListener('change', function(e){
+  $('mbody').onchange = function(e){
     if (e.target.matches && e.target.matches('[data-gf="s"]')){ gmSync(); gmForm(); }
-  });
+  };
   skTotals();
 
   $('gm-cancel').onclick = mClose;
@@ -1293,7 +1298,19 @@ function gmForm(){
   };
   if ($('gm-del')) $('gm-del').onclick = function(){
     if (!confirm('Удалить эту игру?')) return;
-    api({ a:'game2del', id: g.id }, function(){ mClose(); GM.list = null; gmLoad(true); });
+    var btn = this, saveBtn = $('gm-save');
+    btn.disabled = true; btn.textContent = 'Удаляю…';
+    saveBtn.disabled = true;
+    api({ a:'game2del', id: g.id }, function(res){
+      btn.disabled = false; btn.textContent = 'Удалить игру';
+      saveBtn.disabled = false;
+      if (!res || !res.ok){
+        alert('Удаление не подтверждено. Проверь связь и обнови список игр перед повторной попыткой.');
+        return;
+      }
+      if ($('gm-del') === btn) mClose();
+      GM.list = null; gmLoad(true);
+    });
   };
   $('gm-save').onclick = function(){
     gmSync();

@@ -1993,18 +1993,8 @@ function flushQueue(){
   flushing = true;
   var k = keys[qIdx], body = QUEUE[k];
 
-  /* слишком большой раздел сервер не примет — режем сами, чтобы не встало всё */
-  if (body.length > 85000){
-    try {
-      var arr = parse(body);
-      if (arr && arr.length > 10){
-        arr = arr.slice(0, Math.max(10, Math.floor(arr.length / 2)));
-        DB[k] = arr; lset(k, arr);
-        QUEUE[k] = body = JSON.stringify(arr);
-        qSave();
-      }
-    } catch(e){}
-  }
+  /* Отправляем историю целиком. При отказе сервера очередь и локальные
+     данные сохраняются без сокращения, остальные разделы продолжают отправляться. */
 
   api({ a: 'push', key: k, json: body }, function(res){
     flushing = false;
