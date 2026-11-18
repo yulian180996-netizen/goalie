@@ -123,11 +123,14 @@ function microFocusPanel() {
     '<div class="focus-tools"><label>Раздел <select id="focus-group"></select></label>' +
     '<span id="focus-status" role="status"></span><button type="button" id="focus-retry" hidden>Повторить</button></div>' +
     '<div class="muted">Нажми на пересечение навыка и цикла. Повторное нажатие снимает отметку.</div>' +
-    '<div class="focus-scroll" id="focus-grid"></div></div>';
+    '<div class="focus-scroll" id="focus-grid"></div><button type="button" class="btn sec sm" id="focus-add" hidden>+ Добавить навык</button></div>';
 }
 function mountMicroFocus(current) {
   var select = document.getElementById('focus-group'), grid = document.getElementById('focus-grid');
   var catalog = microFocus.catalog;
+  var editable = Number.isInteger(microFocus.version);
+  var add=document.getElementById('focus-add');
+  add.hidden=!editable;
   if (!catalog.length) { grid.textContent = 'Список навыков пока недоступен. Обнови страницу.'; return; }
   select.innerHTML = catalog.map(function(g,i) {
     return '<option value="' + i + '">' + esc(g.title) + '</option>';
@@ -140,13 +143,13 @@ function mountMicroFocus(current) {
       return '<th scope="col"' + (i === chosen ? ' class="focus-current"' : '') + ' title="' +
         esc(c.dates) + '">МЦ ' + esc(c.n) + '</th>';
     }).join('');
-    var rows = catalog[microFocus.group].skills.map(function(skill) {
+    var rows = microFocus.catalog[microFocus.group].skills.map(function(skill) {
       var section = '';
       if (skill.section && lastSection !== skill.section) {
         section = '<tr><th colspan="' + (cols.length+2) + '" class="focus-section">' + esc(skill.section) + '</th></tr>';
       }
       lastSection = skill.section;
-      return section+'<tr data-skill="'+esc(skill.id)+'"><th scope="row">'+esc(skill.name)+'</th>' +
+      return section+'<tr data-skill="'+esc(skill.id)+'"><th scope="row">'+(editable ? '<div class="skill-name"><button type="button" data-row-action title="Изменить, переместить или удалить" aria-label="Изменить навык '+esc(skill.name)+'">−</button><span>'+esc(skill.name)+'</span></div>' : esc(skill.name))+'</th>' +
         '<td class="focus-count"></td>'+cols.map(function(c,i) {
           var label = esc(skill.name + ', микроцикл ' + c.n);
           return '<td'+(i === chosen ? ' class="focus-current"' : '')+'><button type="button" data-cycle="' +
@@ -161,8 +164,16 @@ function mountMicroFocus(current) {
       grid.scrollLeft = currentHeader.offsetLeft - stickyWidth;
     }
   }
+  function redraw() {
+    var x=grid.scrollLeft, y=grid.scrollTop;
+    if (grid.isConnected) {renderGroup();grid.scrollLeft=x;grid.scrollTop=y;}
+    else if(document.getElementById('focus-grid')) mcDraw();
+  }
+  add.onclick=function(){openSkillRow(microFocus.group,null,redraw);};
   select.onchange = function() { microFocus.group = Number(select.value); renderGroup(); };
   grid.onclick = function(ev) {
+    var actions=ev.target.closest('[data-row-action]');
+    if(actions){openSkillRow(microFocus.group,actions.closest('[data-skill]').dataset.skill,redraw);return;}
     var button = ev.target.closest('button[data-cycle]');
     if (!button) return;
     var id = button.closest('[data-skill]').dataset.skill, n = button.dataset.cycle;

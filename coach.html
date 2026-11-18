@@ -342,6 +342,15 @@
   .micro-editor{min-height:85px;white-space:pre-wrap;overflow-wrap:anywhere;border:1px solid var(--line);border-radius:8px;padding:10px;color:var(--tx);background:var(--bg2);font:inherit}
   .micro-editor:focus{outline:2px solid var(--red);outline-offset:1px}
   .micro-editor strong,.micro-editor b,.mcbox .tx strong{font-weight:800}
+  .focus-scroll .skill-name{display:flex;gap:4px;align-items:center}
+  .focus-scroll .skill-name button{width:30px;min-width:30px;min-height:36px;margin:0;border:1px solid var(--line);border-radius:6px;color:var(--tx);background:var(--card)}
+  .focus-scroll .skill-name span{min-width:0;overflow-wrap:anywhere}
+  .skill-order{display:flex;gap:8px;margin-top:12px}
+  .skill-order button{padding:7px 12px;color:var(--tx);background:var(--bg2);border:1px solid var(--line);border-radius:6px;cursor:pointer}
+  .skill-order button:disabled{opacity:.4}
+  .skill-actions{flex-wrap:wrap}
+  #focus-add[hidden]{display:none}
+  #focus-add{margin-top:12px}
   .focus-tools select{max-width:100%;font:inherit;color:var(--tx);background:var(--bg2);border:1px solid var(--line);border-radius:7px;padding:6px}
   .focus-tools label{max-width:100%}
   .focus-card{min-width:0}
@@ -460,7 +469,8 @@
   <div class="mbox" id="mbody"></div>
 </div>
 
-<script src="microcycles.js?v=1"></script>
+<script src="microcycles.js?v=2"></script>
+<script src="skill-rows.js?v=1"></script>
 <script>
 var API_URL = 'https://script.google.com/macros/s/AKfycbySUUoLkv6qaywWfDZ9Qn1fob2Z2o4Md7npra59c_F24DreU8iSc9tzdsoedyC_6-tM/exec';
 
@@ -767,6 +777,7 @@ function mcLoad(fresh){
     }
     MC.list = res.list || [];
     microFocus.catalog = res.focusCatalog || [];
+    microFocus.version = res.focusVersion;
     MC.cur  = res.cur || '';
     if (!MC.sel) MC.sel = MC.cur || (MC.list.length ? MC.list[MC.list.length-1].n : '');
     mcDraw();
@@ -2555,6 +2566,7 @@ function ofPlanDraw(){
         return;
       }
       microFocus.catalog = res.focusCatalog || [];
+    microFocus.version = res.focusVersion;
       MC.list = res.list || []; MC.cur = res.cur || '';
       ofPlanDraw();
     });
