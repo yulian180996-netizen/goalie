@@ -398,7 +398,7 @@
       <button class="thm" id="thm" type="button" title="Светлая или тёмная тема">🌙</button>
       <a id="me-out">выйти</a>
     </div>
-    <div class="ver" id="ver" title="Дата и время сборки по Москве. Если видишь прежнюю дату — обнови страницу.">сборка 17.11.2026 00:41 МСК</div>
+    <div class="ver" id="ver" title="Дата и время сборки по Москве. Если видишь прежнюю дату — обнови страницу.">сборка 18.11.2026 14:09 МСК</div>
   </aside>
 
   <main class="main" id="main">
@@ -491,13 +491,31 @@ function gateIn(){
       KEY = res.key;
       try { localStorage.setItem('gk_coach_key', KEY); } catch(e){}
       ME.name = res.name || ''; ME.coach = true;
-      start();
+      loadCoach();
     })
     .catch(function(){ $('g-err').textContent = 'Нет связи.'; });
 }
 function gateOut(){
   try { localStorage.removeItem('gk_coach_key'); localStorage.removeItem('gk_site_key'); } catch(e){}
   KEY = ''; location.reload();
+}
+
+/* Одинаковая загрузка состава после ввода кода и входа с сохранённым ключом. */
+function loadCoach(){
+  $('g-err').textContent = 'Загружаю список вратарей…';
+  api({ a:'roster' }, function(res){
+    if (!res || !res.ok || !Array.isArray(res.list)){
+      showGate(true);
+      $('g-err').textContent = res && res.err === 'forbidden'
+        ? 'Этот вход не тренерский.'
+        : 'Не удалось загрузить вратарей. Проверь связь и нажми «Войти» ещё раз.';
+      return;
+    }
+    ME.coach = true;
+    ROSTER = res.list;
+    $('g-err').textContent = '';
+    start();
+  });
 }
 
 /* ───────── навигация ───────── */
@@ -1142,13 +1160,13 @@ function gmEdit(id){
 
 function gmForm(){
   var g = GME;
-  var gkOpts = ROSTER.map(function(r){
+  var gkOpts = '<option value="">' + (ROSTER.length ? 'Выбери вратаря' : 'В составе пока нет вратарей') + '</option>' + ROSTER.map(function(r){
     var nm = r.name || '';
     return '<option value="' + esc(nm) + '" data-uid="' + esc(r.uid) + '"' +
            (nm === g.gk ? ' selected' : '') + '>' + esc(nm) + '</option>';
   }).join('');
   if (g.gk && ROSTER.every(function(r){ return r.name !== g.gk; }))
-    gkOpts = '<option selected>' + esc(g.gk) + '</option>' + gkOpts;
+    gkOpts = '<option selected value="' + esc(g.gk) + '" data-uid="' + esc(g.uid || '') + '">' + esc(g.gk) + '</option>' + gkOpts;
 
   var tree = sitTree();
   var glRows = (g.gls || []).map(function(x, i){
@@ -2856,20 +2874,11 @@ function boot(){
   };
 
   if (!KEY){ showGate(true); $('g-code').focus(); return; }
-  /* ключ есть — проверяем, что он тренерский */
-  /* roster отдаётся только тренеру — заодно проверка доступа */
-  api({ a:'roster' }, function(res){
-    if (!res || !res.ok){
-      showGate(true);
-      if (res && res.err === 'forbidden') $('g-err').textContent = 'Этот вход не тренерский.';
-      return;
-    }
-    ME.coach = true;
-    ROSTER = res.list || [];
-    start();
-  });
+  /* roster отдаётся только тренеру — заодно проверка сохранённого ключа */
+  loadCoach();
 }
 boot();
 </script>
 </body>
 </html>
+
