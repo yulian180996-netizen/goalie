@@ -98,7 +98,7 @@ test('Fresh login waits for the full roster before opening the coach app',async(
   const els={'g-code':{value:'TEST'},'g-err':{textContent:''}},requests=[];let started=0;
   const {c}=harness(auth,{$:id=>els[id],ME:{},ROSTER:[],KEY:'',API_URL:'test',localStorage:{setItem(){}},
     fetch:async()=>({json:async()=>({ok:true,isCoach:true,key:'test-key'})}),
-    api:(payload,cb)=>requests.push({payload,cb}),start:()=>started++,showGate(){}});
+    api:(payload,cb)=>requests.push({payload,cb}),start:()=>started++,gateMode(){}});
   c.gateIn();await new Promise(resolve=>setImmediate(resolve));assert.equal(started,0);
   assert.equal(requests[0].payload.a,'roster');
   requests[0].cb({ok:true,list:[{uid:'test-1',name:'Тестовый вратарь'}]});
@@ -107,8 +107,8 @@ test('Fresh login waits for the full roster before opening the coach app',async(
 test('Roster failure leaves login actionable, and retry loads the full roster',()=>{
   const error={textContent:''},requests=[];let started=0,gate=false;
   const {c}=harness(auth,{$:()=>error,ME:{},ROSTER:[],api:(_,cb)=>requests.push(cb),
-    start:()=>started++,showGate:v=>gate=v});
-  c.loadCoach();requests.shift()(null);assert.equal(started,0);assert.equal(gate,true);
+    start:()=>started++,gateMode:v=>gate=v});
+  c.loadCoach();requests.shift()(null);assert.equal(started,0);assert.equal(gate,'retry');
   assert.match(error.textContent,/Не удалось загрузить/);
   c.loadCoach();requests.shift()({ok:true,list:[{uid:'1',name:'A'},{uid:'2',name:'B'}]});
   assert.equal(started,1);assert.equal(c.ROSTER.length,2);

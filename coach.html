@@ -385,18 +385,20 @@
     .nav button{white-space:nowrap}
     .week{grid-template-columns:1fr}
   }
+  .gate .hide{display:none}
 </style>
 </head>
 <body>
 
 <!-- ── вход ── -->
-<div class="gate" id="gate">
+<div class="gate hide" id="gate">
   <div class="gbox">
     <h1>Кабинет тренера</h1>
-    <p>Введи код доступа. Он выдаётся один раз — дальше браузер помнит вход.</p>
-    <input id="g-code" maxlength="8" autocomplete="off" placeholder="КОД">
+    <p id="g-hint">Введи код доступа. Он выдаётся один раз — дальше браузер помнит вход.</p>
+    <div id="g-credentials"><input id="g-code" maxlength="8" autocomplete="off" placeholder="КОД"></div>
     <div class="gerr" id="g-err"></div>
     <button class="btn" id="g-in">Войти</button>
+    <button class="btn hide" id="g-retry">Повторить загрузку</button>
   </div>
 </div>
 
@@ -512,6 +514,17 @@ function showGate(on){
   $('gate').className = on ? 'gate' : 'gate hide';
   $('app').className  = on ? 'app hide' : 'app';
 }
+function gateMode(mode){
+  showGate(true);
+  var ask = mode === 'code';
+  $('g-credentials').classList.toggle('hide', !ask);
+  $('g-in').classList.toggle('hide', !ask);
+  $('g-retry').classList.toggle('hide', mode !== 'retry');
+  $('g-hint').classList.toggle('hide', !ask);
+}
+function savedSiteKey(){
+  try { return localStorage.getItem('gk_site_key') || ''; } catch(e){ return ''; }
+}
 function gateIn(){
   var code = ($('g-code').value || '').trim().toUpperCase();
   if (code.length < 4){ $('g-err').textContent = 'Код короткий.'; return; }
@@ -520,7 +533,7 @@ function gateIn(){
     .then(function(r){ return r.json(); })
     .then(function(res){
       if (!res || !res.ok){ $('g-err').textContent = (res && res.err) || 'Не получилось.'; return; }
-      if (!res.isCoach){ $('g-err').textContent = 'Этот код не тренерский. Вратарям — основное приложение.'; return; }
+      if (!res.isCoach || !res.key){ $('g-err').textContent = 'Этот код не тренерский. Вратарям — основное приложение.'; return; }
       KEY = res.key;
       try { localStorage.setItem('gk_coach_key', KEY); } catch(e){}
       ME.name = res.name || ''; ME.coach = true;
@@ -535,15 +548,23 @@ function gateOut(){
 
 /* Одинаковая загрузка состава после ввода кода и входа с сохранённым ключом. */
 function loadCoach(){
+  gateMode('loading');
   $('g-err').textContent = 'Загружаю список вратарей…';
   api({ a:'roster' }, function(res){
     if (!res || !res.ok || !Array.isArray(res.list)){
-      showGate(true);
-      $('g-err').textContent = res && res.err === 'forbidden'
-        ? 'Этот вход не тренерский.'
-        : 'Не удалось загрузить вратарей. Проверь связь и нажми «Войти» ещё раз.';
+      if (res && (res.err === 'forbidden' || res.err === 'auth')){
+        var alternate = savedSiteKey();
+        if (alternate && alternate !== KEY){ KEY = alternate; loadCoach(); return; }
+        gateMode('code');
+        $('g-err').textContent = res.err === 'auth' ? 'Сохранённый вход недействителен. Введи тренерский код.' : 'Для кабинета нужен тренерский код.';
+        $('g-code').focus();
+      } else {
+        gateMode('retry');
+        $('g-err').textContent = 'Не удалось загрузить список вратарей. Проверь связь и повтори загрузку.';
+      }
       return;
     }
+    try { localStorage.setItem('gk_coach_key', KEY); } catch(e){}
     ME.coach = true;
     ROSTER = res.list;
     $('g-err').textContent = '';
@@ -2882,6 +2903,7 @@ function start(){
 
 function boot(){
   $('g-in').onclick = gateIn;
+  $('g-retry').onclick = loadCoach;
   $('g-code').onkeydown = function(e){ if (e.key === 'Enter') gateIn(); };
   $('me-out').onclick = gateOut;
   $('thm').onclick = function(){ applyTheme(document.body.className !== 'dk'); };
@@ -2917,7 +2939,7 @@ function boot(){
     if (b) go(b.getAttribute('data-p'));
   };
 
-  if (!KEY){ showGate(true); $('g-code').focus(); return; }
+  if (!KEY){ gateMode('code'); $('g-code').focus(); return; }
   /* roster отдаётся только тренеру — заодно проверка сохранённого ключа */
   loadCoach();
 }
