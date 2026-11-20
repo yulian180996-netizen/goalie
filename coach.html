@@ -473,6 +473,7 @@
 
 <script src="microcycles.js?v=2"></script>
 <script src="skill-rows.js?v=1"></script>
+<script src="player-history.js?v=1"></script>
 <script>
 var API_URL = 'https://script.google.com/macros/s/AKfycbySUUoLkv6qaywWfDZ9Qn1fob2Z2o4Md7npra59c_F24DreU8iSc9tzdsoedyC_6-tM/exec';
 
@@ -1883,11 +1884,13 @@ function rsCard(uid){
         '<th class="num">Вес</th></tr></thead><tbody>' + wb + '</tbody></table>'
          : '<div class="muted">Записей нет.</div>') +
     '</div>' +
+    '<div id="rc-history"></div>' +
     '<div class="mact">' +
       '<button class="btn sec sm" id="rc-code">Код для входа на сайт</button>' +
       '<div class="muted" id="rc-codev" style="margin-left:12px;font-size:15px"></div>' +
       '<div class="sp"></div><button class="btn sec sm" id="rc-x">Закрыть</button></div>'
   );
+  playerHistory($('rc-history'), x);
   $('rc-x').onclick = mClose;
   $('rc-code').onclick = function(){
     if (!confirm('Выдать ' + x.name + ' новый код?\n\nПрежний код этого вратаря перестанет работать.')) return;
